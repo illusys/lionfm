@@ -1,3 +1,6 @@
+// Flutter SDK target: 3.24.5 (stable)
+// Do not use API introduced after Flutter 3.24.5.
+// Verify compatibility at: https://api.flutter.dev/flutter/material/ThemeData-class.html
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
@@ -60,7 +63,7 @@ class AppTheme {
         ),
       ),
 
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: AppColors.surface2,
         elevation: 0,
         shape: RoundedRectangleBorder(
