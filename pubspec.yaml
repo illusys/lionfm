@@ -38,9 +38,6 @@ dependencies:
   shimmer: ^3.0.0
   lottie: ^3.1.2
 
-  # Payments
-  flutter_paystack: ^1.0.5
-
   # Utils
   intl: ^0.19.0
   url_launcher: ^6.3.0
