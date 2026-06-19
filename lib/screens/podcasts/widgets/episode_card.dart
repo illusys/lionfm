@@ -6,7 +6,9 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/models/episode_model.dart';
 import '../../../providers/audio_provider.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../providers/podcast_provider.dart';
+import '../../../widgets/common/login_prompt_sheet.dart';
 
 class EpisodeCard extends ConsumerWidget {
   final EpisodeModel episode;
@@ -127,7 +129,16 @@ class EpisodeCard extends ConsumerWidget {
           const SizedBox(width: 6),
           // Download button
           GestureDetector(
-            onTap: () {
+            onTap: () async {
+              final isGuest = ref.read(isGuestModeProvider);
+              final isSignedIn = ref.read(authStateProvider).valueOrNull != null;
+              if (isGuest && !isSignedIn) {
+                await LoginPromptSheet.show(
+                  context,
+                  reason: 'Sign in to download episodes for offline listening.',
+                );
+                return;
+              }
               final downloads = ref.read(downloadedEpisodesProvider);
               ref.read(downloadedEpisodesProvider.notifier).state = {
                 ...downloads,

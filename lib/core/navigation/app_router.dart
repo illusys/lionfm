@@ -22,22 +22,11 @@ import '../../screens/admin/revenue_dashboard_screen.dart';
 import '../../widgets/common/bottom_nav_bar.dart';
 import '../../widgets/common/mini_player_bar.dart';
 import '../../widgets/common/offline_banner.dart';
-import '../../providers/auth_provider.dart';
 import 'nav_destinations.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
-    redirect: (context, state) {
-      final location = state.matchedLocation;
-      // Skip auth check for splash and login
-      if (location == '/splash' || location == '/login') return null;
-      // Skip for admin routes (rely on role check inside)
-      if (location.startsWith('/admin')) return null;
-      final isAuthenticated = ref.read(isAuthenticatedProvider);
-      if (!isAuthenticated) return '/login';
-      return null;
-    },
     routes: [
       GoRoute(
         path: '/splash',

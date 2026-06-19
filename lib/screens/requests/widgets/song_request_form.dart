@@ -5,6 +5,8 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/request_model.dart';
 import '../../../data/repositories/request_repository.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../widgets/common/login_prompt_sheet.dart';
 import 'success_confirmation.dart';
 
 class SongRequestForm extends ConsumerStatefulWidget {
@@ -44,6 +46,15 @@ class _SongRequestFormState extends ConsumerState<SongRequestForm> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final isGuest = ref.read(isGuestModeProvider);
+    final isSignedIn = ref.read(authStateProvider).valueOrNull != null;
+    if (isGuest && !isSignedIn) {
+      await LoginPromptSheet.show(
+        context,
+        reason: 'Sign in to send a song request to Lion FM.',
+      );
+      return;
+    }
     setState(() => _submitting = true);
     await _repo.submitRequest(RequestModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),

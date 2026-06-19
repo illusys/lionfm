@@ -8,7 +8,7 @@ final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
 });
 
-final isGuestModeProvider = StateProvider<bool>((ref) => false);
+final isGuestModeProvider = StateProvider<bool>((ref) => true);
 
 final isAuthenticatedProvider = Provider<bool>((ref) {
   final auth = ref.watch(authStateProvider);

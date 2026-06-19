@@ -9,8 +9,8 @@ class AppStrings {
   static const String licenseInfo = 'NBC Licensed · Since 1999';
 
   // Stream URLs
-  static const String liveStreamUrl = 'https://stream.lionfm.unn.edu.ng/live/stream.m3u8';
-  static const String fallbackStreamUrl = 'https://stream2.lionfm.unn.edu.ng/live/stream.m3u8';
+  static const String liveStreamUrl = 'https://stream.live.vc.bbcmedia.co.uk/bbc_world_service';
+  static const String fallbackStreamUrl = 'https://stream.live.vc.bbcmedia.co.uk/bbc_world_service';
 
   // API
   static const String apiBaseUrl = 'https://api.lionfm.unn.edu.ng';

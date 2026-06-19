@@ -18,7 +18,7 @@ class MockPodcastRepository implements PodcastRepository {
         description: 'UNN pharmacy students discuss practical strategies for managing academic stress, sleep hygiene, and mental health during exam season.',
         durationMinutes: 42,
         publishedAt: now.subtract(const Duration(days: 3)),
-        audioUrl: 'https://podcast.lionfm.unn.edu.ng/episodes/ep_01.mp3',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
         category: 'health',
       ),
       EpisodeModel(
@@ -29,7 +29,7 @@ class MockPodcastRepository implements PodcastRepository {
         description: 'Engr. Ada Obi breaks down everything you need — from building your portfolio to acing technical interviews at top Nigerian tech companies.',
         durationMinutes: 58,
         publishedAt: now.subtract(const Duration(days: 5)),
-        audioUrl: 'https://podcast.lionfm.unn.edu.ng/episodes/ep_02.mp3',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
         category: 'tech',
       ),
       EpisodeModel(
@@ -40,7 +40,7 @@ class MockPodcastRepository implements PodcastRepository {
         description: 'DJ Emeka hosts a special convocation episode covering the 2025 UNN graduation ceremony highlights and alumni stories.',
         durationMinutes: 35,
         publishedAt: now.subtract(const Duration(days: 7)),
-        audioUrl: 'https://podcast.lionfm.unn.edu.ng/episodes/ep_03.mp3',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
         category: 'news',
       ),
       EpisodeModel(
@@ -51,7 +51,7 @@ class MockPodcastRepository implements PodcastRepository {
         description: 'An open, informative discussion on sexual and reproductive health tailored for university students, with expert responses to listener questions.',
         durationMinutes: 50,
         publishedAt: now.subtract(const Duration(days: 10)),
-        audioUrl: 'https://podcast.lionfm.unn.edu.ng/episodes/ep_04.mp3',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
         category: 'health',
       ),
       EpisodeModel(
@@ -62,7 +62,7 @@ class MockPodcastRepository implements PodcastRepository {
         description: 'DJ Chi counts down the 20 hottest Afrobeats tracks of the month — from Burna Boy to Asake, Rema to Wizkid.',
         durationMinutes: 120,
         publishedAt: now.subtract(const Duration(days: 2)),
-        audioUrl: 'https://podcast.lionfm.unn.edu.ng/episodes/ep_05.mp3',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
         category: 'music',
       ),
       EpisodeModel(
@@ -73,7 +73,7 @@ class MockPodcastRepository implements PodcastRepository {
         description: 'A beginner-friendly deep dive into Flutter development — from setting up your environment to publishing your first app on the Play Store.',
         durationMinutes: 75,
         publishedAt: now.subtract(const Duration(days: 14)),
-        audioUrl: 'https://podcast.lionfm.unn.edu.ng/episodes/ep_06.mp3',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
         category: 'tech',
       ),
       EpisodeModel(
@@ -84,7 +84,7 @@ class MockPodcastRepository implements PodcastRepository {
         description: 'A post-election breakdown of the Student Union Government elections — winners, margins, and what the results mean for UNN students.',
         durationMinutes: 45,
         publishedAt: now.subtract(const Duration(days: 21)),
-        audioUrl: 'https://podcast.lionfm.unn.edu.ng/episodes/ep_07.mp3',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
         category: 'news',
       ),
       EpisodeModel(
@@ -95,7 +95,7 @@ class MockPodcastRepository implements PodcastRepository {
         description: 'Three uninterrupted hours of lo-fi beats, ambient jazz, and chill instrumentals — the perfect study companion for any UNN night owl.',
         durationMinutes: 180,
         publishedAt: now.subtract(const Duration(days: 1)),
-        audioUrl: 'https://podcast.lionfm.unn.edu.ng/episodes/ep_08.mp3',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
         category: 'music',
       ),
     ];
