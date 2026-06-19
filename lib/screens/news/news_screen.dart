@@ -7,6 +7,7 @@ import '../../core/theme/text_styles.dart';
 import '../../providers/news_provider.dart';
 import '../../widgets/common/error_state_widget.dart';
 import '../../widgets/common/loading_shimmer.dart';
+import '../../widgets/ads/direct_banner_widget.dart';
 import 'widgets/featured_story_card.dart';
 import 'widgets/news_list_tile.dart';
 
@@ -108,6 +109,11 @@ class NewsScreen extends ConsumerWidget {
                   ),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
+              ),
+            // Ad between featured and news list
+            if (category == 'all')
+              const SliverToBoxAdapter(
+                child: DirectBannerWidget(placement: 'news_top'),
               ),
             // News list
             SliverToBoxAdapter(

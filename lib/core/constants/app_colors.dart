@@ -60,6 +60,11 @@ class AppColors {
   static const Color emeraldGreen = lionGreen;
   static const Color unnGreen = lionGreen;
   static const Color border3 = border2;
+  static const Color broadcastOrange = deepOrange;
+  static const Color signalTeal = electricTeal;
+  static const Color goldTint = Color(0xFF2A2008);
+  static const Color blueTint = Color(0xFF08121A);
+  static const Color greenTint = Color(0xFF081A0D);
 
   // GRADIENTS
   static const LinearGradient heroGradient = LinearGradient(

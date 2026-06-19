@@ -7,7 +7,6 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/audio_provider.dart';
 import '../../providers/schedule_provider.dart';
-import 'live_badge.dart';
 
 class MiniPlayerBar extends ConsumerWidget {
   const MiniPlayerBar({super.key});
@@ -21,100 +20,99 @@ class MiniPlayerBar extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.go('/'),
       child: Container(
-        height: AppDimensions.miniPlayerHeight,
+        height: 68,
         decoration: const BoxDecoration(
-          color: AppColors.surface1,
-          border: Border(top: BorderSide(color: AppColors.border1)),
+          color: AppColors.bg1,
+          border: Border(top: BorderSide(color: AppColors.borderGreen, width: 1)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.p16),
-        child: Row(
+        child: Column(
           children: [
-            // Thumbnail
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: AppColors.heroGradient,
-                borderRadius: BorderRadius.circular(AppDimensions.r8),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                'FM',
-                style: TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                  color: AppColors.amberGold,
-                ),
-              ),
+            // Thin animated progress bar at top
+            const LinearProgressIndicator(
+              value: null,
+              backgroundColor: AppColors.bg3,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.lionGreen),
+              minHeight: 2,
             ),
-            const SizedBox(width: AppDimensions.p12),
-            // Show info
             Expanded(
-              child: currentShow.when(
-                data: (show) => Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.p16),
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            show?.title ?? 'Lion FM 91.1 MHz',
-                            style: AppTextStyles.bodyMedium.copyWith(fontSize: 13),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        const LiveBadge(),
-                      ],
+                    // Artwork
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.greenTealGradient,
+                        borderRadius: BorderRadius.circular(AppDimensions.r8),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'FM',
+                        style: AppTextStyles.label.copyWith(color: AppColors.bg0, fontSize: 12),
+                      ),
                     ),
-                    Text(
-                      show?.hostName ?? 'Live Radio',
-                      style: AppTextStyles.caption,
-                      overflow: TextOverflow.ellipsis,
+                    const SizedBox(width: AppDimensions.p12),
+                    // Show info
+                    Expanded(
+                      child: currentShow.when(
+                        data: (show) => Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              show?.title ?? 'Lion FM 91.1 MHz',
+                              style: AppTextStyles.bodyMedium.copyWith(fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            Text(
+                              show?.hostName ?? 'Live Radio',
+                              style: AppTextStyles.caption.copyWith(color: AppColors.electricTeal),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => Text('Lion FM', style: AppTextStyles.body),
+                      ),
+                    ),
+                    // Play/pause
+                    playbackState.when(
+                      data: (state) {
+                        final isPlaying = state.playing;
+                        final isLoading = state.processingState == ProcessingState.loading ||
+                            state.processingState == ProcessingState.buffering;
+                        return GestureDetector(
+                          onTap: () => isPlaying ? player.pause() : player.play(),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: const BoxDecoration(
+                              gradient: AppColors.greenTealGradient,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: isLoading
+                                ? const SizedBox(
+                                    width: 16, height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.bg0),
+                                  )
+                                : Icon(
+                                    isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                    color: AppColors.bg0,
+                                    size: 20,
+                                  ),
+                          ),
+                        );
+                      },
+                      loading: () => const SizedBox(width: 36, height: 36),
+                      error: (_, __) => const SizedBox(width: 36, height: 36),
                     ),
                   ],
                 ),
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => Text('Lion FM', style: AppTextStyles.body),
               ),
-            ),
-            // Play/Pause
-            playbackState.when(
-              data: (state) {
-                final isPlaying = state.playing;
-                final isLoading = state.processingState == ProcessingState.loading ||
-                    state.processingState == ProcessingState.buffering;
-                return GestureDetector(
-                  onTap: () => isPlaying ? player.pause() : player.play(),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: AppColors.amberGold,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.appBackground,
-                            ),
-                          )
-                        : Icon(
-                            isPlaying ? Icons.pause : Icons.play_arrow,
-                            color: AppColors.appBackground,
-                            size: 20,
-                          ),
-                  ),
-                );
-              },
-              loading: () => const SizedBox(width: 36, height: 36),
-              error: (_, __) => const SizedBox(width: 36, height: 36),
             ),
           ],
         ),

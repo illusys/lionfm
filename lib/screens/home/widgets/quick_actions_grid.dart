@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_dimensions.dart';
-import '../../../core/constants/app_strings.dart';
-import '../../../core/theme/text_styles.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/theme/text_styles.dart';
 
 class QuickActionsGrid extends StatelessWidget {
   const QuickActionsGrid({super.key});
@@ -11,45 +10,50 @@ class QuickActionsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.p16,
-        vertical: AppDimensions.p16,
-      ),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: AppDimensions.p12,
-        mainAxisSpacing: AppDimensions.p12,
-        childAspectRatio: 1.6,
-        children: const [
-          _QuickActionCard(
-            icon: Icons.radio,
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.p16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('EXPLORE', style: AppTextStyles.categoryLabel),
+          const SizedBox(height: AppDimensions.p12),
+          _QuickActionRow(
+            iconBg: AppColors.electricTeal,
+            icon: Icons.mic_rounded,
+            iconColor: AppColors.bg0,
             title: 'Podcasts',
-            subtitle: AppStrings.latestEpisodes,
-            color: AppColors.electricBlue,
-            route: '/podcasts',
+            subtitle: 'Recorded shows & episodes',
+            accentColor: AppColors.electricTeal,
+            onTap: () => context.go('/podcasts'),
           ),
-          _QuickActionCard(
-            icon: Icons.calendar_today,
+          const SizedBox(height: AppDimensions.p8),
+          _QuickActionRow(
+            iconBg: AppColors.lionGreen,
+            icon: Icons.calendar_today_rounded,
+            iconColor: AppColors.bg0,
             title: 'Schedule',
-            subtitle: AppStrings.todaysShows,
-            color: AppColors.signalTeal,
-            route: '/schedule',
+            subtitle: 'This week\'s programme',
+            accentColor: AppColors.lionGreen,
+            onTap: () => context.go('/schedule'),
           ),
-          _QuickActionCard(
-            icon: Icons.music_note,
+          const SizedBox(height: AppDimensions.p8),
+          _QuickActionRow(
+            iconBg: AppColors.lionGold,
+            icon: Icons.music_note_rounded,
+            iconColor: AppColors.bg0,
             title: 'Request',
-            subtitle: AppStrings.dedicateASong,
-            color: AppColors.amberGold,
-            route: '/requests',
+            subtitle: 'Songs & show pitches',
+            accentColor: AppColors.lionGold,
+            onTap: () => context.go('/requests'),
           ),
-          _QuickActionCard(
-            icon: Icons.article,
-            title: 'News',
-            subtitle: AppStrings.campusUpdates,
-            color: AppColors.broadcastOrange,
-            route: '/news',
+          const SizedBox(height: AppDimensions.p8),
+          _QuickActionRow(
+            iconBg: AppColors.burntAmber,
+            icon: Icons.article_rounded,
+            iconColor: AppColors.ivoryWhite,
+            title: 'Campus News',
+            subtitle: 'UNN & beyond',
+            accentColor: AppColors.burntAmber,
+            onTap: () => context.go('/news'),
           ),
         ],
       ),
@@ -57,45 +61,79 @@ class QuickActionsGrid extends StatelessWidget {
   }
 }
 
-class _QuickActionCard extends StatelessWidget {
+class _QuickActionRow extends StatefulWidget {
+  final Color iconBg;
   final IconData icon;
+  final Color iconColor;
   final String title;
   final String subtitle;
-  final Color color;
-  final String route;
+  final Color accentColor;
+  final VoidCallback onTap;
 
-  const _QuickActionCard({
+  const _QuickActionRow({
+    required this.iconBg,
     required this.icon,
+    required this.iconColor,
     required this.title,
     required this.subtitle,
-    required this.color,
-    required this.route,
+    required this.accentColor,
+    required this.onTap,
   });
+
+  @override
+  State<_QuickActionRow> createState() => _QuickActionRowState();
+}
+
+class _QuickActionRowState extends State<_QuickActionRow> {
+  double _scale = 1.0;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.go(route),
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.p12),
-        decoration: BoxDecoration(
-          color: AppColors.surface2,
-          borderRadius: BorderRadius.circular(AppDimensions.r12),
-          border: Border.all(color: AppColors.border1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Icon(icon, color: color, size: AppDimensions.iconXl * 0.8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTextStyles.h3.copyWith(fontSize: 14)),
-                Text(subtitle, style: AppTextStyles.caption),
-              ],
+      onTapDown: (_) => setState(() => _scale = 0.97),
+      onTapUp: (_) { setState(() => _scale = 1.0); widget.onTap(); },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.bg2,
+            borderRadius: BorderRadius.circular(AppDimensions.r16),
+            border: Border(
+              left: BorderSide(color: widget.accentColor, width: 3),
+              top: const BorderSide(color: AppColors.border1),
+              right: const BorderSide(color: AppColors.border1),
+              bottom: const BorderSide(color: AppColors.border1),
             ),
-          ],
+          ),
+          padding: const EdgeInsets.all(AppDimensions.p12),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: widget.iconBg,
+                  borderRadius: BorderRadius.circular(AppDimensions.r12),
+                ),
+                alignment: Alignment.center,
+                child: Icon(widget.icon, color: widget.iconColor, size: 22),
+              ),
+              const SizedBox(width: AppDimensions.p12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.title, style: AppTextStyles.bodyMedium),
+                    const SizedBox(height: 2),
+                    Text(widget.subtitle, style: AppTextStyles.caption),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 20),
+            ],
+          ),
         ),
       ),
     );

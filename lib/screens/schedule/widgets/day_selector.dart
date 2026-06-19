@@ -3,116 +3,87 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../../providers/schedule_provider.dart';
 
 class DaySelector extends ConsumerStatefulWidget {
   const DaySelector({super.key});
-
   @override
   ConsumerState<DaySelector> createState() => _DaySelectorState();
 }
 
 class _DaySelectorState extends ConsumerState<DaySelector> {
-  final _scrollCtrl = ScrollController();
-
-  static const _days = [
-    ('Mon', 'Monday'),
-    ('Tue', 'Tuesday'),
-    ('Wed', 'Wednesday'),
-    ('Thu', 'Thursday'),
-    ('Fri', 'Friday'),
-    ('Sat', 'Saturday'),
-    ('Sun', 'Sunday'),
-  ];
-
-  int get _todayIndex => DateTime.now().weekday - 1;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(
-          _todayIndex * (AppDimensions.dayPillWidth + 8),
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+      final today = DateTime.now().weekday;
+      final offset = (today - 1) * 64.0;
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(offset, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
       }
     });
   }
 
   @override
-  void dispose() {
-    _scrollCtrl.dispose();
-    super.dispose();
-  }
+  void dispose() { _scrollController.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
-    final selected = ref.watch(selectedDayProvider);
+    final selectedDay = ref.watch(selectedDayProvider);
+    final today = DateTime.now().weekday;
 
     return SizedBox(
-      height: AppDimensions.dayPillHeight + 16,
+      height: 80,
       child: ListView.separated(
-        controller: _scrollCtrl,
+        controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.p16, vertical: 8),
-        itemCount: _days.length,
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.p16),
         separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final (abbr, full) = _days[i];
-          final isSelected = selected == full;
-          final isToday = i == _todayIndex;
-
+        itemCount: 7,
+        itemBuilder: (_, index) {
+          final day = index + 1;
+          final isSelected = day == selectedDay;
+          final isToday = day == today;
           return GestureDetector(
-            onTap: () {
-              ref.read(selectedDayProvider.notifier).state = full;
-              _scrollCtrl.animateTo(
-                i * (AppDimensions.dayPillWidth + 8),
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-              );
-            },
+            onTap: () => ref.read(selectedDayProvider.notifier).state = day,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: AppDimensions.dayPillWidth,
+              width: 56,
               decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.unnDeepBlue.withOpacity(0.5)
-                    : AppColors.surface2,
+                gradient: isSelected ? AppColors.greenTealGradient : null,
+                color: isSelected ? null : AppColors.bg2,
                 borderRadius: BorderRadius.circular(AppDimensions.r12),
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.electricBlue
-                      : AppColors.border1,
-                ),
+                border: isSelected ? null : Border.all(color: AppColors.border1),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(abbr, style: AppTextStyles.label.copyWith(
-                    color: isSelected ? AppColors.pureWhite : AppColors.textTertiary,
-                  )),
-                  const SizedBox(height: 2),
                   Text(
-                    '${_dateForDay(i)}',
-                    style: AppTextStyles.h3.copyWith(
-                      fontSize: 18,
-                      color: isSelected ? AppColors.pureWhite : AppColors.textSecondary,
+                    AppDateUtils.dayName(day).substring(0, 3),
+                    style: AppTextStyles.caption.copyWith(
+                      color: isSelected ? AppColors.bg0 : AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
+                  Text(
+                    '$day',
+                    style: AppTextStyles.h3.copyWith(
+                      color: isSelected ? AppColors.bg0 : AppColors.textPrimary,
+                    ),
+                  ),
                   if (isToday)
                     Container(
-                      width: 5,
-                      height: 5,
-                      decoration: const BoxDecoration(
-                        color: AppColors.liveRed,
+                      width: 4, height: 4,
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.bg0 : AppColors.lionGreen,
                         shape: BoxShape.circle,
                       ),
-                    )
-                  else
-                    const SizedBox(height: 5),
+                    ),
                 ],
               ),
             ),
@@ -120,11 +91,5 @@ class _DaySelectorState extends ConsumerState<DaySelector> {
         },
       ),
     );
-  }
-
-  int _dateForDay(int dayIndex) {
-    final now = DateTime.now();
-    final diff = dayIndex - (now.weekday - 1);
-    return now.add(Duration(days: diff)).day;
   }
 }

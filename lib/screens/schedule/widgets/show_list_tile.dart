@@ -68,12 +68,19 @@ class _ShowListTileState extends State<ShowListTile>
                 horizontal: AppDimensions.p16, vertical: 2),
             decoration: BoxDecoration(
               color: isLive
-                  ? AppColors.unnDeepBlue.withOpacity(0.2)
+                  ? AppColors.liveRed.withOpacity(0.05)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(AppDimensions.r10),
-              border: isLive
-                  ? Border.all(color: AppColors.electricBlue.withOpacity(0.4))
-                  : null,
+              border: Border(
+                left: BorderSide(
+                  color: switch (status) {
+                    ShowStatus.live => AppColors.liveRed,
+                    ShowStatus.upcoming => AppColors.lionGreen,
+                    ShowStatus.done => AppColors.bg4,
+                  },
+                  width: 2,
+                ),
+              ),
             ),
             child: IntrinsicHeight(
               child: Row(

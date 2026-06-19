@@ -7,6 +7,7 @@ import '../../core/theme/text_styles.dart';
 import '../../providers/schedule_provider.dart';
 import '../../widgets/common/error_state_widget.dart';
 import '../../widgets/common/loading_shimmer.dart';
+import '../../widgets/ads/direct_banner_widget.dart';
 import 'widgets/day_selector.dart';
 import 'widgets/show_list_tile.dart';
 
@@ -62,6 +63,7 @@ class ScheduleScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const DirectBannerWidget(placement: 'schedule_bottom'),
         ],
       ),
     );

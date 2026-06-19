@@ -8,21 +8,44 @@ import '../../screens/news/news_screen.dart';
 import '../../screens/requests/requests_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/splash/splash_screen.dart';
+import '../../screens/auth/login_screen.dart';
+import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
+import '../../screens/admin/schedule_manager_screen.dart';
+import '../../screens/admin/stream_monitor_screen.dart';
+import '../../screens/admin/notification_sender_screen.dart';
+import '../../screens/admin/request_queue_screen.dart';
+import '../../screens/admin/podcast_manager_screen.dart';
+import '../../screens/admin/ad_manager_screen.dart';
+import '../../screens/admin/analytics_screen.dart';
+import '../../screens/admin/revenue_dashboard_screen.dart';
 import '../../widgets/common/bottom_nav_bar.dart';
 import '../../widgets/common/mini_player_bar.dart';
 import '../../widgets/common/offline_banner.dart';
+import '../../providers/auth_provider.dart';
 import 'nav_destinations.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
+    redirect: (context, state) {
+      final location = state.matchedLocation;
+      // Skip auth check for splash and login
+      if (location == '/splash' || location == '/login') return null;
+      // Skip for admin routes (rely on role check inside)
+      if (location.startsWith('/admin')) return null;
+      final isAuthenticated = ref.read(isAuthenticatedProvider);
+      if (!isAuthenticated) return '/login';
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/splash',
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: SplashScreen(),
-        ),
+        pageBuilder: (context, state) => const NoTransitionPage(child: SplashScreen()),
+      ),
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen()),
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -31,45 +54,69 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: HomeScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: HomeScreen()),
           ),
           GoRoute(
             path: '/schedule',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ScheduleScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: ScheduleScreen()),
           ),
           GoRoute(
             path: '/podcasts',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PodcastsScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: PodcastsScreen()),
           ),
           GoRoute(
             path: '/news',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: NewsScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: NewsScreen()),
           ),
           GoRoute(
             path: '/requests',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: RequestsScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: RequestsScreen()),
           ),
           GoRoute(
             path: '/settings',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: SettingsScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
           ),
+        ],
+      ),
+      // Admin routes — wrapped in AdminShell
+      ShellRoute(
+        builder: (context, state, child) => AdminShell(child: child),
+        routes: [
           GoRoute(
             path: '/admin',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: AdminDashboardScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: AdminDashboardScreen()),
+          ),
+          GoRoute(
+            path: '/admin/schedule',
+            pageBuilder: (context, state) => const NoTransitionPage(child: ScheduleManagerScreen()),
+          ),
+          GoRoute(
+            path: '/admin/stream',
+            pageBuilder: (context, state) => const NoTransitionPage(child: StreamMonitorScreen()),
+          ),
+          GoRoute(
+            path: '/admin/notifications',
+            pageBuilder: (context, state) => const NoTransitionPage(child: NotificationSenderScreen()),
+          ),
+          GoRoute(
+            path: '/admin/requests',
+            pageBuilder: (context, state) => const NoTransitionPage(child: RequestQueueScreen()),
+          ),
+          GoRoute(
+            path: '/admin/podcasts',
+            pageBuilder: (context, state) => const NoTransitionPage(child: PodcastManagerScreen()),
+          ),
+          GoRoute(
+            path: '/admin/ads',
+            pageBuilder: (context, state) => const NoTransitionPage(child: AdManagerScreen()),
+          ),
+          GoRoute(
+            path: '/admin/analytics',
+            pageBuilder: (context, state) => const NoTransitionPage(child: AnalyticsScreen()),
+          ),
+          GoRoute(
+            path: '/admin/revenue',
+            pageBuilder: (context, state) => const NoTransitionPage(child: RevenueDashboardScreen()),
           ),
         ],
       ),
@@ -95,7 +142,6 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final location = state.uri.toString();
     final isHome = location == '/';
-    final currentIndex = _routeIndex(location);
 
     return Scaffold(
       body: OfflineBanner(
@@ -103,7 +149,7 @@ class AppShell extends ConsumerWidget {
           children: [
             Expanded(child: child),
             if (!isHome) const MiniPlayerBar(),
-            AppBottomNavBar(currentIndex: currentIndex),
+            const AppBottomNavBar(),
           ],
         ),
       ),

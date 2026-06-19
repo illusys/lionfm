@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../providers/audio_provider.dart';
+import '../../widgets/ads/direct_banner_widget.dart';
 import 'widgets/now_playing_card.dart';
 import 'widgets/quick_actions_grid.dart';
 import 'widgets/upcoming_shows_list.dart';
@@ -29,6 +30,9 @@ class HomeScreen extends ConsumerWidget {
             slivers: [
               const SliverToBoxAdapter(child: NowPlayingCard()),
               const SliverToBoxAdapter(child: QuickActionsGrid()),
+              const SliverToBoxAdapter(
+                child: DirectBannerWidget(placement: 'home_mid'),
+              ),
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.symmetric(
