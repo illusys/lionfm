@@ -1,0 +1,38 @@
+import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/theme/text_styles.dart';
+
+class ErrorStateWidget extends StatelessWidget {
+  final String message;
+  final VoidCallback? onRetry;
+
+  const ErrorStateWidget({
+    super.key,
+    this.message = 'Something went wrong',
+    this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off_rounded,
+                size: 48, color: AppColors.textTertiary),
+            const SizedBox(height: 16),
+            Text(message,
+                style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                textAlign: TextAlign.center),
+            if (onRetry != null) ...[
+              const SizedBox(height: 20),
+              OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

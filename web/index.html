@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Lion FM 91.1 MHz — Your Interactive Radio</title>
+  <meta name="description" content="Stream Lion FM 91.1 MHz live — official campus radio of the University of Nigeria, Nsukka. Available on web, Android, and iOS.">
+
+  <!-- OG tags -->
+  <meta property="og:title" content="Lion FM 91.1 MHz — Your Interactive Radio">
+  <meta property="og:description" content="Stream the official campus radio of UNN, Nsukka. Live 24/7.">
+  <meta property="og:image" content="https://lionfm.unn.edu.ng/icons/Icon-512.png">
+  <meta property="og:url" content="https://lionfm.unn.edu.ng">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@lionfmunn">
+
+  <meta name="theme-color" content="#003087">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      margin: 0;
+      background-color: #0A0F1E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Inter', sans-serif;
+    }
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .logo-box {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #001245, #0A0F1E);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-lion { color: #E6A800; font-size: 18px; font-weight: 700; letter-spacing: 3px; }
+    .logo-fm { color: #fff; font-size: 32px; font-weight: 900; }
+    .logo-mhz { color: rgba(255,255,255,0.5); font-size: 11px; letter-spacing: 1px; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2.5px solid rgba(230,168,0,0.2);
+      border-top-color: #E6A800;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tagline { color: rgba(255,255,255,0.5); font-size: 13px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="logo-box">
+      <span class="logo-lion">LION</span>
+      <span class="logo-fm">FM</span>
+      <span class="logo-mhz">91.1 MHz</span>
+    </div>
+    <div class="spinner"></div>
+    <span class="tagline">...Your interactive radio</span>
+  </div>
+
+  <script>
+    // Unlock audio on first user gesture (browser autoplay policy)
+    document.addEventListener('click', function() {
+      if (window._flutterAudioUnlocked) return;
+      var a = new Audio();
+      a.play().catch(function(){});
+      window._flutterAudioUnlocked = true;
+    }, { once: true });
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
