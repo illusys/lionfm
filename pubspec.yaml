@@ -51,6 +51,29 @@ dependencies:
   permission_handler: ^11.3.1
   timezone: ^0.9.4
 
+  # Auth
+  firebase_auth: ^5.3.1
+  google_sign_in: ^6.2.1
+  flutter_facebook_auth: ^7.1.1
+  sign_in_with_apple: ^6.1.4
+
+  # Ads
+  google_mobile_ads: ^5.1.0
+
+  # Charts
+  fl_chart: ^0.69.0
+
+  # Firebase / Storage
+  firebase_storage: ^12.3.6
+  cloud_firestore: ^5.4.4
+
+  # File / Image pickers
+  file_picker: ^8.1.2
+  image_picker: ^1.1.2
+
+  # CSV export
+  csv: ^6.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

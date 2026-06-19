@@ -1,6 +1,5 @@
 // Flutter SDK target: 3.24.5 (stable)
 // Do not use API introduced after Flutter 3.24.5.
-// Verify compatibility at: https://api.flutter.dev/flutter/material/ThemeData-class.html
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,13 +10,14 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get dark {
-    const colorScheme = ColorScheme.dark(
-      primary: AppColors.unnDeepBlue,
-      secondary: AppColors.amberGold,
-      surface: AppColors.surface2,
+    final colorScheme = ColorScheme.dark(
+      primary: AppColors.lionGreen,
+      secondary: AppColors.electricTeal,
+      tertiary: AppColors.lionGold,
+      surface: AppColors.bg2,
       error: AppColors.errorRed,
-      onPrimary: AppColors.textPrimary,
-      onSecondary: AppColors.appBackground,
+      onPrimary: AppColors.bg0,
+      onSecondary: AppColors.bg0,
       onSurface: AppColors.textPrimary,
       onError: AppColors.textPrimary,
     );
@@ -25,11 +25,12 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.appBackground,
+      scaffoldBackgroundColor: AppColors.bg0,
+      primaryColor: AppColors.lionGreen,
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
 
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.surface1,
+        backgroundColor: AppColors.bg1,
         elevation: 0,
         centerTitle: false,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
@@ -43,48 +44,40 @@ class AppTheme {
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
+        shape: const Border(
+          bottom: BorderSide(color: AppColors.borderGreen, width: 1),
+        ),
       ),
 
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surface1,
-        selectedItemColor: AppColors.amberGold,
-        unselectedItemColor: AppColors.textTertiary,
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: AppColors.bg1,
+        selectedItemColor: AppColors.lionGreen,
+        unselectedItemColor: AppColors.textMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: TextStyle(
-          fontFamily: 'Inter',
-          fontWeight: FontWeight.w500,
-          fontSize: 10,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontFamily: 'Inter',
-          fontWeight: FontWeight.w400,
-          fontSize: 10,
-        ),
+        selectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 10),
+        unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w400, fontSize: 10),
       ),
 
       cardTheme: CardTheme(
-        color: AppColors.surface2,
+        color: AppColors.bg2,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.r12),
-          side: const BorderSide(color: AppColors.border1),
+          borderRadius: BorderRadius.circular(AppDimensions.r16),
+          side: const BorderSide(color: AppColors.borderGreen, width: 0.5),
         ),
         margin: EdgeInsets.zero,
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.amberGold,
-          foregroundColor: AppColors.appBackground,
+          backgroundColor: AppColors.lionGreen,
+          foregroundColor: AppColors.bg0,
           elevation: 0,
-          textStyle: const TextStyle(
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          minimumSize: const Size(double.infinity, 48),
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.r10),
+            borderRadius: BorderRadius.circular(AppDimensions.r12),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         ),
@@ -94,13 +87,9 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textPrimary,
           side: const BorderSide(color: AppColors.border2),
-          textStyle: const TextStyle(
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.r10),
+            borderRadius: BorderRadius.circular(AppDimensions.r12),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         ),
@@ -108,18 +97,18 @@ class AppTheme {
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface2,
+        fillColor: AppColors.bg2,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
-          borderSide: const BorderSide(color: AppColors.border2),
+          borderSide: const BorderSide(color: AppColors.border1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
-          borderSide: const BorderSide(color: AppColors.border2),
+          borderSide: const BorderSide(color: AppColors.border1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
-          borderSide: const BorderSide(color: AppColors.electricBlue, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.borderGreen, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
@@ -135,17 +124,16 @@ class AppTheme {
       ),
 
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.surface3,
-        contentTextStyle: const TextStyle(color: AppColors.textPrimary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r8)),
+        backgroundColor: AppColors.bg3,
+        contentTextStyle: GoogleFonts.inter(color: AppColors.textPrimary),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.r12)),
         behavior: SnackBarBehavior.floating,
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surface2,
-        side: const BorderSide(color: AppColors.border1),
-        labelStyle: const TextStyle(
-          fontFamily: 'Inter',
+        backgroundColor: AppColors.bg3,
+        side: const BorderSide(color: AppColors.border2),
+        labelStyle: GoogleFonts.inter(
           fontWeight: FontWeight.w500,
           fontSize: 12,
           color: AppColors.textSecondary,
@@ -162,8 +150,13 @@ class AppTheme {
 
       iconTheme: const IconThemeData(color: AppColors.textSecondary),
 
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.lionGreen,
+        foregroundColor: AppColors.bg0,
+      ),
+
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.amberGold,
+        color: AppColors.lionGreen,
       ),
     );
   }
