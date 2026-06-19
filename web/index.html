@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Lion FM 91.1 MHz — Your Interactive Radio</title>
+  <meta name="description" content="Stream Lion FM 91.1 MHz live — official campus radio of the University of Nigeria, Nsukka. Available on web, Android, and iOS.">
+
+  <!-- OG tags -->
+  <meta property="og:title" content="Lion FM 91.1 MHz — Your Interactive Radio">
+  <meta property="og:description" content="Stream the official campus radio of UNN, Nsukka. Live 24/7.">
+  <meta property="og:image" content="https://lionfm.unn.edu.ng/icons/Icon-512.png">
+  <meta property="og:url" content="https://lionfm.unn.edu.ng">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@lionfmunn">
+
+  <meta name="theme-color" content="#1E9B43">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0A0A0A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Inter', -apple-system, sans-serif;
+      overflow: hidden;
+    }
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+
+    /* Glow blob */
+    .glow-blob {
+      position: fixed;
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(30,155,67,0.12) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: glowPulse 2s ease-in-out infinite alternate;
+    }
+    @keyframes glowPulse {
+      from { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
+      to   { opacity: 1;   transform: translate(-50%, -50%) scale(1.1); }
+    }
+
+    /* Logo box */
+    .logo-box {
+      width: 120px; height: 120px;
+      background: linear-gradient(135deg, #1E9B43, #28D7D2);
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 32px rgba(30,155,67,0.4);
+      animation: logoFloat 2.5s ease-in-out infinite alternate, logoBounce 0.6s cubic-bezier(.36,.07,.19,.97) forwards;
+    }
+    @keyframes logoBounce {
+      0%   { opacity: 0; transform: scale(0.5); }
+      70%  { opacity: 1; transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    @keyframes logoFloat {
+      from { transform: translateY(0px); }
+      to   { transform: translateY(-8px); }
+    }
+    .logo-lion { color: rgba(10,10,10,0.8); font-size: 13px; font-weight: 700; letter-spacing: 3px; }
+    .logo-fm   { color: #0A0A0A; font-size: 38px; font-weight: 900; line-height: 1; }
+    .logo-mhz  { color: rgba(10,10,10,0.6); font-size: 10px; letter-spacing: 1px; }
+
+    /* Tagline */
+    .tagline {
+      color: rgba(245,244,239,0.5);
+      font-size: 13px;
+      font-style: italic;
+      animation: fadeIn 0.5s ease 0.8s both;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* Equalizer bars */
+    .equalizer {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 32px;
+      animation: fadeIn 0.5s ease 1s both;
+    }
+    .eq-bar {
+      width: 4px;
+      border-radius: 2px;
+      animation: eqBounce var(--dur, 0.6s) ease-in-out infinite alternate;
+    }
+    @keyframes eqBounce {
+      from { height: var(--min-h, 6px); }
+      to   { height: var(--max-h, 28px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-blob"></div>
+  <div id="loading">
+    <div class="logo-box">
+      <span class="logo-lion">LION</span>
+      <span class="logo-fm">FM</span>
+      <span class="logo-mhz">91.1 MHz</span>
+    </div>
+    <div class="tagline">...Your interactive radio</div>
+    <div class="equalizer" id="eq"></div>
+  </div>
+
+  <script>
+    // Build equalizer bars
+    var eq = document.getElementById('eq');
+    var colors = ['#1E9B43','#1E9B43','#28D7D2','#28D7D2','#C89A29','#28D7D2','#28D7D2','#1E9B43','#1E9B43'];
+    for (var i = 0; i < 9; i++) {
+      var bar = document.createElement('div');
+      bar.className = 'eq-bar';
+      var minH = (6 + Math.random() * 8).toFixed(0);
+      var maxH = (16 + Math.random() * 16).toFixed(0);
+      var dur  = (0.4 + Math.random() * 0.5).toFixed(2);
+      bar.style.cssText = '--min-h:' + minH + 'px;--max-h:' + maxH + 'px;--dur:' + dur + 's;background:' + colors[i] + ';animation-delay:' + (i * 0.07) + 's';
+      eq.appendChild(bar);
+    }
+
+    // Hide loading screen once Flutter renders first frame
+    window.addEventListener('flutter-first-frame', function () {
+      document.getElementById('loading').classList.add('hidden');
+    });
+
+    // Unlock audio on first user gesture
+    document.addEventListener('click', function() {
+      if (window._flutterAudioUnlocked) return;
+      var a = new Audio();
+      a.play().catch(function(){});
+      window._flutterAudioUnlocked = true;
+    }, { once: true });
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

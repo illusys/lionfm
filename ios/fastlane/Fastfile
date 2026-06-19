@@ -1,0 +1,27 @@
+platform :ios do
+  lane :deploy do
+    build_app(
+      scheme: "Runner",
+      export_method: "app-store",
+      configuration: "Release",
+      export_options: {
+        provisioningProfiles: {
+          "ng.edu.unn.lionfm" => "Lion FM App Store"
+        }
+      }
+    )
+    upload_to_app_store(
+      skip_metadata: false,
+      skip_screenshots: false,
+      submit_for_review: false,
+      app_identifier: "ng.edu.unn.lionfm",
+    )
+  end
+
+  lane :sync_certs do
+    match(
+      type: "appstore",
+      app_identifier: "ng.edu.unn.lionfm",
+    )
+  end
+end
