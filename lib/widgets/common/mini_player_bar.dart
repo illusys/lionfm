@@ -77,7 +77,7 @@ class MiniPlayerBar extends ConsumerWidget {
                   ],
                 ),
                 loading: () => const SizedBox.shrink(),
-                error: (_, __) => const Text('Lion FM', style: AppTextStyles.body),
+                error: (_, __) => Text('Lion FM', style: AppTextStyles.body),
               ),
             ),
             // Play/Pause
