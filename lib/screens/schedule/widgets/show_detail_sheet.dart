@@ -10,7 +10,7 @@ class ShowDetailSheet extends StatelessWidget {
 
   const ShowDetailSheet({super.key, required this.show});
 
-  static void show(BuildContext context, ShowModel show) {
+  static void present(BuildContext context, ShowModel show) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

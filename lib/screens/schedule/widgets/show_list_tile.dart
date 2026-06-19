@@ -62,7 +62,7 @@ class _ShowListTileState extends State<ShowListTile>
       child: SlideTransition(
         position: _slide,
         child: GestureDetector(
-          onTap: () => ShowDetailSheet.show(context, widget.show),
+          onTap: () => ShowDetailSheet.present(context, widget.show),
           child: Container(
             margin: const EdgeInsets.symmetric(
                 horizontal: AppDimensions.p16, vertical: 2),

@@ -70,7 +70,7 @@ class _WaveformPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const barCount = WaveformWidget._barCount;
+    const barCount = 52;
     final barWidth = (size.width - (barCount - 1) * 2) / barCount;
     final maxH = size.height * 0.85;
     final minH = size.height * 0.06;
