@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../core/utils/date_utils.dart';
 import '../../../providers/schedule_provider.dart';
 
 class DaySelector extends ConsumerStatefulWidget {
@@ -32,6 +31,7 @@ class _DaySelectorState extends ConsumerState<DaySelector> {
 
   @override
   Widget build(BuildContext context) {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     final selectedDay = ref.watch(selectedDayProvider);
     final today = DateTime.now().weekday;
 
@@ -44,11 +44,12 @@ class _DaySelectorState extends ConsumerState<DaySelector> {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemCount: 7,
         itemBuilder: (_, index) {
-          final day = index + 1;
-          final isSelected = day == selectedDay;
-          final isToday = day == today;
+          final dayIndex = index + 1; // 1=Mon … 7=Sun
+          final dayName = days[index];
+          final isSelected = dayName == selectedDay;
+          final isToday = dayIndex == today;
           return GestureDetector(
-            onTap: () => ref.read(selectedDayProvider.notifier).state = day,
+            onTap: () => ref.read(selectedDayProvider.notifier).state = dayName,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 56,
@@ -62,7 +63,7 @@ class _DaySelectorState extends ConsumerState<DaySelector> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    AppDateUtils.dayName(day).substring(0, 3),
+                    dayName.substring(0, 3),
                     style: AppTextStyles.caption.copyWith(
                       color: isSelected ? AppColors.bg0 : AppColors.textMuted,
                       fontWeight: FontWeight.w600,
@@ -70,12 +71,12 @@ class _DaySelectorState extends ConsumerState<DaySelector> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$day',
+                    '$dayIndex',
                     style: AppTextStyles.h3.copyWith(
                       color: isSelected ? AppColors.bg0 : AppColors.textPrimary,
                     ),
                   ),
-                  if (isToday)
+                  if (dayIndex == today)
                     Container(
                       width: 4, height: 4,
                       margin: const EdgeInsets.only(top: 4),
