@@ -8,8 +8,10 @@ import '../../screens/news/news_screen.dart';
 import '../../screens/requests/requests_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/splash/splash_screen.dart';
+import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../widgets/common/bottom_nav_bar.dart';
 import '../../widgets/common/mini_player_bar.dart';
+import '../../widgets/common/offline_banner.dart';
 import 'nav_destinations.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -63,6 +65,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: SettingsScreen(),
             ),
           ),
+          GoRoute(
+            path: '/admin',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: AdminDashboardScreen(),
+            ),
+          ),
         ],
       ),
     ],
@@ -90,12 +98,14 @@ class AppShell extends ConsumerWidget {
     final currentIndex = _routeIndex(location);
 
     return Scaffold(
-      body: Column(
-        children: [
-          Expanded(child: child),
-          if (!isHome) const MiniPlayerBar(),
-          AppBottomNavBar(currentIndex: currentIndex),
-        ],
+      body: OfflineBanner(
+        child: Column(
+          children: [
+            Expanded(child: child),
+            if (!isHome) const MiniPlayerBar(),
+            AppBottomNavBar(currentIndex: currentIndex),
+          ],
+        ),
       ),
     );
   }

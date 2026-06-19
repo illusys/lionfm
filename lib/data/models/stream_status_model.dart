@@ -1,28 +1,71 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+class StreamStatusModel {
+  final bool isLive;
+  final int listenerCount;
+  final String? currentShowId;
+  final String currentShowTitle;
+  final String currentHostName;
+  final int streamBitrate;
+  final String streamUrl;
+  final DateTime lastCheckedAt;
 
-part 'stream_status_model.freezed.dart';
-part 'stream_status_model.g.dart';
-
-@freezed
-class StreamStatusModel with _$StreamStatusModel {
-  const StreamStatusModel._();
-
-  const factory StreamStatusModel({
-    required bool isLive,
-    required int listenerCount,
-    String? currentShowId,
-    required String currentShowTitle,
-    required String currentHostName,
-    required int streamBitrate,
-    required String streamUrl,
-    required DateTime lastCheckedAt,
-  }) = _StreamStatusModel;
+  const StreamStatusModel({
+    required this.isLive,
+    required this.listenerCount,
+    this.currentShowId,
+    required this.currentShowTitle,
+    required this.currentHostName,
+    required this.streamBitrate,
+    required this.streamUrl,
+    required this.lastCheckedAt,
+  });
 
   bool get isHealthy =>
       isLive &&
       streamUrl.isNotEmpty &&
       DateTime.now().difference(lastCheckedAt).inMinutes < 2;
 
+  StreamStatusModel copyWith({
+    bool? isLive,
+    int? listenerCount,
+    String? currentShowId,
+    String? currentShowTitle,
+    String? currentHostName,
+    int? streamBitrate,
+    String? streamUrl,
+    DateTime? lastCheckedAt,
+  }) {
+    return StreamStatusModel(
+      isLive: isLive ?? this.isLive,
+      listenerCount: listenerCount ?? this.listenerCount,
+      currentShowId: currentShowId ?? this.currentShowId,
+      currentShowTitle: currentShowTitle ?? this.currentShowTitle,
+      currentHostName: currentHostName ?? this.currentHostName,
+      streamBitrate: streamBitrate ?? this.streamBitrate,
+      streamUrl: streamUrl ?? this.streamUrl,
+      lastCheckedAt: lastCheckedAt ?? this.lastCheckedAt,
+    );
+  }
+
   factory StreamStatusModel.fromJson(Map<String, dynamic> json) =>
-      _$StreamStatusModelFromJson(json);
+      StreamStatusModel(
+        isLive: json['isLive'] as bool,
+        listenerCount: json['listenerCount'] as int,
+        currentShowId: json['currentShowId'] as String?,
+        currentShowTitle: json['currentShowTitle'] as String,
+        currentHostName: json['currentHostName'] as String,
+        streamBitrate: json['streamBitrate'] as int,
+        streamUrl: json['streamUrl'] as String,
+        lastCheckedAt: DateTime.parse(json['lastCheckedAt'] as String),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'isLive': isLive,
+        'listenerCount': listenerCount,
+        'currentShowId': currentShowId,
+        'currentShowTitle': currentShowTitle,
+        'currentHostName': currentHostName,
+        'streamBitrate': streamBitrate,
+        'streamUrl': streamUrl,
+        'lastCheckedAt': lastCheckedAt.toIso8601String(),
+      };
 }

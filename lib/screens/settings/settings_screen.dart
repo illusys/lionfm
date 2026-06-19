@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
@@ -43,6 +44,7 @@ class SettingsScreen extends ConsumerWidget {
                 _AboutTile(
                   title: AppStrings.aboutLionFm,
                   onTap: () => launchUrl(Uri.parse(AppStrings.webUrl)),
+                  onLongPress: () => context.go('/admin'),
                 ),
                 _AboutTile(
                   title: AppStrings.aboutPlatform,
@@ -130,8 +132,9 @@ class _StatsGrid extends StatelessWidget {
 class _AboutTile extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
-  const _AboutTile({required this.title, required this.onTap});
+  const _AboutTile({required this.title, required this.onTap, this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +144,7 @@ class _AboutTile extends StatelessWidget {
       trailing: const Icon(Icons.chevron_right,
           color: AppColors.textTertiary, size: 20),
       onTap: onTap,
+      onLongPress: onLongPress,
     );
   }
 }

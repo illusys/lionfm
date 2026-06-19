@@ -17,7 +17,6 @@ dependencies:
 
   # State management
   flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
 
   # Navigation
   go_router: ^14.2.7
@@ -52,18 +51,12 @@ dependencies:
   # Platform
   flutter_local_notifications: ^17.2.2
   permission_handler: ^11.3.1
-  freezed_annotation: ^2.4.4
-  json_annotation: ^4.9.0
   timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  riverpod_generator: ^2.4.3
-  build_runner: ^2.4.11
-  freezed: ^2.5.2
-  json_serializable: ^6.8.0
 
 flutter:
   uses-material-design: true
