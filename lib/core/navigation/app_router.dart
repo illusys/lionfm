@@ -22,7 +22,6 @@ import '../../screens/admin/revenue_dashboard_screen.dart';
 import '../../widgets/common/bottom_nav_bar.dart';
 import '../../widgets/common/mini_player_bar.dart';
 import '../../widgets/common/offline_banner.dart';
-import 'nav_destinations.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -118,14 +117,6 @@ class AppShell extends ConsumerWidget {
   final GoRouterState state;
 
   const AppShell({super.key, required this.child, required this.state});
-
-  int _routeIndex(String location) {
-    if (location.startsWith('/schedule')) return 1;
-    if (location.startsWith('/podcasts')) return 2;
-    if (location.startsWith('/news')) return 3;
-    if (location.startsWith('/requests')) return 4;
-    return 0;
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

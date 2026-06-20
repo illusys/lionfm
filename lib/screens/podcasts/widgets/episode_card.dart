@@ -30,7 +30,7 @@ class EpisodeCard extends ConsumerWidget {
         color: AppColors.surface2,
         borderRadius: BorderRadius.circular(AppDimensions.r12),
         border: Border.all(
-          color: isThisPlaying ? AppColors.electricBlue.withOpacity(0.5) : AppColors.border1,
+          color: isThisPlaying ? AppColors.electricBlue.withValues(alpha: 0.5) : AppColors.border1,
         ),
       ),
       child: Row(

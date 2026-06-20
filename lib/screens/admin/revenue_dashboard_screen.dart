@@ -32,10 +32,10 @@ class RevenueDashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('This Month', style: AppTextStyles.caption.copyWith(color: AppColors.bg0.withOpacity(0.7))),
+                Text('This Month', style: AppTextStyles.caption.copyWith(color: AppColors.bg0.withValues(alpha: 0.7))),
                 Text('₦142,500', style: AppTextStyles.heroTitle.copyWith(color: AppColors.bg0, fontSize: 32)),
                 const SizedBox(height: 4),
-                Text('+12% vs last month', style: AppTextStyles.bodySmall.copyWith(color: AppColors.bg0.withOpacity(0.8))),
+                Text('+12% vs last month', style: AppTextStyles.bodySmall.copyWith(color: AppColors.bg0.withValues(alpha: 0.8))),
               ],
             ),
           ),

@@ -128,7 +128,7 @@ class _ShowPitchesTab extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.15),
+                      color: statusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppDimensions.rFull),
                     ),
                     child: Text(p.$4, style: AppTextStyles.caption.copyWith(color: statusColor)),

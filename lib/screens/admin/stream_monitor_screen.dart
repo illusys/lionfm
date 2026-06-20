@@ -24,10 +24,10 @@ class StreamMonitorScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(AppDimensions.p20),
                   decoration: BoxDecoration(
-                    color: status.isLive ? AppColors.liveRed.withOpacity(0.1) : AppColors.bg2,
+                    color: status.isLive ? AppColors.liveRed.withValues(alpha: 0.1) : AppColors.bg2,
                     borderRadius: BorderRadius.circular(AppDimensions.r16),
                     border: Border.all(
-                      color: status.isLive ? AppColors.liveRed.withOpacity(0.4) : AppColors.border1,
+                      color: status.isLive ? AppColors.liveRed.withValues(alpha: 0.4) : AppColors.border1,
                     ),
                   ),
                   child: Row(

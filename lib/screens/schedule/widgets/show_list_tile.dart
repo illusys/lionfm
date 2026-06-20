@@ -68,7 +68,7 @@ class _ShowListTileState extends State<ShowListTile>
                 horizontal: AppDimensions.p16, vertical: 2),
             decoration: BoxDecoration(
               color: isLive
-                  ? AppColors.liveRed.withOpacity(0.05)
+                  ? AppColors.liveRed.withValues(alpha: 0.05)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(AppDimensions.r10),
               border: Border(
@@ -222,7 +222,7 @@ class _ShowStatusBadge extends StatelessWidget {
     final (label, bgColor, textColor) = switch (status) {
       ShowStatus.live => (
           'LIVE',
-          AppColors.liveRed.withOpacity(0.2),
+          AppColors.liveRed.withValues(alpha: 0.2),
           AppColors.liveRed
         ),
       ShowStatus.upcoming => (

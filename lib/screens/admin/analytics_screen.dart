@@ -85,7 +85,7 @@ class AnalyticsScreen extends StatelessWidget {
                     barWidth: 2,
                     belowBarData: BarAreaData(
                       show: true,
-                      color: AppColors.lionGreen.withOpacity(0.1),
+                      color: AppColors.lionGreen.withValues(alpha: 0.1),
                     ),
                     dotData: const FlDotData(show: false),
                   ),

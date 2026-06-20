@@ -45,7 +45,7 @@ class _NotificationSenderScreenState extends State<NotificationSenderScreen> {
                 Text('SEND NOTIFICATION', style: AppTextStyles.label),
                 const SizedBox(height: AppDimensions.p12),
                 DropdownButtonFormField<String>(
-                  value: _notifType,
+                  initialValue: _notifType,
                   dropdownColor: AppColors.bg3,
                   decoration: const InputDecoration(labelText: 'Type'),
                   onChanged: (v) => setState(() => _notifType = v!),
@@ -62,7 +62,7 @@ class _NotificationSenderScreenState extends State<NotificationSenderScreen> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: _audience,
+                  initialValue: _audience,
                   dropdownColor: AppColors.bg3,
                   decoration: const InputDecoration(labelText: 'Audience'),
                   onChanged: (v) => setState(() => _audience = v!),

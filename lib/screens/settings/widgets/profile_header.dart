@@ -50,12 +50,12 @@ class ProfileHeader extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: user.isPremium
-                  ? AppColors.amberGold.withOpacity(0.2)
+                  ? AppColors.amberGold.withValues(alpha: 0.2)
                   : AppColors.surface3,
               borderRadius: BorderRadius.circular(AppDimensions.rFull),
               border: Border.all(
                 color: user.isPremium
-                    ? AppColors.amberGold.withOpacity(0.5)
+                    ? AppColors.amberGold.withValues(alpha: 0.5)
                     : AppColors.border2,
               ),
             ),

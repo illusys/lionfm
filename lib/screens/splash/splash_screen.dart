@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,8 +23,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final Animation<double> _logoScale;
   late final Animation<double> _logoOpacity;
   late final Animation<double> _floatY;
-  late final Animation<double> _ringScale;
-  late final Animation<double> _ringOpacity;
   late final Animation<double> _taglineOpacity;
   late final Animation<double> _eqOpacity;
 
@@ -60,10 +57,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     _ringCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 2400));
-    _ringScale = Tween<double>(begin: 1.0, end: 3.2).animate(
-        CurvedAnimation(parent: _ringCtrl, curve: Curves.easeOut));
-    _ringOpacity = Tween<double>(begin: 0.8, end: 0.0).animate(
-        CurvedAnimation(parent: _ringCtrl, curve: Curves.easeOut));
 
     _taglineCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 800));
@@ -230,7 +223,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: colors[e.key].withOpacity(opacity),
+                            color: colors[e.key].withValues(alpha: opacity),
                             width: 2,
                           ),
                         ),

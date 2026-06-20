@@ -77,7 +77,7 @@ class LionFMAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     _isPlayingEpisode = false;
     _retryCount = 0;
     final url = getStreamUrl(bitrate);
-    mediaItem.add(const MediaItem(
+    mediaItem.add(MediaItem(
       id: 'live_stream',
       title: 'Lion FM 91.1 MHz',
       artist: 'Live Radio',
@@ -114,14 +114,14 @@ class LionFMAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler
 
   bool get isPlayingEpisode => _isPlayingEpisode;
 
-  void updateMediaItem(String showTitle, String hostName) {
-    mediaItem.add(MediaItem(
-      id: 'live_stream',
-      title: showTitle,
-      artist: hostName,
-      album: 'Lion FM 91.1 MHz · Live',
-      artUri: Uri.parse('https://lionfm.unn.edu.ng/logo.png'),
-    ));
+  @override
+  Future<void> updateMediaItem(MediaItem mediaItem) async {
+    final index = queue.value.indexWhere((item) => item.id == mediaItem.id);
+    if (index >= 0) {
+      final newQueue = [...queue.value];
+      newQueue[index] = mediaItem;
+      queue.add(newQueue);
+    }
   }
 
   @override
