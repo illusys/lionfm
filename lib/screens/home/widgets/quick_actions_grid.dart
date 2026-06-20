@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/theme/text_styles.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/text_styles.dart';
 
 class QuickActionsGrid extends StatelessWidget {
   const QuickActionsGrid({super.key});
@@ -10,130 +9,70 @@ class QuickActionsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.p16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('EXPLORE', style: AppTextStyles.categoryLabel),
-          const SizedBox(height: AppDimensions.p12),
-          _QuickActionRow(
-            iconBg: AppColors.electricTeal,
-            icon: Icons.mic_rounded,
-            iconColor: AppColors.bg0,
-            title: 'Podcasts',
-            subtitle: 'Recorded shows & episodes',
-            accentColor: AppColors.electricTeal,
-            onTap: () => context.go('/podcasts'),
-          ),
-          const SizedBox(height: AppDimensions.p8),
-          _QuickActionRow(
-            iconBg: AppColors.lionGreen,
-            icon: Icons.calendar_today_rounded,
-            iconColor: AppColors.bg0,
-            title: 'Schedule',
-            subtitle: 'This week\'s programme',
-            accentColor: AppColors.lionGreen,
-            onTap: () => context.go('/schedule'),
-          ),
-          const SizedBox(height: AppDimensions.p8),
-          _QuickActionRow(
-            iconBg: AppColors.lionGold,
-            icon: Icons.music_note_rounded,
-            iconColor: AppColors.bg0,
-            title: 'Request',
-            subtitle: 'Songs & show pitches',
-            accentColor: AppColors.lionGold,
-            onTap: () => context.go('/requests'),
-          ),
-          const SizedBox(height: AppDimensions.p8),
-          _QuickActionRow(
-            iconBg: AppColors.burntAmber,
-            icon: Icons.article_rounded,
-            iconColor: AppColors.ivoryWhite,
-            title: 'Campus News',
-            subtitle: 'UNN & beyond',
-            accentColor: AppColors.burntAmber,
-            onTap: () => context.go('/news'),
-          ),
+          _QuickActionRow(icon: Icons.radio, iconColor: AppColors.electricTeal, title: 'Podcasts', subtitle: 'Latest episodes', onTap: () => context.go('/podcasts')),
+          const SizedBox(height: 10),
+          _QuickActionRow(icon: Icons.calendar_today, iconColor: AppColors.lionGreen, title: 'Schedule', subtitle: "Today's shows", onTap: () => context.go('/schedule')),
+          const SizedBox(height: 10),
+          _QuickActionRow(icon: Icons.music_note, iconColor: AppColors.lionGold, title: 'Request a Song', subtitle: 'Dedicate to someone', onTap: () => context.go('/requests')),
+          const SizedBox(height: 10),
+          _QuickActionRow(icon: Icons.article, iconColor: AppColors.burntAmber, title: 'Campus News', subtitle: 'Campus updates', onTap: () => context.go('/news')),
         ],
       ),
     );
   }
 }
 
-class _QuickActionRow extends StatefulWidget {
-  final Color iconBg;
+class _QuickActionRow extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String title;
   final String subtitle;
-  final Color accentColor;
   final VoidCallback onTap;
 
-  const _QuickActionRow({
-    required this.iconBg,
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.accentColor,
-    required this.onTap,
-  });
-
-  @override
-  State<_QuickActionRow> createState() => _QuickActionRowState();
-}
-
-class _QuickActionRowState extends State<_QuickActionRow> {
-  double _scale = 1.0;
+  const _QuickActionRow({required this.icon, required this.iconColor, required this.title, required this.subtitle, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.97),
-      onTapUp: (_) { setState(() => _scale = 1.0); widget.onTap(); },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 100),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.bg2,
-            borderRadius: BorderRadius.circular(AppDimensions.r16),
-            border: Border(
-              left: BorderSide(color: widget.accentColor, width: 3),
-              top: const BorderSide(color: AppColors.border1),
-              right: const BorderSide(color: AppColors.border1),
-              bottom: const BorderSide(color: AppColors.border1),
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.bg2,
+                border: Border.all(color: AppColors.border1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+                    child: Icon(icon, color: iconColor, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text(subtitle, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                ],
+              ),
             ),
-          ),
-          padding: const EdgeInsets.all(AppDimensions.p12),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: widget.iconBg,
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                ),
-                alignment: Alignment.center,
-                child: Icon(widget.icon, color: widget.iconColor, size: 22),
-              ),
-              const SizedBox(width: AppDimensions.p12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.title, style: AppTextStyles.bodyMedium),
-                    const SizedBox(height: 2),
-                    Text(widget.subtitle, style: AppTextStyles.caption),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 20),
-            ],
-          ),
+            Positioned(left: 0, top: 0, bottom: 0, child: Container(width: 3, color: iconColor)),
+          ],
         ),
       ),
     );
