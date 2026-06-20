@@ -121,7 +121,13 @@ class _SplashScreenState extends State<SplashScreen>
             animation: _glowOpacity,
             builder: (_, __) => Opacity(
               opacity: _glowOpacity.value,
-              child: Container(
+              child: Image.asset(
+                        'assets/images/lionfm_logo.png',
+                        width: 220,
+                        height: 220,
+                        fit: BoxFit.contain,
+                      ),
+                      // old: Container(
                 width: 400,
                 height: 400,
                 decoration: BoxDecoration(
@@ -141,7 +147,13 @@ class _SplashScreenState extends State<SplashScreen>
             animation: _ringCtrl,
             builder: (_, __) => Opacity(
               opacity: _ringOpacity.value,
-              child: Container(
+              child: Image.asset(
+                        'assets/images/lionfm_logo.png',
+                        width: 220,
+                        height: 220,
+                        fit: BoxFit.contain,
+                      ),
+                      // old: Container(
                 width: 200 * _ringScale.value,
                 height: 200 * _ringScale.value,
                 decoration: BoxDecoration(
@@ -266,50 +278,11 @@ class _SplashScreenState extends State<SplashScreen>
 class _LogoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 140,
-      height: 140,
-      decoration: BoxDecoration(
-        gradient: AppColors.greenTealGradient,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.lionGreen.withOpacity(0.4),
-            blurRadius: 30,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'LION',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.bg0,
-              letterSpacing: 3,
-              fontSize: 16,
-            ),
-          ),
-          Text(
-            'FM',
-            style: AppTextStyles.heroTitle.copyWith(
-              color: AppColors.bg0,
-              fontSize: 40,
-              height: 1,
-            ),
-          ),
-          Text(
-            '91.1 MHz',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.bg0.withOpacity(0.7),
-              letterSpacing: 1,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
+    return Image.asset(
+      'assets/images/lionfm_logo.png',
+      width: 220,
+      height: 220,
+      fit: BoxFit.contain,
     );
   }
 }
