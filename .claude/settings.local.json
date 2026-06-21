@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(flutter run *)"
+      "Bash(flutter run *)",
+      "Bash(flutter analyze *)",
+      "Read(//private/tmp/**)",
+      "Bash(npm install *)",
+      "Bash(npx playwright *)",
+      "Bash(flutter --version)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
