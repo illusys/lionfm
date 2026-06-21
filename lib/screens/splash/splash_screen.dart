@@ -252,9 +252,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         scale: _logoScale.value,
                         child: Image.asset(
                           'assets/images/lionfm_logo.png',
-                          width: 220,
-                          height: 220,
+                          width: 240,
                           fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
                         ),
                       ),
                     ),

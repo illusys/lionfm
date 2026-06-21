@@ -1,12 +1,11 @@
 {
   "name": "Lion FM 91.1 MHz",
   "short_name": "Lion FM",
-  "description": "Your interactive campus radio — University of Nigeria, Nsukka",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#0A0F1E",
-  "theme_color": "#003087",
-  "orientation": "portrait-primary",
+  "background_color": "#0A0A0A",
+  "theme_color": "#1E9B43",
+  "description": "Lion FM 91.1 MHz — University of Nigeria, Nsukka. Your Interactive Radio. Stream live, browse schedules, listen to podcasts and make song requests.",
   "icons": [
     {
       "src": "icons/Icon-192.png",

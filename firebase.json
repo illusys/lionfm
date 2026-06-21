@@ -1,1 +1,26 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"lionfm-unn","appId":"1:748866798356:android:14a9607595f8df87333801","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"lionfm-unn","configurations":{"android":"1:748866798356:android:14a9607595f8df87333801","web":"1:748866798356:web:5f19a72f0bb0d69f333801"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "lionfm-unn",
+          "appId": "1:748866798356:android:14a9607595f8df87333801",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "lionfm-unn",
+          "configurations": {
+            "android": "1:748866798356:android:14a9607595f8df87333801",
+            "web": "1:748866798356:web:5f19a72f0bb0d69f333801"
+          }
+        }
+      }
+    }
+  }
+}
