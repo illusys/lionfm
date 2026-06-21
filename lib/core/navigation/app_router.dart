@@ -30,7 +30,7 @@ import '../../providers/admin_auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Listen to auth changes so the router refreshes on sign-in/out
-  final notifier = _AuthNotifier(ref);
+  final notifier = _RouterNotifier(ref);
 
   return GoRouter(
     initialLocation: '/splash',
@@ -56,7 +56,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Protect all /admin/* routes (except login and setup)
       if (isAdminRoute && !isLoginRoute && !isSetupRoute) {
-        if (adminUser == null) return '/admin-login';
+        if (adminUser == null || !adminUser.isActive) return '/admin-login';
 
         // Role-gated routes
         if (loc == '/admin/revenue' && !adminUser.canManageRevenue) {
@@ -70,8 +70,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
       }
 
-      // If already signed in, skip the login screen
-      if (isLoginRoute && adminUser != null) {
+      // If already signed in as active admin, skip the login screen
+      if (isLoginRoute && adminUser != null && adminUser.isActive) {
         return '/admin';
       }
 
@@ -203,11 +203,15 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 // Notifier that triggers router refresh when admin auth state changes
-class _AuthNotifier extends ChangeNotifier {
-  _AuthNotifier(Ref ref) {
-    ref.listen(adminUserProvider, (_, __) => notifyListeners());
-    ref.listen(needsFirstTimeSetupProvider, (_, __) => notifyListeners());
+class _RouterNotifier extends ChangeNotifier {
+  _RouterNotifier(this._ref) {
+    _ref.listen<AsyncValue<AdminUser?>>(
+      adminUserProvider,
+      (_, __) => notifyListeners(),
+    );
+    _ref.listen<bool>(needsFirstTimeSetupProvider, (_, __) => notifyListeners());
   }
+  final Ref _ref;
 }
 
 class AppShell extends ConsumerWidget {

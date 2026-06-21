@@ -37,14 +37,23 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
         password: _passCtrl.text,
       );
 
-      // Wait a tick for adminUserProvider to resolve
-      await Future.delayed(const Duration(milliseconds: 800));
+      if (!mounted) return;
+
+      // Poll until adminUserProvider settles (up to 5 seconds)
+      AdminUser? adminUser;
+      for (int i = 0; i < 25; i++) {
+        await Future.delayed(const Duration(milliseconds: 200));
+        if (!mounted) return;
+        final asyncVal = ref.read(adminUserProvider);
+        if (!asyncVal.isLoading) {
+          adminUser = asyncVal.valueOrNull;
+          break;
+        }
+      }
 
       if (!mounted) return;
 
-      final adminUser = ref.read(adminUserProvider).valueOrNull;
       final needsSetup = ref.read(needsFirstTimeSetupProvider);
-
       if (needsSetup) {
         context.go('/admin-setup');
         return;
@@ -52,27 +61,56 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
       if (adminUser == null) {
         await FirebaseAuth.instance.signOut();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'Your account does not have admin access. Contact iLLuSys LTD.'),
-            backgroundColor: AppColors.errorRed,
-          ));
-        }
+        _showError(
+          'Your account does not have admin access. '
+          'Contact iLLuSys LTD to be added as an admin user.',
+        );
+        return;
+      }
+
+      if (!adminUser.isActive) {
+        await FirebaseAuth.instance.signOut();
+        _showError('Your admin account has been deactivated.');
         return;
       }
 
       if (mounted) context.go('/admin');
     } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.message ?? 'Sign-in failed'),
-          backgroundColor: AppColors.errorRed,
-        ));
-      }
+      _showError(_friendlyAuthError(e.code));
+    } catch (e) {
+      _showError('Sign in failed. Please try again.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  String _friendlyAuthError(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'No account found with this email.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Incorrect password. Try again or use Forgot password.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait a few minutes and try again.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      default:
+        return 'Sign in failed ($code). Please try again.';
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.errorRed,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _forgotPassword() async {

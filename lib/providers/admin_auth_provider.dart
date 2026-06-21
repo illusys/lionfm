@@ -79,52 +79,72 @@ final needsFirstTimeSetupProvider = StateProvider<bool>((ref) => false);
 
 final adminUserProvider = StreamProvider<AdminUser?>((ref) async* {
   final authStream = FirebaseAuth.instance.authStateChanges();
-  await for (final user in authStream) {
-    if (user == null) {
+
+  await for (final firebaseUser in authStream) {
+    if (firebaseUser == null) {
       yield null;
       continue;
     }
+
     try {
+      // Small delay to let Firestore rules propagate after sign-in
+      await Future.delayed(const Duration(milliseconds: 300));
+
       final doc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(user.uid)
+          .doc(firebaseUser.uid)
           .get();
 
       if (!doc.exists) {
-        // Check if any superAdmin exists — if none, signal first-time setup
-        final superAdminSnap = await FirebaseFirestore.instance
-            .collection('users')
-            .where('role', isEqualTo: 'superAdmin')
-            .limit(1)
-            .get();
-        if (superAdminSnap.docs.isEmpty) {
-          ref.read(needsFirstTimeSetupProvider.notifier).state = true;
+        // Check if any superAdmin exists — if none, signal first-time setup.
+        // Wrapped separately so a permission error here doesn't prevent login.
+        try {
+          final superAdminSnap = await FirebaseFirestore.instance
+              .collection('users')
+              .where('role', isEqualTo: 'superAdmin')
+              .limit(1)
+              .get();
+          if (superAdminSnap.docs.isEmpty) {
+            ref.read(needsFirstTimeSetupProvider.notifier).state = true;
+          }
+        } catch (e) {
+          debugPrint('AdminAuth superAdmin check error: $e');
         }
         yield null;
         continue;
       }
 
-      final data = doc.data()!;
+      final data = doc.data();
+      if (data == null) {
+        yield null;
+        continue;
+      }
+
       final role = AdminUser.roleFromString(data['role'] as String?);
       if (role == AdminRole.none) {
         yield null;
         continue;
       }
+
       final isActive = data['isActive'] as bool? ?? true;
       if (!isActive) {
         yield null;
         continue;
       }
+
       yield AdminUser(
-        uid: user.uid,
-        email: user.email ?? '',
+        uid: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
         displayName:
-            data['displayName'] as String? ?? user.displayName ?? '',
+            data['displayName'] as String? ?? firebaseUser.displayName ?? '',
         role: role,
         isActive: isActive,
       );
+    } on FirebaseException catch (e) {
+      debugPrint('AdminAuth FirebaseException: ${e.code} — ${e.message}');
+      yield null;
     } catch (e) {
-      debugPrint('AdminAuth error: $e');
+      debugPrint('AdminAuth unexpected error: $e');
       yield null;
     }
   }
