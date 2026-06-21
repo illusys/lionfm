@@ -53,7 +53,9 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAnyAdmin());
+      // Always allow reading own document — needed for role check on login
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isAnyAdmin();
       allow create: if isSuperAdmin();
       allow update: if isSuperAdmin() || request.auth.uid == userId;
       allow delete: if isSuperAdmin();

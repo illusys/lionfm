@@ -36,9 +36,14 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/splash',
     refreshListenable: notifier,
     redirect: (context, state) {
-      final adminUser = ref.read(adminUserProvider).valueOrNull;
+      final adminAsync = ref.read(adminUserProvider);
       final needsSetup = ref.read(needsFirstTimeSetupProvider);
       final loc = state.matchedLocation;
+
+      // While stream is loading, don't redirect — let it settle
+      if (adminAsync.isLoading) return null;
+
+      final adminUser = adminAsync.valueOrNull;
 
       final isAdminRoute = loc.startsWith('/admin');
       final isLoginRoute = loc == '/admin-login';
