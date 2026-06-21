@@ -44,7 +44,7 @@ class SettingsScreen extends ConsumerWidget {
                 _AboutTile(
                   title: AppStrings.aboutLionFm,
                   onTap: () => launchUrl(Uri.parse(AppStrings.webUrl)),
-                  onLongPress: () => context.go('/admin'),
+                  onLongPress: () => context.go('/admin-login'),
                 ),
                 _AboutTile(
                   title: AppStrings.aboutPlatform,

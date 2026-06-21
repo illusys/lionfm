@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && getUserRole() == 'superAdmin';
+    }
+
+    function isStationManager() {
+      return isSignedIn() && (getUserRole() == 'superAdmin' || getUserRole() == 'stationManager');
+    }
+
+    function isBroadcaster() {
+      return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'broadcaster']);
+    }
+
+    function isAnyAdmin() {
+      return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'broadcaster', 'unnAdmin']);
+    }
+
+    match /shows/{doc} {
+      allow read: if true;
+      allow write: if isStationManager();
+    }
+
+    match /episodes/{doc} {
+      allow read: if true;
+      allow write: if isBroadcaster();
+    }
+
+    match /news/{doc} {
+      allow read: if true;
+      allow write: if isStationManager();
+    }
+
+    match /stream_config/{doc} {
+      allow read: if true;
+      allow write: if isStationManager();
+    }
+
+    match /requests/{doc} {
+      allow create: if isSignedIn();
+      allow read, update: if isBroadcaster();
+      allow delete: if isStationManager();
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAnyAdmin());
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || request.auth.uid == userId;
+      allow delete: if isSuperAdmin();
+    }
+
+    match /revenue/{doc} {
+      allow read: if isSignedIn() && (getUserRole() in ['superAdmin', 'unnAdmin']);
+      allow write: if isSuperAdmin();
+    }
+
+    match /ads/{doc} {
+      allow read: if true;
+      allow write: if isStationManager();
+    }
+
+    match /admin_config/{doc} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /analytics/{doc} {
+      allow read: if isAnyAdmin();
+      allow write: if isSignedIn();
+    }
+
+    match /admin_invites/{doc} {
+      allow read, write: if isSuperAdmin();
+    }
+  }
+}

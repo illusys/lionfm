@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/audio_provider.dart';
+import '../../providers/admin_auth_provider.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -56,12 +57,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final streamStatus = ref.watch(streamStatusProvider);
+    final adminUser = ref.watch(adminUserProvider).valueOrNull;
     return Scaffold(
       backgroundColor: AppColors.bg0,
       appBar: AppBar(
         title: const Text('Dashboard'),
         automaticallyImplyLeading: false,
         actions: [
+          if (adminUser != null) ...[
+            _AdminBadge(adminUser: adminUser),
+            const SizedBox(width: AppDimensions.p8),
+          ],
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () => ref.refresh(streamStatusProvider),
@@ -163,6 +169,46 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AdminBadge extends StatelessWidget {
+  final AdminUser adminUser;
+  const _AdminBadge({required this.adminUser});
+
+  Color get _roleColor {
+    switch (adminUser.role) {
+      case AdminRole.superAdmin: return AppColors.lionGreen;
+      case AdminRole.stationManager: return AppColors.electricTeal;
+      case AdminRole.broadcaster: return AppColors.warningGold;
+      case AdminRole.unnAdmin: return const Color(0xFF4B8EFF);
+      case AdminRole.none: return AppColors.textMuted;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _roleColor;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(adminUser.displayName,
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
+        const SizedBox(width: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(AppDimensions.rFull),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
+          ),
+          child: Text(
+            AdminUser.roleDisplayName(adminUser.role),
+            style: AppTextStyles.caption.copyWith(color: color),
+          ),
+        ),
+      ],
     );
   }
 }

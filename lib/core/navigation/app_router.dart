@@ -11,6 +11,10 @@ import '../../screens/splash/splash_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
+import '../../screens/admin/admin_login_screen.dart';
+import '../../screens/admin/first_time_setup_screen.dart';
+import '../../screens/admin/user_management_screen.dart';
+import '../../screens/admin/admin_settings_screen.dart';
 import '../../screens/admin/schedule_manager_screen.dart';
 import '../../screens/admin/stream_monitor_screen.dart';
 import '../../screens/admin/notification_sender_screen.dart';
@@ -22,18 +26,74 @@ import '../../screens/admin/revenue_dashboard_screen.dart';
 import '../../widgets/common/bottom_nav_bar.dart';
 import '../../widgets/common/mini_player_bar.dart';
 import '../../widgets/common/offline_banner.dart';
+import '../../providers/admin_auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  // Listen to auth changes so the router refreshes on sign-in/out
+  final notifier = _AuthNotifier(ref);
+
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: notifier,
+    redirect: (context, state) {
+      final adminUser = ref.read(adminUserProvider).valueOrNull;
+      final needsSetup = ref.read(needsFirstTimeSetupProvider);
+      final loc = state.matchedLocation;
+
+      final isAdminRoute = loc.startsWith('/admin');
+      final isLoginRoute = loc == '/admin-login';
+      final isSetupRoute = loc == '/admin-setup';
+
+      // If signed in but needs first-time setup, send to setup
+      if (isAdminRoute && !isSetupRoute && needsSetup) {
+        return '/admin-setup';
+      }
+
+      // Protect all /admin/* routes (except login and setup)
+      if (isAdminRoute && !isLoginRoute && !isSetupRoute) {
+        if (adminUser == null) return '/admin-login';
+
+        // Role-gated routes
+        if (loc == '/admin/revenue' && !adminUser.canManageRevenue) {
+          return '/admin';
+        }
+        if (loc == '/admin/users' && !adminUser.canManageUsers) {
+          return '/admin';
+        }
+        if (loc == '/admin/settings' && !adminUser.isSuperAdmin) {
+          return '/admin';
+        }
+      }
+
+      // If already signed in, skip the login screen
+      if (isLoginRoute && adminUser != null) {
+        return '/admin';
+      }
+
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/splash',
-        pageBuilder: (context, state) => const NoTransitionPage(child: SplashScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: SplashScreen()),
       ),
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => const NoTransitionPage(child: LoginScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: LoginScreen()),
+      ),
+      // Admin login — outside shells, no guard needed
+      GoRoute(
+        path: '/admin-login',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: AdminLoginScreen()),
+      ),
+      // First-time superAdmin setup
+      GoRoute(
+        path: '/admin-setup',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: FirstTimeSetupScreen()),
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -42,75 +102,108 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/',
-            pageBuilder: (context, state) => const NoTransitionPage(child: HomeScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: HomeScreen()),
           ),
           GoRoute(
             path: '/schedule',
-            pageBuilder: (context, state) => const NoTransitionPage(child: ScheduleScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ScheduleScreen()),
           ),
           GoRoute(
             path: '/podcasts',
-            pageBuilder: (context, state) => const NoTransitionPage(child: PodcastsScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PodcastsScreen()),
           ),
           GoRoute(
             path: '/news',
-            pageBuilder: (context, state) => const NoTransitionPage(child: NewsScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: NewsScreen()),
           ),
           GoRoute(
             path: '/requests',
-            pageBuilder: (context, state) => const NoTransitionPage(child: RequestsScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: RequestsScreen()),
           ),
           GoRoute(
             path: '/settings',
-            pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SettingsScreen()),
           ),
         ],
       ),
-      // Admin routes — wrapped in AdminShell
+      // Admin routes — wrapped in AdminShell, protected by redirect above
       ShellRoute(
         builder: (context, state, child) => AdminShell(child: child),
         routes: [
           GoRoute(
             path: '/admin',
-            pageBuilder: (context, state) => const NoTransitionPage(child: AdminDashboardScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AdminDashboardScreen()),
           ),
           GoRoute(
             path: '/admin/schedule',
-            pageBuilder: (context, state) => const NoTransitionPage(child: ScheduleManagerScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ScheduleManagerScreen()),
           ),
           GoRoute(
             path: '/admin/stream',
-            pageBuilder: (context, state) => const NoTransitionPage(child: StreamMonitorScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: StreamMonitorScreen()),
           ),
           GoRoute(
             path: '/admin/notifications',
-            pageBuilder: (context, state) => const NoTransitionPage(child: NotificationSenderScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: NotificationSenderScreen()),
           ),
           GoRoute(
             path: '/admin/requests',
-            pageBuilder: (context, state) => const NoTransitionPage(child: RequestQueueScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: RequestQueueScreen()),
           ),
           GoRoute(
             path: '/admin/podcasts',
-            pageBuilder: (context, state) => const NoTransitionPage(child: PodcastManagerScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PodcastManagerScreen()),
           ),
           GoRoute(
             path: '/admin/ads',
-            pageBuilder: (context, state) => const NoTransitionPage(child: AdManagerScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AdManagerScreen()),
           ),
           GoRoute(
             path: '/admin/analytics',
-            pageBuilder: (context, state) => const NoTransitionPage(child: AnalyticsScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AnalyticsScreen()),
           ),
           GoRoute(
             path: '/admin/revenue',
-            pageBuilder: (context, state) => const NoTransitionPage(child: RevenueDashboardScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: RevenueDashboardScreen()),
+          ),
+          GoRoute(
+            path: '/admin/users',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: UserManagementScreen()),
+          ),
+          GoRoute(
+            path: '/admin/settings',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AdminSettingsScreen()),
           ),
         ],
       ),
     ],
   );
 });
+
+// Notifier that triggers router refresh when admin auth state changes
+class _AuthNotifier extends ChangeNotifier {
+  _AuthNotifier(Ref ref) {
+    ref.listen(adminUserProvider, (_, __) => notifyListeners());
+    ref.listen(needsFirstTimeSetupProvider, (_, __) => notifyListeners());
+  }
+}
 
 class AppShell extends ConsumerWidget {
   final Widget child;
