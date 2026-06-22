@@ -59,7 +59,7 @@ class AppTheme {
         unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w400, fontSize: 10),
       ),
 
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.bg2,
         elevation: 0,
         shape: RoundedRectangleBorder(

@@ -1,0 +1,132 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && getUserRole() == 'superAdmin';
+    }
+
+    function isStationManager() {
+      return isSignedIn() && (getUserRole() == 'superAdmin' || getUserRole() == 'stationManager');
+    }
+
+    function isBroadcaster() {
+      return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'broadcaster']);
+    }
+
+    function isAnyAdmin() {
+      return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'broadcaster', 'unnAdmin']);
+    }
+
+    match /shows/{doc} {
+      allow read: if true;
+      allow write: if isStationManager();
+    }
+
+    match /episodes/{doc} {
+      allow read: if true;
+      allow write: if isBroadcaster();
+    }
+
+    match /news/{doc} {
+      allow read: if true;
+      allow write: if isStationManager();
+    }
+
+    match /stream_config/{doc} {
+      allow read: if true;
+      allow write: if isStationManager();
+    }
+
+    match /requests/{doc} {
+      allow create: if isSignedIn();
+      allow read, update: if isBroadcaster();
+      allow delete: if isStationManager();
+    }
+
+    match /users/{userId} {
+      // Always allow reading own document — needed for role check on login
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isAnyAdmin();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || request.auth.uid == userId;
+      allow delete: if isSuperAdmin();
+    }
+
+    match /revenue/{doc} {
+      allow read: if isSignedIn() && (getUserRole() in ['superAdmin', 'unnAdmin']);
+      allow write: if isSuperAdmin();
+    }
+
+    match /ads/{doc} {
+      allow read: if true;
+      // Station managers can do full writes; signed-in listeners can only increment counters
+      allow write: if isStationManager();
+      allow update: if isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['impressions', 'clicks']);
+    }
+
+    match /admin_config/{doc} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /analytics/{doc} {
+      allow read: if isAnyAdmin();
+      allow write: if isSignedIn();
+    }
+
+    match /admin_invites/{inviteId} {
+      // Invited user can read their own invite (doc ID = their email)
+      allow read: if isSignedIn() && inviteId == request.auth.token.email;
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /notification_queue/{doc} {
+      allow create: if isStationManager();
+      allow read, update: if isStationManager();
+    }
+
+    match /podcast_feeds/{doc} {
+      allow read: if true;
+      allow write: if isBroadcaster();
+    }
+
+    // Directly-uploaded podcast episodes
+    match /episodes/{doc} {
+      allow read: if true;
+      allow write: if isBroadcaster();
+    }
+
+    // Paid live events
+    match /events/{doc} {
+      allow read: if true;
+      allow write: if isStationManager();
+    }
+
+    // Event tickets — written by Cloud Functions (admin SDK bypasses rules).
+    // App reads its own ticket only.
+    match /tickets/{ticketId} {
+      allow read: if isSignedIn() && ticketId.matches(request.auth.uid + '_.*');
+      allow write: if false; // Cloud Functions only
+    }
+
+    // Podcast episodes uploaded directly to Firestore
+    match /podcasts/{doc} {
+      allow read: if true;
+      allow write: if isBroadcaster();
+    }
+
+    match /mail/{doc} {
+      allow create: if isSuperAdmin();
+    }
+  }
+}

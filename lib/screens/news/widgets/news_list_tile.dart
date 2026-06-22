@@ -32,7 +32,7 @@ class NewsListTile extends StatelessWidget {
                   width: AppDimensions.thumbnailNews,
                   height: AppDimensions.thumbnailNews,
                   decoration: BoxDecoration(
-                    color: _categoryColor(news.category).withOpacity(0.2),
+                    color: _categoryColor(news.category).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(AppDimensions.r8),
                   ),
                   alignment: Alignment.center,

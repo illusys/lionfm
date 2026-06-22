@@ -1,77 +1,71 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/text_styles.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController _logoCtrl;
-  late AnimationController _ringCtrl;
-  late AnimationController _floatCtrl;
-  late AnimationController _glowCtrl;
-  late AnimationController _noteCtrl;
-  late AnimationController _taglineCtrl;
-  late AnimationController _eqCtrl;
 
-  late Animation<double> _logoScale;
-  late Animation<double> _logoOpacity;
-  late Animation<double> _ringScale;
-  late Animation<double> _ringOpacity;
-  late Animation<double> _floatY;
-  late Animation<double> _glowOpacity;
-  late Animation<double> _noteOpacity;
-  late Animation<double> _taglineOpacity;
+  late final AnimationController _logoCtrl;
+  late final AnimationController _floatCtrl;
+  late final AnimationController _ringCtrl;
+  late final AnimationController _taglineCtrl;
+  late final AnimationController _eqCtrl;
 
-  final List<Animation<double>> _eqHeights = [];
+  late final Animation<double> _logoScale;
+  late final Animation<double> _logoOpacity;
+  late final Animation<double> _floatY;
+  late final Animation<double> _taglineOpacity;
+  late final Animation<double> _eqOpacity;
 
   @override
   void initState() {
     super.initState();
 
-    _logoCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
-    _ringCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
-    _floatCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 2000))..repeat(reverse: true);
-    _glowCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat(reverse: true);
-    _noteCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
-    _taglineCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
-    _eqCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 400))..repeat(reverse: true);
-
-    _logoScale = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.15).chain(CurveTween(curve: Curves.easeOut)), weight: 70),
-      TweenSequenceItem(tween: Tween(begin: 1.15, end: 1.0).chain(CurveTween(curve: Curves.easeIn)), weight: 30),
+    _logoCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900));
+    _logoScale = TweenSequence<double>([
+      TweenSequenceItem(
+          tween: Tween(begin: 0.2, end: 1.08)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: 60),
+      TweenSequenceItem(
+          tween: Tween(begin: 1.08, end: 0.96)
+              .chain(CurveTween(curve: Curves.easeInOut)),
+          weight: 20),
+      TweenSequenceItem(
+          tween: Tween(begin: 0.96, end: 1.0)
+              .chain(CurveTween(curve: Curves.easeInOut)),
+          weight: 20),
     ]).animate(_logoCtrl);
-    _logoOpacity = Tween(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _logoCtrl, curve: const Interval(0, 0.5)));
+    _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+            parent: _logoCtrl, curve: const Interval(0.0, 0.4)));
 
-    _ringScale = Tween(begin: 0.6, end: 2.2).animate(
-        CurvedAnimation(parent: _ringCtrl, curve: Curves.easeOut));
-    _ringOpacity = Tween(begin: 0.6, end: 0.0).animate(
-        CurvedAnimation(parent: _ringCtrl, curve: Curves.easeOut));
-
-    _floatY = Tween(begin: 0.0, end: -8.0).animate(
+    _floatCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 3000));
+    _floatY = Tween<double>(begin: 0.0, end: -10.0).animate(
         CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut));
-    _glowOpacity = Tween(begin: 0.3, end: 0.7).animate(
-        CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut));
-    _noteOpacity = Tween(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _noteCtrl, curve: const Interval(0, 0.3)));
-    _taglineOpacity = Tween(begin: 0.0, end: 1.0).animate(
+
+    _ringCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2400));
+
+    _taglineCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800));
+    _taglineOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: _taglineCtrl, curve: Curves.easeOut));
 
-    final rng = Random();
-    for (int i = 0; i < 9; i++) {
-      final min = 0.2 + rng.nextDouble() * 0.3;
-      final max = 0.6 + rng.nextDouble() * 0.4;
-      _eqHeights.add(Tween(begin: min, end: max).animate(
-          CurvedAnimation(parent: _eqCtrl, curve: Interval(i / 9, (i + 1) / 9, curve: Curves.easeInOut))));
-    }
+    _eqCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _eqOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(_eqCtrl);
 
     _startSequence();
   }
@@ -81,18 +75,20 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
     _logoCtrl.forward();
 
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
-    _ringCtrl.forward();
+    _ringCtrl.repeat();
+    _floatCtrl.repeat(reverse: true);
 
-    await Future.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
     _taglineCtrl.forward();
 
-    await Future.delayed(const Duration(milliseconds: 1000));
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+    _eqCtrl.forward();
+
+    await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
     context.go('/');
   }
@@ -100,13 +96,86 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _logoCtrl.dispose();
-    _ringCtrl.dispose();
     _floatCtrl.dispose();
-    _glowCtrl.dispose();
-    _noteCtrl.dispose();
+    _ringCtrl.dispose();
     _taglineCtrl.dispose();
     _eqCtrl.dispose();
     super.dispose();
+  }
+
+  List<Widget> _buildNotes() {
+    return [
+      _buildNote('♪', left: 40, top: 120, color: AppColors.lionGreen, delay: 0.0),
+      _buildNote('♫', right: 60, top: 100, color: AppColors.electricTeal, delay: 0.3),
+      _buildNote('♩', right: 40, bottom: 160, color: AppColors.lionGold, delay: 0.6),
+      _buildNote('♬', left: 50, bottom: 140, color: AppColors.lionGreen, delay: 0.9),
+    ];
+  }
+
+  Widget _buildNote(String note, {
+    double? left, double? right, double? top, double? bottom,
+    required Color color, required double delay,
+  }) {
+    return Positioned(
+      left: left, right: right, top: top, bottom: bottom,
+      child: AnimatedBuilder(
+        animation: _ringCtrl,
+        builder: (_, __) {
+          final progress = (_ringCtrl.value + delay) % 1.0;
+          final opacity = progress < 0.2
+              ? progress / 0.2
+              : progress < 0.6
+                  ? 1.0
+                  : (1.0 - progress) / 0.4;
+          return Opacity(
+            opacity: opacity.clamp(0.0, 1.0),
+            child: Transform.translate(
+              offset: Offset(0, -progress * 50),
+              child: Text(note,
+                  style: TextStyle(fontSize: 20, color: color)),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEqualizer() {
+    final bars = [
+      (AppColors.lionGreen, 8.0, 0.0),
+      (AppColors.electricTeal, 16.0, 0.1),
+      (AppColors.lionGreen, 12.0, 0.2),
+      (AppColors.lionGold, 20.0, 0.3),
+      (AppColors.lionGreen, 10.0, 0.4),
+      (AppColors.electricTeal, 18.0, 0.15),
+      (AppColors.lionGreen, 14.0, 0.25),
+      (AppColors.lionGold, 8.0, 0.35),
+      (AppColors.electricTeal, 20.0, 0.05),
+    ];
+    return FadeTransition(
+      opacity: _eqOpacity,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: bars.map((bar) {
+          return AnimatedBuilder(
+            animation: _eqCtrl,
+            builder: (_, __) {
+              final scaleY = 0.3 + ((_eqCtrl.value + bar.$3) % 1.0) * 1.1;
+              return Container(
+                width: 3,
+                height: bar.$2 * scaleY,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: bar.$1,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            },
+          );
+        }).toList(),
+      ),
+    );
   }
 
   @override
@@ -114,198 +183,101 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       backgroundColor: AppColors.bg0,
       body: Stack(
-        alignment: Alignment.center,
+        fit: StackFit.expand,
         children: [
           // Background glow
-          AnimatedBuilder(
-            animation: _glowOpacity,
-            builder: (_, __) => Opacity(
-              opacity: _glowOpacity.value,
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.lionGreen.withOpacity(0.15),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 0.8,
+                colors: [
+                  Color(0x141E9B43),
+                  Color(0x0A28D7D2),
+                  Colors.transparent,
+                ],
               ),
             ),
           ),
           // Pulse rings
-          AnimatedBuilder(
-            animation: _ringCtrl,
-            builder: (_, __) => Opacity(
-              opacity: _ringOpacity.value,
-              child: Container(
-                width: 200 * _ringScale.value,
-                height: 200 * _ringScale.value,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.lionGreen.withOpacity(0.4),
-                    width: 1.5,
-                  ),
-                ),
+          Center(
+            child: AnimatedBuilder(
+              animation: _ringCtrl,
+              builder: (_, __) => Stack(
+                alignment: Alignment.center,
+                children: [
+                  ...[0.0, 0.33, 0.66].asMap().entries.map((e) {
+                    final colors = [
+                      AppColors.lionGreen,
+                      AppColors.electricTeal,
+                      AppColors.lionGold,
+                    ];
+                    final progress = (_ringCtrl.value + e.key * 0.33) % 1.0;
+                    final scale = 1.0 + progress * 2.2;
+                    final opacity = (1.0 - progress).clamp(0.0, 0.8);
+                    return Transform.scale(
+                      scale: scale,
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: colors[e.key].withValues(alpha: opacity),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ),
             ),
           ),
-          // Floating music notes
-          ..._buildNotes(),
-          // Center content
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Logo with float
-              AnimatedBuilder(
-                animation: Listenable.merge([_logoCtrl, _floatCtrl]),
-                builder: (_, __) => Transform.translate(
-                  offset: Offset(0, _floatY.value),
-                  child: Opacity(
+          // Music notes
+          Stack(children: _buildNotes()),
+          // Main content
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Logo
+                AnimatedBuilder(
+                  animation: Listenable.merge([_logoCtrl, _floatCtrl]),
+                  builder: (_, __) => Opacity(
                     opacity: _logoOpacity.value,
-                    child: Transform.scale(
-                      scale: _logoScale.value,
-                      child: _LogoWidget(),
+                    child: Transform.translate(
+                      offset: Offset(0, _floatCtrl.isAnimating ? _floatY.value : 0),
+                      child: Transform.scale(
+                        scale: _logoScale.value,
+                        child: Image.asset(
+                          'assets/images/lionfm_logo.png',
+                          width: 300,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              // Tagline
-              AnimatedBuilder(
-                animation: _taglineCtrl,
-                builder: (_, __) => Opacity(
-                  opacity: _taglineOpacity.value,
+                const SizedBox(height: 24),
+                // Tagline
+                FadeTransition(
+                  opacity: _taglineOpacity,
                   child: Text(
                     '...Your interactive radio',
-                    style: AppTextStyles.tagline.copyWith(
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      letterSpacing: 2.0,
                       color: AppColors.textSecondary,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              // Equalizer bars
-              AnimatedBuilder(
-                animation: _eqCtrl,
-                builder: (_, __) => _buildEqualizer(),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildNotes() {
-    final positions = [
-      const Offset(-120, -80),
-      const Offset(110, -60),
-      const Offset(-90, 100),
-      const Offset(130, 90),
-    ];
-    final icons = [Icons.music_note, Icons.music_note, Icons.queue_music, Icons.music_note];
-    return List.generate(4, (i) {
-      return AnimatedBuilder(
-        animation: _noteCtrl,
-        builder: (_, __) {
-          final t = (_noteCtrl.value + i * 0.25) % 1.0;
-          final opacity = t < 0.3 ? t / 0.3 : t > 0.7 ? (1.0 - t) / 0.3 : 1.0;
-          return Positioned(
-            left: MediaQuery.of(context).size.width / 2 + positions[i].dx,
-            top: MediaQuery.of(context).size.height / 2 + positions[i].dy - t * 30,
-            child: Opacity(
-              opacity: opacity.clamp(0.0, 1.0) * 0.6,
-              child: Icon(icons[i], color: AppColors.electricTeal, size: 18),
-            ),
-          );
-        },
-      );
-    });
-  }
-
-  Widget _buildEqualizer() {
-    final colors = [
-      AppColors.lionGreen,
-      AppColors.lionGreen,
-      AppColors.electricTeal,
-      AppColors.electricTeal,
-      AppColors.lionGold,
-      AppColors.electricTeal,
-      AppColors.electricTeal,
-      AppColors.lionGreen,
-      AppColors.lionGreen,
-    ];
-    return SizedBox(
-      height: 32,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: List.generate(9, (i) {
-          final h = _eqHeights.length > i ? _eqHeights[i].value : 0.5;
-          return Container(
-            width: 4,
-            height: 32 * h,
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: colors[i],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
-class _LogoWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 140,
-      height: 140,
-      decoration: BoxDecoration(
-        gradient: AppColors.greenTealGradient,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.lionGreen.withOpacity(0.4),
-            blurRadius: 30,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'LION',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.bg0,
-              letterSpacing: 3,
-              fontSize: 16,
-            ),
-          ),
-          Text(
-            'FM',
-            style: AppTextStyles.heroTitle.copyWith(
-              color: AppColors.bg0,
-              fontSize: 40,
-              height: 1,
-            ),
-          ),
-          Text(
-            '91.1 MHz',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.bg0.withOpacity(0.7),
-              letterSpacing: 1,
-              fontSize: 11,
+                const SizedBox(height: 32),
+                // Equalizer
+                _buildEqualizer(),
+              ],
             ),
           ),
         ],

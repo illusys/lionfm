@@ -91,7 +91,7 @@ class _WaveformPainter extends CustomPainter {
 
       final t = i / barCount;
       final color = Color.lerp(AppColors.amberGold, AppColors.electricBlue, t)!
-          .withOpacity(isPlaying ? 0.85 : 0.35);
+          .withValues(alpha: isPlaying ? 0.85 : 0.35);
 
       final paint = Paint()
         ..color = color

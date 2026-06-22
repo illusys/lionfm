@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 
 class AppBottomNavBar extends StatelessWidget {
@@ -9,7 +8,10 @@ class AppBottomNavBar extends StatelessWidget {
 
   static const _items = [
     _NavItem(icon: Icons.home_rounded, label: 'Home', route: '/'),
-    _NavItem(icon: Icons.calendar_today_rounded, label: 'Schedule', route: '/schedule'),
+    _NavItem(
+        icon: Icons.calendar_today_rounded,
+        label: 'Schedule',
+        route: '/schedule'),
     _NavItem(icon: Icons.mic_rounded, label: 'Podcasts', route: '/podcasts'),
     _NavItem(icon: Icons.article_rounded, label: 'News', route: '/news'),
     _NavItem(icon: Icons.send_rounded, label: 'Request', route: '/requests'),
@@ -19,10 +21,11 @@ class AppBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     return Container(
-      height: 72,
+      height: 76,
       decoration: const BoxDecoration(
         color: AppColors.bg1,
-        border: Border(top: BorderSide(color: AppColors.borderGreen, width: 1)),
+        border:
+            Border(top: BorderSide(color: AppColors.borderGreen, width: 1)),
       ),
       child: Row(
         children: _items.map((item) {
@@ -46,32 +49,41 @@ class _NavTab extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => context.go(item.route),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Stack(
         children: [
+          // Accent bar at top for selected state
           if (isSelected)
-            Container(
-              width: 4,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 4),
-              decoration: const BoxDecoration(
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 3,
                 color: AppColors.lionGreen,
-                shape: BoxShape.circle,
               ),
-            )
-          else
-            const SizedBox(height: 8),
-          Icon(
-            item.icon,
-            color: isSelected ? AppColors.lionGreen : AppColors.textMuted,
-            size: 22,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            item.label,
-            style: AppTextStyles.navLabel.copyWith(
-              color: isSelected ? AppColors.lionGreen : AppColors.textMuted,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            ),
+          // Tab content
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  item.icon,
+                  color:
+                      isSelected ? AppColors.lionGreen : AppColors.textMuted,
+                  size: 26,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.label,
+                  style: AppTextStyles.navLabel.copyWith(
+                    color:
+                        isSelected ? AppColors.lionGreen : AppColors.textMuted,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -84,5 +96,6 @@ class _NavItem {
   final IconData icon;
   final String label;
   final String route;
-  const _NavItem({required this.icon, required this.label, required this.route});
+  const _NavItem(
+      {required this.icon, required this.label, required this.route});
 }

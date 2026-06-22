@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/theme/text_styles.dart';
+import '../../widgets/common/lion_fm_app_bar.dart';
 import 'widgets/show_pitch_form.dart';
 import 'widgets/song_request_form.dart';
 
@@ -19,7 +20,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.requestsTitle)),
+      appBar: const LionFmAppBar(title: AppStrings.requestsTitle),
       body: Column(
         children: [
           // Custom tab bar

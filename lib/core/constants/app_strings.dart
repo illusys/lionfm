@@ -8,13 +8,13 @@ class AppStrings {
   static const String appSubtitle = 'Official Campus Radio · University of Nigeria, Nsukka';
   static const String licenseInfo = 'NBC Licensed · Since 1999';
 
-  // Stream URLs
-  static const String liveStreamUrl = 'https://stream.live.vc.bbcmedia.co.uk/bbc_world_service';
-  static const String fallbackStreamUrl = 'https://stream.live.vc.bbcmedia.co.uk/bbc_world_service';
+  // Stream URL — empty; real URL is loaded from Firestore stream_config/current
+  static const String liveStreamUrl = '';
+  static const String fallbackStreamUrl = '';
 
-  // API
-  static const String apiBaseUrl = 'https://api.lionfm.unn.edu.ng';
-  static const String webUrl = 'https://lionfm.unn.edu.ng';
+  // API / Web
+  static const String apiBaseUrl = 'https://api.lionfm.online';
+  static const String webUrl = 'https://www.lionfm.online';
 
   // Navigation labels
   static const String navHome = 'Home';
@@ -47,6 +47,7 @@ class AppStrings {
   static const String connecting = 'Connecting…';
   static const String reconnecting = 'Reconnecting…';
   static const String offAir = 'Lion FM is currently off-air';
+  static const String noStreamConfigured = 'Stream offline — no URL configured';
   static const String retryStream = 'Tap to retry';
 
   // Requests
@@ -143,9 +144,9 @@ class AppStrings {
 
   // Share text
   static const String shareListening =
-      "I'm listening to %s on Lion FM 91.1 MHz! Stream live at lionfm.unn.edu.ng";
+      "I'm listening to %s on Lion FM 91.1 MHz! Stream live at www.lionfm.online";
   static const String shareNews =
-      '%s — via Lion FM 91.1 MHz · lionfm.unn.edu.ng';
+      '%s — via Lion FM 91.1 MHz · www.lionfm.online';
 
   // About
   static const String aboutLionFm = 'Lion FM 91.1 MHz';
@@ -153,8 +154,8 @@ class AppStrings {
   static const String privacyPolicy = 'Privacy Policy — NDPR Compliant';
   static const String rateApp = 'Rate the App';
   static const String contactLionFm = 'Contact Lion FM';
-  static const String contactEmail = 'mailto:studio@lionfm.unn.edu.ng';
-  static const String privacyUrl = 'https://lionfm.unn.edu.ng/privacy';
+  static const String contactEmail = 'mailto:studio@lionfm.online';
+  static const String privacyUrl = 'https://www.lionfm.online/privacy';
 
   // Social
   static const String twitterHandle = '@lionfmunn';

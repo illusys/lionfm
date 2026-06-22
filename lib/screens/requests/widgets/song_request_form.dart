@@ -106,7 +106,7 @@ class _SongRequestFormState extends ConsumerState<SongRequestForm> {
             _field(_nameCtrl, AppStrings.yourName, required: true),
             const SizedBox(height: AppDimensions.p12),
             DropdownButtonFormField<String>(
-              value: _selectedShow,
+              initialValue: _selectedShow,
               dropdownColor: AppColors.surface2,
               decoration: const InputDecoration(labelText: AppStrings.showToPlayOn),
               validator: (v) => v == null ? AppStrings.fieldRequired : null,

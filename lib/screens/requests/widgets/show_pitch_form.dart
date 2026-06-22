@@ -155,7 +155,7 @@ class _ShowPitchFormState extends State<ShowPitchForm> {
     ValueChanged<String?> onChanged,
   ) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       dropdownColor: AppColors.surface2,
       decoration: InputDecoration(labelText: label),
       validator: (v) => v == null ? AppStrings.fieldRequired : null,

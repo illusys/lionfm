@@ -76,7 +76,7 @@ class _DaySelectorState extends ConsumerState<DaySelector> {
                       color: isSelected ? AppColors.bg0 : AppColors.textPrimary,
                     ),
                   ),
-                  if (dayIndex == today)
+                  if (isToday)
                     Container(
                       width: 4, height: 4,
                       margin: const EdgeInsets.only(top: 4),

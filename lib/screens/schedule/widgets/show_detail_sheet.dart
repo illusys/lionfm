@@ -71,11 +71,11 @@ class ShowDetailSheet extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.liveRed.withOpacity(0.2),
+                      color: AppColors.liveRed.withValues(alpha: 0.2),
                       borderRadius:
                           BorderRadius.circular(AppDimensions.rFull),
                       border:
-                          Border.all(color: AppColors.liveRed.withOpacity(0.5)),
+                          Border.all(color: AppColors.liveRed.withValues(alpha: 0.5)),
                     ),
                     child: Text('● LIVE',
                         style: AppTextStyles.badgeText
@@ -102,7 +102,7 @@ class ShowDetailSheet extends StatelessWidget {
                             color: AppColors.surface3,
                             borderRadius:
                                 BorderRadius.circular(AppDimensions.rFull),
-                            border: Border.all(color: AppColors.electricBlue.withOpacity(0.4)),
+                            border: Border.all(color: AppColors.electricBlue.withValues(alpha: 0.4)),
                           ),
                           child: Text('#$tag',
                               style: AppTextStyles.caption.copyWith(

@@ -3,7 +3,7 @@ import '../data/models/news_model.dart';
 import '../data/repositories/news_repository.dart';
 
 final newsRepositoryProvider = Provider<NewsRepository>((ref) {
-  return MockNewsRepository();
+  return FirestoreNewsRepository();
 });
 
 final newsItemsProvider = FutureProvider<List<NewsModel>>((ref) async {

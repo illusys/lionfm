@@ -1,149 +1,228 @@
 import 'dart:async';
-import 'package:audio_service/audio_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:just_audio/just_audio.dart';
-import '../../core/constants/app_strings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/audio_ad_model.dart';
+import '../models/episode_model.dart';
 
-class LionFMAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+enum AudioSourceType { liveRadio, podcast, ad }
+
+typedef AudioSourceChangedCallback = void Function(
+  AudioSourceType source,
+  EpisodeModel? episode,
+  int adDurationSec,
+);
+
+/// Single app-wide audio pipeline. Exposes [player] for stream-based
+/// Riverpod providers. All playback goes through this class — never
+/// create a raw AudioPlayer anywhere else.
+class LionFMAudioHandler {
   final AudioPlayer _player = AudioPlayer();
 
-  static const String _primaryUrl = AppStrings.liveStreamUrl;
-  static const String _fallbackUrl = AppStrings.fallbackStreamUrl;
-
-  bool _isPlayingEpisode = false;
+  AudioSourceType _currentSource = AudioSourceType.liveRadio;
+  EpisodeModel? _currentEpisode;
+  String? _currentAdId;
+  int _currentAdDurationSec = 0;
+  EpisodeModel? _pendingEpisodeAfterAd;
+  String _currentStreamUrl = '';
   int _retryCount = 0;
   static const int _maxRetries = 3;
+  StreamSubscription<PlayerState>? _stateSub;
+  StreamSubscription<PlaybackEvent>? _eventSub;
+
+  /// Called by the Riverpod layer to propagate state into providers.
+  AudioSourceChangedCallback? onSourceChanged;
 
   LionFMAudioHandler() {
-    _init();
+    _stateSub = _player.playerStateStream.listen(_onPlayerState);
+    _eventSub = _player.playbackEventStream.listen(
+      (_) {},
+      onError: _onPlaybackError,
+    );
+    _loadVolume();
   }
 
-  void _init() {
-    _player.playbackEventStream.listen(_broadcastState, onError: _handleError);
-    _player.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        _handleError(null, null);
-      }
-    });
-  }
+  // ─── Public getters ────────────────────────────────────────────────────────
 
-  void _broadcastState(PlaybackEvent event) {
-    final playing = _player.playing;
-    playbackState.add(playbackState.value.copyWith(
-      controls: [
-        if (playing) MediaControl.pause else MediaControl.play,
-        MediaControl.stop,
-      ],
-      systemActions: const {MediaAction.seek},
-      androidCompactActionIndices: const [0],
-      processingState: {
-        ProcessingState.idle: AudioProcessingState.idle,
-        ProcessingState.loading: AudioProcessingState.loading,
-        ProcessingState.buffering: AudioProcessingState.buffering,
-        ProcessingState.ready: AudioProcessingState.ready,
-        ProcessingState.completed: AudioProcessingState.completed,
-      }[_player.processingState]!,
-      playing: playing,
-      updatePosition: _player.position,
-      bufferedPosition: _player.bufferedPosition,
-      speed: _player.speed,
-      queueIndex: event.currentIndex,
-    ));
-  }
+  AudioPlayer get player => _player;
+  AudioSourceType get currentSource => _currentSource;
+  EpisodeModel? get currentEpisode => _currentEpisode;
+  int get currentAdDurationSec => _currentAdDurationSec;
 
-  void _handleError(Object? error, StackTrace? stack) async {
-    if (_retryCount >= _maxRetries) {
-      playbackState.add(playbackState.value.copyWith(
-        processingState: AudioProcessingState.error,
-      ));
-      return;
+  // ─── Internal state machine ────────────────────────────────────────────────
+
+  void _onPlayerState(PlayerState state) {
+    if (state.processingState != ProcessingState.completed) return;
+    switch (_currentSource) {
+      case AudioSourceType.ad:
+        final pending = _pendingEpisodeAfterAd;
+        _pendingEpisodeAfterAd = null;
+        if (_currentAdId != null) _trackAdCompletion(_currentAdId!);
+        if (pending != null) _playEpisodeDirectly(pending);
+      case AudioSourceType.liveRadio:
+        _scheduleRetry();
+      case AudioSourceType.podcast:
+        break;
     }
+  }
+
+  void _onPlaybackError(Object _, StackTrace __) {
+    if (_currentSource == AudioSourceType.liveRadio) {
+      _scheduleRetry();
+    }
+  }
+
+  void _scheduleRetry() async {
+    if (_currentStreamUrl.isEmpty || _retryCount >= _maxRetries) return;
     _retryCount++;
     await Future.delayed(const Duration(seconds: 5));
     try {
-      final url = _retryCount > 1 ? _fallbackUrl : _primaryUrl;
-      await _player.setUrl(url);
+      await _player.setUrl(_currentStreamUrl);
       await _player.play();
       _retryCount = 0;
     } catch (_) {
-      _handleError(null, null);
+      _scheduleRetry();
     }
   }
 
-  String getStreamUrl(String qualityBitrate) {
-    return '$_primaryUrl?bitrate=$qualityBitrate';
-  }
+  // ─── Public playback API ───────────────────────────────────────────────────
 
-  Future<void> playLiveStream({String bitrate = '128'}) async {
-    _isPlayingEpisode = false;
+  Future<void> playLiveRadio(String url) async {
+    if (url.isEmpty) return;
+    _currentSource = AudioSourceType.liveRadio;
+    _currentStreamUrl = url;
+    _currentEpisode = null;
+    _pendingEpisodeAfterAd = null;
     _retryCount = 0;
-    final url = getStreamUrl(bitrate);
-    mediaItem.add(const MediaItem(
-      id: 'live_stream',
-      title: 'Lion FM 91.1 MHz',
-      artist: 'Live Radio',
-      album: 'University of Nigeria, Nsukka',
-      artUri: Uri.parse('https://lionfm.unn.edu.ng/logo.png'),
-    ));
+    onSourceChanged?.call(AudioSourceType.liveRadio, null, 0);
     try {
       await _player.setUrl(url);
       await _player.play();
     } catch (_) {
-      _handleError(null, null);
+      _scheduleRetry();
     }
   }
 
-  Future<void> playEpisode({
-    required String url,
-    required String title,
-    required String showName,
-    String? artUrl,
+  Future<void> playPodcast(
+    EpisodeModel episode, {
+    required bool isPremium,
   }) async {
-    _isPlayingEpisode = true;
-    mediaItem.add(MediaItem(
-      id: url,
-      title: title,
-      artist: showName,
-      album: 'Lion FM Podcasts',
-      artUri: artUrl != null ? Uri.parse(artUrl) : null,
-    ));
-    await _player.setUrl(url);
+    if (!isPremium) {
+      final ad = await _fetchPrerollAd();
+      if (ad != null) {
+        _currentSource = AudioSourceType.ad;
+        _currentAdId = ad.id;
+        _currentAdDurationSec = ad.durationSec;
+        _pendingEpisodeAfterAd = episode;
+        onSourceChanged?.call(AudioSourceType.ad, null, ad.durationSec);
+        try {
+          await _player.setUrl(ad.audioUrl);
+          await _player.play();
+          _trackAdImpression(ad.id);
+          return;
+        } catch (_) {
+          // Ad failed — fall through to episode
+          _pendingEpisodeAfterAd = null;
+        }
+      }
+    }
+    await _playEpisodeDirectly(episode);
+  }
+
+  Future<void> _playEpisodeDirectly(EpisodeModel episode) async {
+    _currentSource = AudioSourceType.podcast;
+    _currentEpisode = episode;
+    onSourceChanged?.call(AudioSourceType.podcast, episode, 0);
+    await _player.setUrl(episode.audioUrl);
     await _player.play();
   }
 
-  Future<void> returnToLiveStream() => playLiveStream();
+  // ─── Seek controls (podcast only) ─────────────────────────────────────────
 
-  bool get isPlayingEpisode => _isPlayingEpisode;
-
-  void updateMediaItem(String showTitle, String hostName) {
-    mediaItem.add(MediaItem(
-      id: 'live_stream',
-      title: showTitle,
-      artist: hostName,
-      album: 'Lion FM 91.1 MHz · Live',
-      artUri: Uri.parse('https://lionfm.unn.edu.ng/logo.png'),
-    ));
+  Future<void> seekForward([Duration delta = const Duration(seconds: 30)]) async {
+    if (_currentSource != AudioSourceType.podcast) return;
+    final pos = _player.position;
+    final dur = _player.duration ?? Duration.zero;
+    final next = pos + delta;
+    await _player.seek(next > dur ? dur : next);
   }
 
-  @override
+  Future<void> seekBackward([Duration delta = const Duration(seconds: 15)]) async {
+    if (_currentSource != AudioSourceType.podcast) return;
+    final pos = _player.position;
+    final prev = pos - delta;
+    await _player.seek(prev < Duration.zero ? Duration.zero : prev);
+  }
+
+  // ─── Volume (persisted) ────────────────────────────────────────────────────
+
+  Future<void> setVolume(double volume) async {
+    final v = volume.clamp(0.0, 1.0);
+    await _player.setVolume(v);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('volume', v);
+    } catch (_) {}
+  }
+
+  Future<void> _loadVolume() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final vol = prefs.getDouble('volume') ?? 0.75;
+      await _player.setVolume(vol);
+    } catch (_) {}
+  }
+
+  // ─── Pass-through controls ─────────────────────────────────────────────────
+
   Future<void> play() => _player.play();
-
-  @override
   Future<void> pause() => _player.pause();
-
-  @override
-  Future<void> stop() async {
-    await _player.stop();
-    await super.stop();
-  }
-
-  @override
+  Future<void> stop() => _player.stop();
   Future<void> seek(Duration position) => _player.seek(position);
 
-  @override
-  Future<void> onTaskRemoved() => stop();
+  // ─── Ad helpers ────────────────────────────────────────────────────────────
 
-  @override
-  Future<void> onNotificationDeleted() => stop();
+  Future<AudioAdModel?> _fetchPrerollAd() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('ads')
+          .where('type', isEqualTo: 'audio_instream')
+          .where('isActive', isEqualTo: true)
+          .where('placement', isEqualTo: 'preroll')
+          .where('endDate',
+              isGreaterThan: Timestamp.fromDate(DateTime.now()))
+          .limit(1)
+          .get();
+      if (snap.docs.isEmpty) return null;
+      return AudioAdModel.fromFirestore(snap.docs.first);
+    } catch (_) {
+      return null;
+    }
+  }
 
-  AudioPlayer get player => _player;
+  void _trackAdImpression(String adId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('ads')
+          .doc(adId)
+          .update({'impressions': FieldValue.increment(1)});
+    } catch (_) {}
+  }
+
+  void _trackAdCompletion(String adId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('ads')
+          .doc(adId)
+          .update({'completions': FieldValue.increment(1)});
+    } catch (_) {}
+  }
+
+  // ─── Lifecycle ─────────────────────────────────────────────────────────────
+
+  Future<void> dispose() async {
+    await _stateSub?.cancel();
+    await _eventSub?.cancel();
+    await _player.dispose();
+  }
 }

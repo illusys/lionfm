@@ -36,9 +36,9 @@ class _LiveBadgeState extends State<LiveBadge>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.liveRed.withOpacity(0.2),
+        color: AppColors.liveRed.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.liveRed.withOpacity(0.5)),
+        border: Border.all(color: AppColors.liveRed.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -4,6 +4,7 @@ import '../../core/constants/app_dimensions.dart';
 import '../../providers/podcast_provider.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/error_state_widget.dart';
+import '../../widgets/common/lion_fm_app_bar.dart';
 import '../../widgets/common/loading_shimmer.dart';
 import 'widgets/category_chips.dart';
 import 'widgets/episode_card.dart';
@@ -17,7 +18,7 @@ class PodcastsScreen extends ConsumerWidget {
     final filtered = ref.watch(filteredEpisodesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Podcasts')),
+      appBar: const LionFmAppBar(title: 'Podcasts'),
       body: Column(
         children: [
           const PodcastSearchBar(),

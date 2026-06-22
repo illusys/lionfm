@@ -19,9 +19,9 @@ class PremiumCard extends ConsumerWidget {
           horizontal: AppDimensions.p16, vertical: AppDimensions.p8),
       padding: const EdgeInsets.all(AppDimensions.p20),
       decoration: BoxDecoration(
-        color: AppColors.goldTint.withOpacity(0.05),
+        color: AppColors.goldTint.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(AppDimensions.r12),
-        border: Border.all(color: AppColors.amberGold.withOpacity(0.4)),
+        border: Border.all(color: AppColors.amberGold.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
