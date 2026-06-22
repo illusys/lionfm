@@ -136,7 +136,7 @@ class _UserCard extends ConsumerWidget {
     final roleStr = userData['role'] as String? ?? 'none';
     final role = AdminUser.roleFromString(roleStr);
     final isActive = userData['isActive'] as bool? ?? true;
-    final uid = userData['id'] as String;
+    final uid = (userData['id'] as String?) ?? '';
 
     return Container(
       padding: const EdgeInsets.all(AppDimensions.p12),
@@ -704,7 +704,7 @@ class _PendingInvitesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('admin_invites')
           .where('status', isEqualTo: 'pending')
@@ -735,7 +735,7 @@ class _PendingInvitesTab extends StatelessWidget {
           separatorBuilder: (_, __) =>
               const SizedBox(height: AppDimensions.p8),
           itemBuilder: (context, i) {
-            final data = docs[i].data() as Map<String, dynamic>;
+            final data = docs[i].data();
             final name = data['displayName'] as String? ?? '';
             final email = data['email'] as String? ?? '';
             final roleStr = data['role'] as String? ?? '';

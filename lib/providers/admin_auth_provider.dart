@@ -156,6 +156,9 @@ final allAdminUsersProvider =
       .collection('users')
       .where('role', whereNotIn: ['none'])
       .snapshots()
-      .map((snap) =>
-          snap.docs.map((d) => {'id': d.id, ...d.data()}).toList());
+      .map((snap) => snap.docs
+          .map<Map<String, dynamic>>(
+            (d) => <String, dynamic>{'id': d.id, ...d.data()},
+          )
+          .toList());
 });
