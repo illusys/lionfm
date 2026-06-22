@@ -38,6 +38,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
     refreshListenable: notifier,
+    // Catch any path that has no matching route — redirect to safe fallback
+    // rather than exposing the raw black GoRouter error screen.
+    errorBuilder: (context, state) => _GoRouterErrorPage(state: state),
     redirect: (context, state) {
       final adminAsync = ref.read(adminUserProvider);
       final needsSetup = ref.read(needsFirstTimeSetupProvider);
@@ -48,7 +51,12 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final adminUser = adminAsync.valueOrNull;
 
-      final isAdminRoute = loc.startsWith('/admin');
+      // Only treat paths that are exactly '/admin' or start with '/admin/'
+      // as admin routes. This prevents '/admin-login', '/admin-setup',
+      // '/admin-accept-invite', and invalid slugs like '/admin-online'
+      // from being classified as protected admin routes.
+      final isAdminRoute =
+          loc == '/admin' || loc.startsWith('/admin/');
       final isLoginRoute = loc == '/admin-login';
       final isSetupRoute = loc == '/admin-setup';
       final isAcceptRoute = loc == '/admin-accept-invite';
@@ -234,6 +242,34 @@ class _RouterNotifier extends ChangeNotifier {
     _ref.listen<bool>(needsFirstTimeSetupProvider, (_, __) => notifyListeners());
   }
   final Ref _ref;
+}
+
+// Redirects any unmatched path to a safe fallback instead of showing a
+// raw error screen. Admin paths go back to /admin, everything else to /.
+class _GoRouterErrorPage extends StatefulWidget {
+  final GoRouterState state;
+  const _GoRouterErrorPage({required this.state});
+
+  @override
+  State<_GoRouterErrorPage> createState() => _GoRouterErrorPageState();
+}
+
+class _GoRouterErrorPageState extends State<_GoRouterErrorPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final loc = widget.state.uri.toString();
+      context.go(loc.startsWith('/admin') ? '/admin' : '/');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const Scaffold(
+        backgroundColor: Color(0xFF0A0A0A),
+        body: Center(child: CircularProgressIndicator()),
+      );
 }
 
 class AppShell extends ConsumerWidget {

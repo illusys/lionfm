@@ -1,0 +1,15 @@
+{{flutter_js}}
+{{flutter_build_config}}
+
+_flutter.loader.load({
+  onEntrypointLoaded: async function(engineInitializer) {
+    let appRunner = await engineInitializer.initializeEngine({
+      // Use the Chromium-bundled CanvasKit variant so the engine relies on
+      // the browser's native text stack instead of downloading Noto fonts.
+      // This silences the "Could not find a set of Noto fonts" console warning.
+      canvasKitVariant: "chromium",
+      useColorEmoji: false,
+    });
+    await appRunner.runApp();
+  }
+});
