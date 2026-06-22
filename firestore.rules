@@ -80,8 +80,24 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
-    match /admin_invites/{doc} {
+    match /admin_invites/{inviteId} {
+      // Invited user can read their own invite (doc ID = their email)
+      allow read: if isSignedIn() && inviteId == request.auth.token.email;
       allow read, write: if isSuperAdmin();
+    }
+
+    match /notification_queue/{doc} {
+      allow create: if isStationManager();
+      allow read, update: if isStationManager();
+    }
+
+    match /podcast_feeds/{doc} {
+      allow read: if true;
+      allow write: if isBroadcaster();
+    }
+
+    match /mail/{doc} {
+      allow create: if isSuperAdmin();
     }
   }
 }

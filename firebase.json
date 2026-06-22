@@ -3,6 +3,11 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+
+  "functions": {
+    "source": "functions"
+  },
+
   "flutter": {
     "platforms": {
       "android": {
@@ -17,7 +22,7 @@
           "projectId": "lionfm-unn",
           "configurations": {
             "android": "1:748866798356:android:14a9607595f8df87333801",
-            "web": "1:748866798356:web:5f19a72f0bb0d69f333801"
+            "web": "1:748866798356:web:5f19a72160bb0d6f9333801"
           }
         }
       }

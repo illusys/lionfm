@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import '../data/models/stream_status_model.dart';
@@ -45,6 +46,17 @@ final playbackStateStreamProvider = StreamProvider<PlayerState>((ref) {
   return ref.watch(audioPlayerProvider).playerStateStream;
 });
 
+// Reactively watches Firestore stream_config/current.streamUrl
+final liveStreamUrlProvider = StreamProvider<String>((ref) {
+  return FirebaseFirestore.instance
+      .collection('stream_config')
+      .doc('current')
+      .snapshots()
+      .map((doc) =>
+          doc.data()?['streamUrl'] as String? ?? AppStrings.liveStreamUrl);
+});
+
+// Backwards-compatible synchronous read (returns last known value or default)
 final currentStreamUrlProvider = Provider<String>((ref) {
-  return AppStrings.liveStreamUrl;
+  return ref.watch(liveStreamUrlProvider).valueOrNull ?? AppStrings.liveStreamUrl;
 });

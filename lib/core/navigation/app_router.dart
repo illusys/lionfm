@@ -12,6 +12,7 @@ import '../../screens/auth/login_screen.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/admin/admin_login_screen.dart';
+import '../../screens/admin/accept_invite_screen.dart';
 import '../../screens/admin/first_time_setup_screen.dart';
 import '../../screens/admin/user_management_screen.dart';
 import '../../screens/admin/admin_settings_screen.dart';
@@ -48,14 +49,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAdminRoute = loc.startsWith('/admin');
       final isLoginRoute = loc == '/admin-login';
       final isSetupRoute = loc == '/admin-setup';
+      final isAcceptRoute = loc == '/admin-accept-invite';
 
       // If signed in but needs first-time setup, send to setup
       if (isAdminRoute && !isSetupRoute && needsSetup) {
         return '/admin-setup';
       }
 
-      // Protect all /admin/* routes (except login and setup)
-      if (isAdminRoute && !isLoginRoute && !isSetupRoute) {
+      // Protect all /admin/* routes (except login, setup, and accept-invite)
+      if (isAdminRoute && !isLoginRoute && !isSetupRoute && !isAcceptRoute) {
         if (adminUser == null || !adminUser.isActive) return '/admin-login';
 
         // Role-gated routes
@@ -99,6 +101,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/admin-setup',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: FirstTimeSetupScreen()),
+      ),
+      // Accept email invite — no auth guard
+      GoRoute(
+        path: '/admin-accept-invite',
+        pageBuilder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return NoTransitionPage(child: AcceptInviteScreen(email: email));
+        },
       ),
       ShellRoute(
         builder: (context, state, child) {

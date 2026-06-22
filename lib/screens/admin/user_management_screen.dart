@@ -1,6 +1,4 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -504,40 +502,69 @@ class _AddUserSheetState extends ConsumerState<_AddUserSheet> {
     super.dispose();
   }
 
-  String _generatePassword() {
-    const chars =
-        'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#\$';
-    final rng = Random.secure();
-    return List.generate(12, (_) => chars[rng.nextInt(chars.length)])
-        .join();
-  }
-
   Future<void> _createInvite() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
-    final tempPassword = _generatePassword();
+    final email = _emailCtrl.text.trim();
+    final name = _nameCtrl.text.trim();
+    final roleStr = AdminUser.roleToString(_role);
     final currentUser = ref.read(adminUserProvider).valueOrNull;
 
     try {
-      await FirebaseFirestore.instance.collection('admin_invites').add({
-        'email': _emailCtrl.text.trim(),
-        'displayName': _nameCtrl.text.trim(),
-        'role': AdminUser.roleToString(_role),
-        'createdBy': currentUser?.uid ?? '',
+      // Use email as doc ID so the Cloud Function and accept_invite_screen
+      // can look it up directly without a query.
+      await FirebaseFirestore.instance
+          .collection('admin_invites')
+          .doc(email)
+          .set({
+        'email': email,
+        'displayName': name,
+        'role': roleStr,
+        'invitedBy': currentUser?.uid ?? '',
+        'invitedByName': currentUser?.displayName ?? '',
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'pending',
-        'tempPassword': tempPassword,
+      });
+
+      // Trigger email via Firebase "Trigger Email from Firestore" extension
+      final acceptUrl =
+          'https://lionfm.vercel.app/#/admin-accept-invite?email=${Uri.encodeComponent(email)}';
+      await FirebaseFirestore.instance.collection('mail').add({
+        'to': [email],
+        'message': {
+          'subject': "You've been invited to the Lion FM Admin Portal",
+          'html': '''
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#111;color:#fff;border-radius:12px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <span style="font-size:32px;font-weight:700;color:#1E9B43;">LION FM</span>
+    <span style="font-size:14px;color:#888;display:block;">91.1 MHz</span>
+  </div>
+  <h2 style="color:#1E9B43;">You\'re invited!</h2>
+  <p>Hi $name,</p>
+  <p>${currentUser?.displayName ?? 'A Lion FM Admin'} has invited you to join the Lion FM Admin Portal as <strong style="color:#1E9B43;">${AdminUser.roleDisplayName(_role)}</strong>.</p>
+  <p>Click the button below to set your password and activate your account:</p>
+  <div style="text-align:center;margin:32px 0;">
+    <a href="$acceptUrl" style="background:#1E9B43;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
+      Accept Invitation
+    </a>
+  </div>
+  <p style="color:#888;font-size:13px;">This link is personal — do not share it with others.</p>
+  <hr style="border:none;border-top:1px solid #333;margin:24px 0;"/>
+  <p style="color:#666;font-size:12px;text-align:center;">
+    Lion FM 91.1 MHz · University of Nigeria, Nsukka<br/>
+    If you did not expect this invitation, please ignore this email.
+  </p>
+</div>''',
+        },
       });
 
       if (mounted) {
         Navigator.pop(context);
-        _showCredentialsDialog(
-          context,
-          name: _nameCtrl.text.trim(),
-          email: _emailCtrl.text.trim(),
-          password: tempPassword,
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Invite email sent to $email'),
+          backgroundColor: AppColors.successGreen,
+        ));
       }
     } catch (e) {
       if (mounted) {
@@ -549,67 +576,6 @@ class _AddUserSheetState extends ConsumerState<_AddUserSheet> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  void _showCredentialsDialog(
-      BuildContext context,
-      {required String name,
-      required String email,
-      required String password}) {
-    final credentials = 'Email: $email\nTemporary Password: $password';
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.bg2,
-        title: const Text('Invite Created'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Share these credentials with $name:',
-                style: AppTextStyles.bodySmall),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.bg3,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Email: $email', style: AppTextStyles.bodyMedium),
-                  const SizedBox(height: 4),
-                  Text('Temporary Password: $password',
-                      style: AppTextStyles.bodyMedium
-                          .copyWith(color: AppColors.lionGreen)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-                'They must change their password on first login. '
-                'Create their Firebase Auth account in the Firebase Console '
-                'and set the Firestore user document manually.',
-                style: AppTextStyles.caption),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: credentials));
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Credentials copied to clipboard')));
-            },
-            child: const Text('Copy to Clipboard'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -690,7 +656,7 @@ class _AddUserSheetState extends ConsumerState<_AddUserSheet> {
                       height: 20,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: AppColors.bg0))
-                  : const Text('Send Invite & Create Account'),
+                  : const Text('Send Invite Email'),
             ),
           ],
         ),
