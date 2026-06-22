@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
-import '../../providers/admin_auth_provider.dart';
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -16,89 +15,50 @@ class AdminLoginScreen extends ConsumerStatefulWidget {
 
 class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscure = true;
-  bool _loading = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
-    _passCtrl.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailCtrl.text.trim(),
-        password: _passCtrl.text,
-      );
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-      if (!mounted) return;
-
-      // Poll until adminUserProvider settles (up to 5 seconds)
-      AdminUser? adminUser;
-      for (int i = 0; i < 25; i++) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        if (!mounted) return;
-        final asyncVal = ref.read(adminUserProvider);
-        if (!asyncVal.isLoading) {
-          adminUser = asyncVal.valueOrNull;
-          break;
-        }
-      }
-
-      if (!mounted) return;
-
-      final needsSetup = ref.read(needsFirstTimeSetupProvider);
-      if (needsSetup) {
-        context.go('/admin-setup');
-        return;
-      }
-
-      if (adminUser == null) {
-        await FirebaseAuth.instance.signOut();
-        _showError(
-          'Your account does not have admin access. '
-          'Contact iLLuSys LTD to be added as an admin user.',
-        );
-        return;
-      }
-
-      if (!adminUser.isActive) {
-        await FirebaseAuth.instance.signOut();
-        _showError('Your admin account has been deactivated.');
-        return;
-      }
-
-      if (mounted) context.go('/admin');
-    } on FirebaseAuthException catch (e) {
-      _showError(_friendlyAuthError(e.code));
-    } catch (e) {
-      _showError('Sign in failed. Please try again.');
-    } finally {
-      if (mounted) setState(() => _loading = false);
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Please enter both email and password.');
+      return;
     }
-  }
 
-  String _friendlyAuthError(String code) {
-    switch (code) {
-      case 'user-not-found':
-        return 'No account found with this email.';
-      case 'wrong-password':
-      case 'invalid-credential':
-        return 'Incorrect password. Try again or use Forgot password.';
-      case 'invalid-email':
-        return 'Please enter a valid email address.';
-      case 'too-many-requests':
-        return 'Too many attempts. Please wait a few minutes and try again.';
-      case 'user-disabled':
-        return 'This account has been disabled.';
-      default:
-        return 'Sign in failed ($code). Please try again.';
+    setState(() => _isLoading = true);
+
+    try {
+      // Call Firebase FIRST — nothing else before this
+      final credential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      debugPrint('SIGNIN SUCCESS: uid=${credential.user?.uid}');
+
+      // Give the auth state a moment, then navigate.
+      // Do NOT read providers here — let the router redirect handle it.
+      if (!mounted) return;
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      context.go('/admin');
+    } on FirebaseAuthException catch (e) {
+      debugPrint('SIGNIN FirebaseAuthException: ${e.code} ${e.message}');
+      if (mounted) _showError('${e.code}: ${e.message ?? "Auth failed"}');
+    } catch (e, stack) {
+      debugPrint('SIGNIN OTHER ERROR: $e\n$stack');
+      if (mounted) _showError('Error: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -114,7 +74,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   }
 
   Future<void> _forgotPassword() async {
-    final email = _emailCtrl.text.trim();
+    final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Enter your email above first'),
@@ -190,7 +150,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                   ),
                   const SizedBox(height: AppDimensions.p40),
                   TextFormField(
-                    controller: _emailCtrl,
+                    controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     style: AppTextStyles.body,
                     decoration: _inputDecoration('Email address'),
@@ -199,7 +159,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                   ),
                   const SizedBox(height: AppDimensions.p16),
                   TextFormField(
-                    controller: _passCtrl,
+                    controller: _passwordController,
                     obscureText: _obscure,
                     style: AppTextStyles.body,
                     decoration: _inputDecoration('Password').copyWith(
@@ -234,17 +194,18 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: _loading ? null : _signIn,
+                      onPressed: _isLoading ? null : _signIn,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.lionGreen,
                         foregroundColor: AppColors.bg0,
                         disabledBackgroundColor:
                             AppColors.lionGreen.withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimensions.r12),
+                          borderRadius:
+                              BorderRadius.circular(AppDimensions.r12),
                         ),
                       ),
-                      child: _loading
+                      child: _isLoading
                           ? const SizedBox(
                               width: 20,
                               height: 20,
@@ -253,7 +214,11 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                 color: AppColors.bg0,
                               ),
                             )
-                          : Text('Sign In', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.bg0)),
+                          : Text(
+                              'Sign In',
+                              style: AppTextStyles.bodyMedium
+                                  .copyWith(color: AppColors.bg0),
+                            ),
                     ),
                   ),
                   const SizedBox(height: AppDimensions.p32),
