@@ -44,6 +44,8 @@ class _LiveBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentShow = ref.watch(currentShowProvider);
+    final volume = ref.watch(volumeProvider);
+    final handler = ref.read(audioHandlerProvider);
 
     return GestureDetector(
       onTap: () => context.go('/'),
@@ -60,13 +62,13 @@ class _LiveBar extends ConsumerWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.p16),
+                    horizontal: AppDimensions.p12),
                 child: Row(
                   children: [
                     // Artwork
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         gradient: AppColors.greenTealGradient,
                         borderRadius:
@@ -75,9 +77,9 @@ class _LiveBar extends ConsumerWidget {
                       alignment: Alignment.center,
                       child: Text('FM',
                           style: AppTextStyles.label.copyWith(
-                              color: AppColors.bg0, fontSize: 12)),
+                              color: AppColors.bg0, fontSize: 11)),
                     ),
-                    const SizedBox(width: AppDimensions.p12),
+                    const SizedBox(width: AppDimensions.p8),
                     // Show info
                     Expanded(
                       child: currentShow.when(
@@ -88,7 +90,7 @@ class _LiveBar extends ConsumerWidget {
                             Text(
                               show?.title ?? 'Lion FM 91.1 MHz',
                               style: AppTextStyles.bodyMedium
-                                  .copyWith(fontSize: 13),
+                                  .copyWith(fontSize: 12),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
@@ -105,7 +107,8 @@ class _LiveBar extends ConsumerWidget {
                                 const SizedBox(width: 4),
                                 Text('LIVE',
                                     style: AppTextStyles.caption.copyWith(
-                                        color: AppColors.liveRed)),
+                                        color: AppColors.liveRed,
+                                        fontSize: 10)),
                               ],
                             ),
                           ],
@@ -113,6 +116,55 @@ class _LiveBar extends ConsumerWidget {
                         loading: () => const SizedBox.shrink(),
                         error: (_, __) =>
                             Text('Lion FM', style: AppTextStyles.body),
+                      ),
+                    ),
+                    // Volume mute toggle
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        final muted = volume == 0.0;
+                        final newVol = muted ? 0.75 : 0.0;
+                        ref.read(volumeProvider.notifier).state = newVol;
+                        handler.setVolume(newVol);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(
+                          volume > 0.5
+                              ? Icons.volume_up_rounded
+                              : volume > 0.0
+                                  ? Icons.volume_down_rounded
+                                  : Icons.volume_off_rounded,
+                          size: 18,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    // Compact volume slider
+                    SizedBox(
+                      width: 64,
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 2,
+                          thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 5),
+                          overlayShape: const RoundSliderOverlayShape(
+                              overlayRadius: 10),
+                          activeTrackColor: AppColors.lionGold,
+                          inactiveTrackColor: AppColors.border2,
+                          thumbColor: AppColors.lionGold,
+                          overlayColor:
+                              AppColors.lionGold.withValues(alpha: 0.2),
+                        ),
+                        child: Slider(
+                          value: volume,
+                          min: 0.0,
+                          max: 1.0,
+                          onChanged: (v) {
+                            ref.read(volumeProvider.notifier).state = v;
+                            handler.setVolume(v);
+                          },
+                        ),
                       ),
                     ),
                     // Play/Pause

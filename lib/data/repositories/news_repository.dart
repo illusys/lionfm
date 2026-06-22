@@ -119,11 +119,3 @@ class FirestoreNewsRepository implements NewsRepository {
   }
 }
 
-/// Kept for tests / offline fallback only — not used in production.
-class MockNewsRepository implements NewsRepository {
-  @override
-  Future<List<NewsModel>> getNews() async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return FirestoreNewsRepository()._fallback();
-  }
-}

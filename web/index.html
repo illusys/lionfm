@@ -34,6 +34,16 @@
   <meta name="twitter:image" content="icons/Icon-512.png">
 
   <!-- PWA / Mobile -->
+  <!-- Google Sign-In: Web Client ID (OAuth 2.0).
+       Replace with the real value from Firebase Console →
+       Authentication → Sign-in method → Google → Web SDK configuration.
+       Can also be injected via --dart-define=GOOGLE_WEB_CLIENT_ID=... -->
+  <meta name="google-signin-client_id"
+        content="748866798356-l2d6q36gp1444loj06jujj0rgkf5aati.apps.googleusercontent.com">
+
+  <!-- Google Identity Services — required for google_sign_in on Flutter web -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <meta name="theme-color" content="#1E9B43">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">

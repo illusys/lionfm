@@ -71,7 +71,7 @@ final volumeProvider = StateProvider<double>((ref) => 0.75);
 // ─── Stream status ────────────────────────────────────────────────────────────
 
 final streamRepositoryProvider = Provider<StreamRepository>((ref) {
-  return MockStreamRepository();
+  return FirestoreStreamRepository();
 });
 
 final streamStatusProvider = StreamProvider<StreamStatusModel>((ref) async* {
