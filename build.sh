@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# 1. Define Flutter Target Context
-FLUTTER_VERSION="3.22.2"
+# 1. Update the Target Version to support withValues() and modern Material properties
+FLUTTER_VERSION="3.24.3"
 export PATH="$PATH:$(pwd)/flutter/bin"
 
 # 2. Prevent Git permissions errors inside Vercel's root directory environment
@@ -24,4 +24,4 @@ flutter config --no-analytics
 
 # 6. Execute public web production compilation pass
 echo "--- Compiling Production Web App Assets ---"
-flutter build web --release --pwa-strategy=none --dart-define=GOOGLE_WEB_CLIENT_ID="748866798356-l2d6q36gp1444loj06jujj0rgkf5aati.apps.googleusercontent.com"
+flutter build web --release --pwa-strategy=none
