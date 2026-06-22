@@ -81,25 +81,23 @@ class LivePlayerWidget extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(children: [
-                        GestureDetector(
-                          onTap: () {
-                            final muted = volume == 0.0;
-                            final newVol = muted ? 0.75 : 0.0;
-                            ref.read(volumeProvider.notifier).state = newVol;
-                            handler.setVolume(newVol);
-                          },
-                          child: Icon(
-                            volume > 0.6
-                                ? Icons.volume_up_rounded
-                                : volume > 0.0
-                                    ? Icons.volume_down_rounded
-                                    : Icons.volume_off_rounded,
-                            size: 16,
-                            color: AppColors.textSecondary,
-                          ),
+                      GestureDetector(
+                        onTap: () {
+                          final muted = volume == 0.0;
+                          final newVol = muted ? 0.75 : 0.0;
+                          ref.read(volumeProvider.notifier).state = newVol;
+                          handler.setVolume(newVol);
+                        },
+                        child: Icon(
+                          volume > 0.6
+                              ? Icons.volume_up_rounded
+                              : volume > 0.0
+                                  ? Icons.volume_down_rounded
+                                  : Icons.volume_off_rounded,
+                          size: 22,
+                          color: AppColors.textSecondary,
                         ),
-                      ]),
+                      ),
                       SliderTheme(
                         data: SliderTheme.of(context).copyWith(
                           trackHeight: 3,
@@ -127,8 +125,10 @@ class LivePlayerWidget extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: AppDimensions.p16),
-                // Play/Pause button
-                GestureDetector(
+                // Pulsing play button (76px, gold→green gradient)
+                _PulsingPlayButton(
+                  isPlaying: isPlaying,
+                  isLoading: isReconnecting || isLoading,
                   onTap: () async {
                     if (isLoading) return;
                     final source = ref.read(currentAudioSourceProvider);
@@ -136,7 +136,6 @@ class LivePlayerWidget extends ConsumerWidget {
                       await handler.pause();
                     } else {
                       if (source == AudioSourceType.podcast) {
-                        // Resume podcast
                         await handler.play();
                       } else {
                         await handler.playLiveRadio(streamUrl);
@@ -147,71 +146,58 @@ class LivePlayerWidget extends ConsumerWidget {
                       }
                     }
                   },
-                  child: Container(
-                    width: AppDimensions.playerButtonLg,
-                    height: AppDimensions.playerButtonLg,
-                    decoration: const BoxDecoration(
-                      gradient: AppColors.goldGradient,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: isReconnecting || isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: AppColors.appBackground,
-                            ),
-                          )
-                        : Icon(
-                            isPlaying ? Icons.pause : Icons.play_arrow,
-                            color: AppColors.appBackground,
-                            size: 28,
-                          ),
-                  ),
                 ),
                 const SizedBox(width: AppDimensions.p16),
-                // Share + notify
+                // Share + notify with 44×44 tap targets
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.share, size: 20),
-                        color: AppColors.textSecondary,
-                        onPressed: () {
-                          final title =
-                              currentShow?.title ?? 'Lion FM 91.1 MHz';
-                          Share.share(
-                            "I'm listening to $title on Lion FM 91.1 MHz! "
-                            "Stream live at www.lionfm.online",
-                          );
-                        },
+                      SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.share, size: 26),
+                          color: AppColors.textSecondary,
+                          onPressed: () {
+                            final title =
+                                currentShow?.title ?? 'Lion FM 91.1 MHz';
+                            Share.share(
+                              "I'm listening to $title on Lion FM 91.1 MHz! "
+                              "Stream live at www.lionfm.online",
+                            );
+                          },
+                        ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.notifications_none, size: 20),
-                        color: AppColors.textSecondary,
-                        onPressed: () {
-                          final user = ref.read(userProvider);
-                          if (user.notifyShowAlerts) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "We'll notify you before "
-                                  "${currentShow?.title ?? 'this show'} next week 🔔",
+                      SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.notifications_none, size: 26),
+                          color: AppColors.textSecondary,
+                          onPressed: () {
+                            final user = ref.read(userProvider);
+                            if (user.notifyShowAlerts) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "We'll notify you before "
+                                    "${currentShow?.title ?? 'this show'} next week 🔔",
+                                  ),
                                 ),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Enable show alerts in Settings to get reminders.'),
-                              ),
-                            );
-                          }
-                        },
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Enable show alerts in Settings to get reminders.'),
+                                ),
+                              );
+                            }
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -223,6 +209,95 @@ class LivePlayerWidget extends ConsumerWidget {
       },
       loading: () => const SizedBox(height: 120),
       error: (_, __) => const SizedBox(height: 120),
+    );
+  }
+}
+
+// ─── Pulsing play/pause button ────────────────────────────────────────────────
+
+class _PulsingPlayButton extends StatefulWidget {
+  final bool isPlaying;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _PulsingPlayButton({
+    required this.isPlaying,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  @override
+  State<_PulsingPlayButton> createState() => _PulsingPlayButtonState();
+}
+
+class _PulsingPlayButtonState extends State<_PulsingPlayButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _scale = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (_, child) => Transform.scale(
+          scale: widget.isPlaying ? _scale.value : 1.0,
+          child: child,
+        ),
+        child: Container(
+          width: 76,
+          height: 76,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFC89A29), Color(0xFF1E9B43)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x441E9B43),
+                blurRadius: 20,
+                spreadRadius: 4,
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: widget.isLoading
+              ? const SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                )
+              : Icon(
+                  widget.isPlaying ? Icons.pause : Icons.play_arrow,
+                  color: Colors.white,
+                  size: 32,
+                ),
+        ),
+      ),
     );
   }
 }

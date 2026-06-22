@@ -9,6 +9,7 @@ import '../../core/theme/text_styles.dart';
 import '../../providers/audio_provider.dart';
 import '../../providers/events_provider.dart';
 import '../../widgets/ads/direct_banner_widget.dart';
+import 'widgets/feature_carousel.dart';
 import 'widgets/latest_podcasts_widget.dart';
 import 'widgets/now_playing_card.dart';
 import 'widgets/quick_actions_grid.dart';
@@ -34,6 +35,12 @@ class HomeScreen extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               const SliverToBoxAdapter(child: NowPlayingCard()),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 12),
+                  child: FeatureCarousel(),
+                ),
+              ),
               const SliverToBoxAdapter(child: QuickActionsGrid()),
               const SliverToBoxAdapter(
                 child: DirectBannerWidget(placement: 'home_mid'),

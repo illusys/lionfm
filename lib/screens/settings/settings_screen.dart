@@ -7,6 +7,7 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/user_provider.dart';
+import '../../widgets/common/lion_fm_app_bar.dart';
 import 'widgets/audio_quality_selector.dart';
 import 'widgets/notification_toggles.dart';
 import 'widgets/premium_card.dart';
@@ -20,7 +21,7 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(userProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.settingsTitle)),
+      appBar: const LionFmAppBar(title: AppStrings.settingsTitle),
       body: ListView(
         padding: const EdgeInsets.only(bottom: AppDimensions.p32),
         children: [

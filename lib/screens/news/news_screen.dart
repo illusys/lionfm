@@ -6,6 +6,7 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/news_provider.dart';
 import '../../widgets/common/error_state_widget.dart';
+import '../../widgets/common/lion_fm_app_bar.dart';
 import '../../widgets/common/loading_shimmer.dart';
 import '../../widgets/ads/direct_banner_widget.dart';
 import 'widgets/featured_story_card.dart';
@@ -30,8 +31,8 @@ class NewsScreen extends ConsumerWidget {
     final category = ref.watch(newsCategoryProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Campus News'),
+      appBar: LionFmAppBar(
+        title: 'Campus News',
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(16),
           child: Padding(

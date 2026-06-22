@@ -6,6 +6,7 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/schedule_provider.dart';
 import '../../widgets/common/error_state_widget.dart';
+import '../../widgets/common/lion_fm_app_bar.dart';
 import '../../widgets/common/loading_shimmer.dart';
 import '../../widgets/ads/direct_banner_widget.dart';
 import 'widgets/day_selector.dart';
@@ -20,11 +21,11 @@ class ScheduleScreen extends ConsumerWidget {
     final shows = ref.watch(scheduledShowsStreamProvider(selectedDay));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Schedule'),
-        actions: [
+      appBar: LionFmAppBar(
+        title: 'Schedule',
+        extra: [
           Padding(
-            padding: const EdgeInsets.only(right: AppDimensions.p16),
+            padding: const EdgeInsets.only(right: 8),
             child: Text(
               DateFormat('MMM d, y').format(DateTime.now()),
               style: AppTextStyles.caption

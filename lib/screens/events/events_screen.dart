@@ -12,6 +12,7 @@ import '../../providers/audio_provider.dart';
 import '../../providers/events_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/common/lion_fm_app_bar.dart';
 import '../../widgets/common/login_prompt_sheet.dart';
 
 class EventsScreen extends ConsumerWidget {
@@ -23,10 +24,7 @@ class EventsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
-      appBar: AppBar(
-        title: const Text('Live Events'),
-        automaticallyImplyLeading: true,
-      ),
+      appBar: const LionFmAppBar(title: 'Live Events'),
       body: upcomingAsync.when(
         data: (events) {
           if (events.isEmpty) {
