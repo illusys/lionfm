@@ -118,17 +118,20 @@ class _EpisodeChip extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              episode.title,
-              style: AppTextStyles.bodyMedium.copyWith(fontSize: 11),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            const SizedBox(height: 4),
+            Flexible(
+              child: Text(
+                episode.title,
+                style: AppTextStyles.bodyMedium.copyWith(fontSize: 11),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const Spacer(),
+            const SizedBox(height: 2),
             Text(
               DateFormat('MMM d').format(episode.publishedAt),
               style: AppTextStyles.caption,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

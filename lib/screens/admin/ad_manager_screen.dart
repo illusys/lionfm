@@ -9,15 +9,19 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../data/models/audio_ad_model.dart';
 import '../../data/models/direct_banner_ad_model.dart';
+import '../../widgets/common/index_building_placeholder.dart';
 
 final _bannerAdsProvider = StreamProvider<List<DirectBannerAd>>((ref) {
+  // Fetch all ads ordered by date, filter out audio_instream in Dart.
+  // Avoids a composite index and handles legacy docs with no 'type' field.
   return FirebaseFirestore.instance
       .collection('ads')
-      .where('type', isNotEqualTo: 'audio_instream')
-      .orderBy('type')
       .orderBy('startDate', descending: true)
       .snapshots()
-      .map((s) => s.docs.map((d) => DirectBannerAd.fromFirestore(d)).toList());
+      .map((s) => s.docs
+          .where((d) => (d.data()['type'] as String?) != 'audio_instream')
+          .map((d) => DirectBannerAd.fromFirestore(d))
+          .toList());
 });
 
 final _audioAdsProvider = StreamProvider<List<AudioAdModel>>((ref) {
@@ -134,7 +138,9 @@ class _BannerAdsTab extends ConsumerWidget {
 
     return adsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e', style: AppTextStyles.body)),
+      error: (e, _) => isIndexBuildingError(e)
+          ? const IndexBuildingPlaceholder()
+          : Center(child: Text('Error: $e', style: AppTextStyles.body)),
       data: (ads) {
         final active = ads.where((a) => a.status == 'active').length;
         final scheduled = ads.where((a) => a.status == 'scheduled').length;
@@ -210,7 +216,9 @@ class _AudioAdsTab extends ConsumerWidget {
 
     return adsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e', style: AppTextStyles.body)),
+      error: (e, _) => isIndexBuildingError(e)
+          ? const IndexBuildingPlaceholder()
+          : Center(child: Text('Error: $e', style: AppTextStyles.body)),
       data: (ads) {
         if (ads.isEmpty) {
           return const Center(

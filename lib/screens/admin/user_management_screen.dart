@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/admin_auth_provider.dart';
+import '../../widgets/common/index_building_placeholder.dart';
 
 class UserManagementScreen extends ConsumerStatefulWidget {
   const UserManagementScreen({super.key});
@@ -679,6 +680,13 @@ class _PendingInvitesTab extends StatelessWidget {
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          return isIndexBuildingError(snap.error!)
+              ? const IndexBuildingPlaceholder()
+              : Center(
+                  child: Text('Error: ${snap.error}',
+                      style: const TextStyle(color: AppColors.errorRed)));
         }
         final docs = snap.data?.docs ?? [];
         if (docs.isEmpty) {
