@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import '../data/models/stream_status_model.dart';
 import '../data/repositories/stream_repository.dart';
-import '../core/constants/app_strings.dart';
 
 // Singleton AudioPlayer
 final audioPlayerProvider = Provider<AudioPlayer>((ref) {
@@ -29,11 +28,8 @@ final streamStatusProvider = StreamProvider<StreamStatusModel>((ref) async* {
   }
 });
 
-// Whether the player is currently playing live stream vs episode
 final isPlayingLiveProvider = StateProvider<bool>((ref) => true);
-
 final reconnectingProvider = StateProvider<bool>((ref) => false);
-
 final volumeProvider = StateProvider<double>((ref) => 0.75);
 
 final isPlayingProvider = Provider<bool>((ref) {
@@ -41,22 +37,21 @@ final isPlayingProvider = Provider<bool>((ref) {
   return player.playing;
 });
 
-// Playback state stream
 final playbackStateStreamProvider = StreamProvider<PlayerState>((ref) {
   return ref.watch(audioPlayerProvider).playerStateStream;
 });
 
 // Reactively watches Firestore stream_config/current.streamUrl
+// Returns '' (empty) when no URL configured — player must NOT auto-load in that case
 final liveStreamUrlProvider = StreamProvider<String>((ref) {
   return FirebaseFirestore.instance
       .collection('stream_config')
       .doc('current')
       .snapshots()
-      .map((doc) =>
-          doc.data()?['streamUrl'] as String? ?? AppStrings.liveStreamUrl);
+      .map((doc) => doc.data()?['streamUrl'] as String? ?? '');
 });
 
-// Backwards-compatible synchronous read (returns last known value or default)
+// Synchronous read: returns last known Firestore value or '' (never BBC)
 final currentStreamUrlProvider = Provider<String>((ref) {
-  return ref.watch(liveStreamUrlProvider).valueOrNull ?? AppStrings.liveStreamUrl;
+  return ref.watch(liveStreamUrlProvider).valueOrNull ?? '';
 });

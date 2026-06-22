@@ -68,7 +68,11 @@ service cloud.firestore {
 
     match /ads/{doc} {
       allow read: if true;
+      // Station managers can do full writes; signed-in listeners can only increment counters
       allow write: if isStationManager();
+      allow update: if isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['impressions', 'clicks']);
     }
 
     match /admin_config/{doc} {

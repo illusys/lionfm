@@ -1,103 +1,112 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/episode_model.dart';
+import '../../services/rss_service.dart';
 
 abstract class PodcastRepository {
   Future<List<EpisodeModel>> getEpisodes();
 }
 
+class FirestoreEpisodeRepository implements PodcastRepository {
+  final _rss = RssService();
+
+  @override
+  Future<List<EpisodeModel>> getEpisodes() async {
+    final results = await Future.wait([
+      _fetchRssEpisodes(),
+      _fetchUploadedEpisodes(),
+    ]);
+    final all = [...results[0], ...results[1]];
+    all.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    return all;
+  }
+
+  Future<List<EpisodeModel>> _fetchRssEpisodes() async {
+    try {
+      final feedsSnap = await FirebaseFirestore.instance
+          .collection('podcast_feeds')
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      final futures = feedsSnap.docs.map((doc) async {
+        final url = doc.data()['url'] as String? ?? '';
+        final name = doc.data()['name'] as String? ?? 'Podcast';
+        if (url.isEmpty) return <EpisodeModel>[];
+        final rssEpisodes = await _rss.fetchFeed(url, feedName: name);
+        return rssEpisodes.map((e) => EpisodeModel(
+              id: '${doc.id}_${e.title.hashCode}',
+              showId: doc.id,
+              showName: e.feedName ?? name,
+              title: e.title,
+              description: e.description,
+              durationMinutes: _parseDuration(e.duration),
+              publishedAt: e.pubDate ?? DateTime.now(),
+              audioUrl: e.audioUrl ?? '',
+              imageUrl: e.imageUrl,
+              category: doc.data()['category'] as String? ?? 'podcast',
+            )).toList();
+      });
+
+      final nested = await Future.wait(futures);
+      return nested.expand((e) => e).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<EpisodeModel>> _fetchUploadedEpisodes() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('podcasts')
+          .orderBy('publishedAt', descending: true)
+          .limit(50)
+          .get();
+
+      return snap.docs.map((doc) {
+        final d = doc.data();
+        final ts = d['publishedAt'];
+        DateTime pub;
+        if (ts is Timestamp) {
+          pub = ts.toDate();
+        } else if (ts is String) {
+          pub = DateTime.tryParse(ts) ?? DateTime.now();
+        } else {
+          pub = DateTime.now();
+        }
+        return EpisodeModel(
+          id: doc.id,
+          showId: d['showId'] as String? ?? '',
+          showName: d['showName'] as String? ?? 'Lion FM',
+          title: d['title'] as String? ?? '',
+          description: d['description'] as String? ?? '',
+          durationMinutes: d['durationMinutes'] as int? ?? 0,
+          publishedAt: pub,
+          audioUrl: d['audioUrl'] as String? ?? '',
+          imageUrl: d['imageUrl'] as String?,
+          category: d['category'] as String? ?? 'podcast',
+        );
+      }).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  int _parseDuration(String? s) {
+    if (s == null || s.isEmpty) return 0;
+    final parts = s.split(':');
+    if (parts.length == 3) {
+      return (int.tryParse(parts[0]) ?? 0) * 60 +
+          (int.tryParse(parts[1]) ?? 0);
+    } else if (parts.length == 2) {
+      return int.tryParse(parts[0]) ?? 0;
+    }
+    return int.tryParse(s) ?? 0;
+  }
+}
+
+// Kept for fallback only; replaced by FirestoreEpisodeRepository
 class MockPodcastRepository implements PodcastRepository {
   @override
   Future<List<EpisodeModel>> getEpisodes() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    final now = DateTime.now();
-    return [
-      EpisodeModel(
-        id: 'ep_01',
-        showId: 'sat_02',
-        showName: 'Health Talks',
-        title: 'Managing Stress During Exams',
-        description: 'UNN pharmacy students discuss practical strategies for managing academic stress, sleep hygiene, and mental health during exam season.',
-        durationMinutes: 42,
-        publishedAt: now.subtract(const Duration(days: 3)),
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        category: 'health',
-      ),
-      EpisodeModel(
-        id: 'ep_02',
-        showId: 'sat_03',
-        showName: 'Tech & Career Forum',
-        title: 'How to Land a Tech Job After UNN',
-        description: 'Engr. Ada Obi breaks down everything you need — from building your portfolio to acing technical interviews at top Nigerian tech companies.',
-        durationMinutes: 58,
-        publishedAt: now.subtract(const Duration(days: 5)),
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-        category: 'tech',
-      ),
-      EpisodeModel(
-        id: 'ep_03',
-        showId: 'sat_01',
-        showName: 'Morning Glory',
-        title: 'Convocation Special 2025',
-        description: 'DJ Emeka hosts a special convocation episode covering the 2025 UNN graduation ceremony highlights and alumni stories.',
-        durationMinutes: 35,
-        publishedAt: now.subtract(const Duration(days: 7)),
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-        category: 'news',
-      ),
-      EpisodeModel(
-        id: 'ep_04',
-        showId: 'sat_02',
-        showName: 'Health Talks',
-        title: 'Sexual & Reproductive Health Q&A',
-        description: 'An open, informative discussion on sexual and reproductive health tailored for university students, with expert responses to listener questions.',
-        durationMinutes: 50,
-        publishedAt: now.subtract(const Duration(days: 10)),
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-        category: 'health',
-      ),
-      EpisodeModel(
-        id: 'ep_05',
-        showId: 'sat_06',
-        showName: 'Afternoon Drive',
-        title: 'Best of Afrobeats Top 20',
-        description: 'DJ Chi counts down the 20 hottest Afrobeats tracks of the month — from Burna Boy to Asake, Rema to Wizkid.',
-        durationMinutes: 120,
-        publishedAt: now.subtract(const Duration(days: 2)),
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
-        category: 'music',
-      ),
-      EpisodeModel(
-        id: 'ep_06',
-        showId: 'sat_03',
-        showName: 'Tech & Career Forum',
-        title: 'Building Your First Flutter App',
-        description: 'A beginner-friendly deep dive into Flutter development — from setting up your environment to publishing your first app on the Play Store.',
-        durationMinutes: 75,
-        publishedAt: now.subtract(const Duration(days: 14)),
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
-        category: 'tech',
-      ),
-      EpisodeModel(
-        id: 'ep_07',
-        showId: 'sat_05',
-        showName: 'SUG Spotlight',
-        title: 'Election Results Analysis',
-        description: 'A post-election breakdown of the Student Union Government elections — winners, margins, and what the results mean for UNN students.',
-        durationMinutes: 45,
-        publishedAt: now.subtract(const Duration(days: 21)),
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
-        category: 'news',
-      ),
-      EpisodeModel(
-        id: 'ep_08',
-        showId: 'sat_08',
-        showName: 'Night Owls',
-        title: '3-Hour Lo-fi Study Session',
-        description: 'Three uninterrupted hours of lo-fi beats, ambient jazz, and chill instrumentals — the perfect study companion for any UNN night owl.',
-        durationMinutes: 180,
-        publishedAt: now.subtract(const Duration(days: 1)),
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
-        category: 'music',
-      ),
-    ];
+    return [];
   }
 }

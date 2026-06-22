@@ -18,7 +18,7 @@ class MockNewsRepository implements NewsRepository {
         publishedAt: now.subtract(const Duration(hours: 2)),
         isFeatured: true,
         readTimeMinutes: 3,
-        sourceUrl: 'https://lionfm.unn.edu.ng/news/cs-hackathon-2025',
+        sourceUrl: 'https://www.lionfm.online/news/cs-hackathon-2025',
       ),
       NewsModel(
         id: 'news_02',
@@ -27,7 +27,7 @@ class MockNewsRepository implements NewsRepository {
         category: NewsCategory.academic,
         publishedAt: now.subtract(const Duration(hours: 5)),
         readTimeMinutes: 2,
-        sourceUrl: 'https://lionfm.unn.edu.ng/news/registration-extension',
+        sourceUrl: 'https://www.lionfm.online/news/registration-extension',
       ),
       NewsModel(
         id: 'news_03',
@@ -36,7 +36,7 @@ class MockNewsRepository implements NewsRepository {
         category: NewsCategory.sports,
         publishedAt: now.subtract(const Duration(hours: 8)),
         readTimeMinutes: 2,
-        sourceUrl: 'https://lionfm.unn.edu.ng/news/unn-fc-nuga',
+        sourceUrl: 'https://www.lionfm.online/news/unn-fc-nuga',
       ),
       NewsModel(
         id: 'news_04',
@@ -45,7 +45,7 @@ class MockNewsRepository implements NewsRepository {
         category: NewsCategory.events,
         publishedAt: now.subtract(const Duration(hours: 12)),
         readTimeMinutes: 4,
-        sourceUrl: 'https://lionfm.unn.edu.ng/news/convocation-2025',
+        sourceUrl: 'https://www.lionfm.online/news/convocation-2025',
       ),
       NewsModel(
         id: 'news_05',
@@ -54,7 +54,7 @@ class MockNewsRepository implements NewsRepository {
         category: NewsCategory.health,
         publishedAt: now.subtract(const Duration(hours: 16)),
         readTimeMinutes: 2,
-        sourceUrl: 'https://lionfm.unn.edu.ng/news/malaria-testing',
+        sourceUrl: 'https://www.lionfm.online/news/malaria-testing',
       ),
       NewsModel(
         id: 'news_06',
@@ -63,7 +63,7 @@ class MockNewsRepository implements NewsRepository {
         category: NewsCategory.academic,
         publishedAt: now.subtract(const Duration(hours: 24)),
         readTimeMinutes: 3,
-        sourceUrl: 'https://lionfm.unn.edu.ng/news/prof-obi-award',
+        sourceUrl: 'https://www.lionfm.online/news/prof-obi-award',
       ),
       NewsModel(
         id: 'news_07',
@@ -72,7 +72,7 @@ class MockNewsRepository implements NewsRepository {
         category: NewsCategory.events,
         publishedAt: now.subtract(const Duration(hours: 30)),
         readTimeMinutes: 3,
-        sourceUrl: 'https://lionfm.unn.edu.ng/news/concert-june28',
+        sourceUrl: 'https://www.lionfm.online/news/concert-june28',
       ),
       NewsModel(
         id: 'news_08',
@@ -81,7 +81,7 @@ class MockNewsRepository implements NewsRepository {
         category: NewsCategory.campus,
         publishedAt: now.subtract(const Duration(hours: 36)),
         readTimeMinutes: 2,
-        sourceUrl: 'https://lionfm.unn.edu.ng/news/power-restored',
+        sourceUrl: 'https://www.lionfm.online/news/power-restored',
       ),
     ];
   }

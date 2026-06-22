@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
+import '../../providers/admin_auth_provider.dart';
 
 class AdminSettingsScreen extends ConsumerStatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -21,6 +22,13 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
   final _streamUrlCtrl = TextEditingController();
   final _stationNameCtrl = TextEditingController();
   final _premiumPriceCtrl = TextEditingController();
+
+  // Revenue split controllers (superAdmin only)
+  final _lionFmPctCtrl = TextEditingController();
+  final _illusysPctCtrl = TextEditingController();
+  final _unnPctCtrl = TextEditingController();
+  String? _revenueSplitError;
+
   bool _loading = true;
   bool _saving = false;
 
@@ -35,41 +43,77 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     _streamUrlCtrl.dispose();
     _stationNameCtrl.dispose();
     _premiumPriceCtrl.dispose();
+    _lionFmPctCtrl.dispose();
+    _illusysPctCtrl.dispose();
+    _unnPctCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _loadSettings() async {
     try {
-      final streamDoc = await FirebaseFirestore.instance
-          .collection('stream_config')
-          .doc('current')
-          .get();
-      final platformDoc = await FirebaseFirestore.instance
-          .collection('admin_config')
-          .doc('platform')
-          .get();
+      final results = await Future.wait([
+        FirebaseFirestore.instance.collection('stream_config').doc('current').get(),
+        FirebaseFirestore.instance.collection('admin_config').doc('platform').get(),
+        FirebaseFirestore.instance.collection('admin_config').doc('revenue').get(),
+      ]);
+
+      final streamDoc = results[0];
+      final platformDoc = results[1];
+      final revenueDoc = results[2];
 
       if (mounted) {
         setState(() {
-          _streamUrlCtrl.text =
-              streamDoc.data()?['streamUrl'] as String? ?? '';
+          _streamUrlCtrl.text = streamDoc.data()?['streamUrl'] as String? ?? '';
           _stationNameCtrl.text =
-              platformDoc.data()?['stationName'] as String? ??
-                  'Lion FM 91.1 MHz';
+              platformDoc.data()?['stationName'] as String? ?? 'Lion FM 91.1 MHz';
           _premiumPriceCtrl.text =
               (platformDoc.data()?['premiumPriceNGN'] ?? '').toString();
+
+          final revenue = revenueDoc.data();
+          _lionFmPctCtrl.text =
+              (revenue?['lionFmPct'] ?? 45).toString();
+          _illusysPctCtrl.text =
+              (revenue?['illusysPct'] ?? 40).toString();
+          _unnPctCtrl.text =
+              (revenue?['unnPct'] ?? 15).toString();
+
           _loading = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _lionFmPctCtrl.text = '45';
+          _illusysPctCtrl.text = '40';
+          _unnPctCtrl.text = '15';
+          _loading = false;
+        });
+      }
     }
   }
 
+  bool _validateRevenueSplit() {
+    final a = int.tryParse(_lionFmPctCtrl.text.trim()) ?? 0;
+    final b = int.tryParse(_illusysPctCtrl.text.trim()) ?? 0;
+    final c = int.tryParse(_unnPctCtrl.text.trim()) ?? 0;
+    if (a + b + c != 100) {
+      setState(() => _revenueSplitError =
+          'The three values must sum to 100 (currently ${a + b + c})');
+      return false;
+    }
+    setState(() => _revenueSplitError = null);
+    return true;
+  }
+
   Future<void> _saveSettings() async {
+    final adminUser = ref.read(adminUserProvider).valueOrNull;
+    final isSuperAdmin = adminUser?.isSuperAdmin == true;
+
+    if (isSuperAdmin && !_validateRevenueSplit()) return;
+
     setState(() => _saving = true);
     try {
-      await Future.wait([
+      final futures = <Future>[
         FirebaseFirestore.instance
             .collection('stream_config')
             .doc('current')
@@ -80,10 +124,27 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             .doc('platform')
             .set({
           'stationName': _stationNameCtrl.text.trim(),
-          'premiumPriceNGN':
-              int.tryParse(_premiumPriceCtrl.text.trim()) ?? 0,
+          'premiumPriceNGN': int.tryParse(_premiumPriceCtrl.text.trim()) ?? 0,
         }, SetOptions(merge: true)),
-      ]);
+      ];
+
+      if (isSuperAdmin) {
+        futures.add(
+          FirebaseFirestore.instance
+              .collection('admin_config')
+              .doc('revenue')
+              .set({
+            'lionFmPct': int.tryParse(_lionFmPctCtrl.text.trim()) ?? 45,
+            'illusysPct': int.tryParse(_illusysPctCtrl.text.trim()) ?? 40,
+            'unnPct': int.tryParse(_unnPctCtrl.text.trim()) ?? 15,
+            'updatedAt': FieldValue.serverTimestamp(),
+            'updatedBy': adminUser?.uid ?? '',
+          }, SetOptions(merge: true)),
+        );
+      }
+
+      await Future.wait(futures);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Settings saved'),
@@ -109,7 +170,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
         backgroundColor: AppColors.bg2,
         title: const Text('Clear Request Queue'),
         content: const Text(
-            'Delete all requests with status "done"? This cannot be undone.'),
+            'Delete all requests with status "played" or "skipped"? This cannot be undone.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -126,18 +187,30 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     if (confirmed != true || !mounted) return;
 
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('requests')
-          .where('status', isEqualTo: 'done')
-          .get();
+      final futures = await Future.wait([
+        FirebaseFirestore.instance
+            .collection('requests')
+            .where('status', isEqualTo: 'played')
+            .get(),
+        FirebaseFirestore.instance
+            .collection('requests')
+            .where('status', isEqualTo: 'skipped')
+            .get(),
+      ]);
+
       final batch = FirebaseFirestore.instance.batch();
-      for (final doc in snap.docs) {
-        batch.delete(doc.reference);
+      int count = 0;
+      for (final snap in futures) {
+        for (final doc in snap.docs) {
+          batch.delete(doc.reference);
+          count++;
+        }
       }
       await batch.commit();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Deleted ${snap.docs.length} completed requests'),
+          content: Text('Deleted $count completed requests'),
           backgroundColor: AppColors.successGreen,
         ));
       }
@@ -153,20 +226,23 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
   Future<void> _exportData() async {
     try {
-      final showsSnap = await FirebaseFirestore.instance
-          .collection('shows')
-          .get();
-      final usersSnap = await FirebaseFirestore.instance
-          .collection('users')
-          .get();
+      final results = await Future.wait([
+        FirebaseFirestore.instance.collection('shows').get(),
+        FirebaseFirestore.instance.collection('users').get(),
+      ]);
+      final showsSnap = results[0];
+      final usersSnap = results[1];
 
       final rows = <List<dynamic>>[
         ['--- SHOWS ---'],
-        ['Title', 'Host', 'Schedule'],
+        ['Title', 'Host', 'Days', 'Start', 'End', 'Category'],
         ...showsSnap.docs.map((d) => [
               d.data()['title'] ?? '',
               d.data()['host'] ?? '',
-              d.data()['schedule'] ?? '',
+              (d.data()['days'] as List?)?.join(',') ?? '',
+              d.data()['startTime'] ?? '',
+              d.data()['endTime'] ?? '',
+              d.data()['category'] ?? '',
             ]),
         [],
         ['--- USERS ---'],
@@ -216,7 +292,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             _InfoRow(label: 'Project', value: 'lionfm-unn'),
             _InfoRow(label: 'Region', value: 'europe-west2 (London)'),
             _InfoRow(
-                label: 'Rules', value: 'Role-based (superAdmin/stationManager/broadcaster/unnAdmin)'),
+                label: 'Rules',
+                value:
+                    'Role-based (superAdmin/stationManager/broadcaster/unnAdmin)'),
           ],
         ),
         actions: [
@@ -230,6 +308,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final adminUser = ref.watch(adminUserProvider).valueOrNull;
+    final isSuperAdmin = adminUser?.isSuperAdmin == true;
+
     if (_loading) {
       return const Scaffold(
         backgroundColor: AppColors.bg0,
@@ -282,38 +363,95 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: AppDimensions.p16),
-          Container(
-            padding: const EdgeInsets.all(AppDimensions.p12),
-            decoration: BoxDecoration(
-              color: AppColors.bg2,
-              borderRadius: BorderRadius.circular(AppDimensions.r12),
-              border: Border.all(color: AppColors.border1),
+
+          // B) Revenue Split
+          _SectionHeader(title: 'Revenue Split'),
+          const SizedBox(height: AppDimensions.p12),
+          if (isSuperAdmin) ...[
+            Container(
+              padding: const EdgeInsets.all(AppDimensions.p12),
+              decoration: BoxDecoration(
+                color: AppColors.bg2,
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+                border: Border.all(color: AppColors.border1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _RevenueSplitField(
+                    label: 'Lion FM (UNN)',
+                    controller: _lionFmPctCtrl,
+                    color: AppColors.lionGreen,
+                    onChanged: (_) => setState(() => _revenueSplitError = null),
+                  ),
+                  const SizedBox(height: 10),
+                  _RevenueSplitField(
+                    label: 'iLLuSys LTD',
+                    controller: _illusysPctCtrl,
+                    color: AppColors.electricTeal,
+                    onChanged: (_) => setState(() => _revenueSplitError = null),
+                  ),
+                  const SizedBox(height: 10),
+                  _RevenueSplitField(
+                    label: 'Operations (UNN)',
+                    controller: _unnPctCtrl,
+                    color: AppColors.warningGold,
+                    onChanged: (_) => setState(() => _revenueSplitError = null),
+                  ),
+                  if (_revenueSplitError != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _revenueSplitError!,
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.errorRed),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'All three values must sum to 100.',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textMuted),
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('REVENUE SPLIT',
-                    style: AppTextStyles.label),
-                const SizedBox(height: 12),
-                _RevenueSplitRow(label: 'Lion FM (UNN)', percent: '45%',
-                    color: AppColors.lionGreen),
-                const SizedBox(height: 8),
-                _RevenueSplitRow(label: 'iLLuSys LTD', percent: '40%',
-                    color: AppColors.electricTeal),
-                const SizedBox(height: 8),
-                _RevenueSplitRow(label: 'Operations', percent: '15%',
-                    color: AppColors.warningGold),
-                const SizedBox(height: 8),
-                Text(
-                  'Contact iLLuSys LTD to modify revenue split.',
-                  style: AppTextStyles.caption,
-                ),
-              ],
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.all(AppDimensions.p12),
+              decoration: BoxDecoration(
+                color: AppColors.bg2,
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+                border: Border.all(color: AppColors.border1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _RevenueSplitRow(
+                      label: 'Lion FM (UNN)',
+                      percent: '${_lionFmPctCtrl.text}%',
+                      color: AppColors.lionGreen),
+                  const SizedBox(height: 8),
+                  _RevenueSplitRow(
+                      label: 'iLLuSys LTD',
+                      percent: '${_illusysPctCtrl.text}%',
+                      color: AppColors.electricTeal),
+                  const SizedBox(height: 8),
+                  _RevenueSplitRow(
+                      label: 'Operations',
+                      percent: '${_unnPctCtrl.text}%',
+                      color: AppColors.warningGold),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Only superAdmin can edit the revenue split.',
+                    style: AppTextStyles.caption,
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: AppDimensions.p24),
 
-          // B) Firebase Configuration
+          // C) Firebase Configuration
           _SectionHeader(title: 'Firebase Configuration'),
           const SizedBox(height: AppDimensions.p12),
           Container(
@@ -334,6 +472,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                 _InfoRow(
                     label: 'Auth Domain',
                     value: 'lionfm-unn.firebaseapp.com'),
+                const Divider(color: AppColors.border1, height: 16),
+                const _InfoRow(
+                    label: 'App Domain', value: 'www.lionfm.online'),
               ],
             ),
           ),
@@ -345,7 +486,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
           ),
           const SizedBox(height: AppDimensions.p24),
 
-          // C) Danger Zone
+          // D) Danger Zone
           _SectionHeader(title: 'Danger Zone', color: AppColors.errorRed),
           const SizedBox(height: AppDimensions.p12),
           Container(
@@ -361,7 +502,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               children: [
                 _DangerButton(
                   label: 'Clear Request Queue',
-                  subtitle: 'Delete all requests with status "done"',
+                  subtitle: 'Delete all played/skipped requests',
                   onPressed: _clearDoneRequests,
                 ),
                 const Divider(color: AppColors.border1, height: 24),
@@ -445,11 +586,70 @@ class _SettingsField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.r12),
-              borderSide: const BorderSide(
-                  color: AppColors.lionGreen, width: 1.5),
+              borderSide:
+                  const BorderSide(color: AppColors.lionGreen, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(
                 horizontal: AppDimensions.p16, vertical: AppDimensions.p12),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RevenueSplitField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final Color color;
+  final ValueChanged<String>? onChanged;
+
+  const _RevenueSplitField({
+    required this.label,
+    required this.controller,
+    required this.color,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Expanded(child: Text(label, style: AppTextStyles.body)),
+        SizedBox(
+          width: 64,
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            onChanged: onChanged,
+            style: AppTextStyles.bodyMedium.copyWith(color: color),
+            decoration: InputDecoration(
+              suffixText: '%',
+              suffixStyle:
+                  AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+              filled: true,
+              fillColor: AppColors.bg3,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: color.withValues(alpha: 0.4)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: color.withValues(alpha: 0.4)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: color),
+              ),
+            ),
           ),
         ),
       ],
@@ -462,9 +662,7 @@ class _RevenueSplitRow extends StatelessWidget {
   final String percent;
   final Color color;
   const _RevenueSplitRow(
-      {required this.label,
-      required this.percent,
-      required this.color});
+      {required this.label, required this.percent, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -522,7 +720,8 @@ class _DangerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? AppColors.errorRed : AppColors.textSecondary;
+    final color =
+        isDestructive ? AppColors.errorRed : AppColors.textSecondary;
 
     return InkWell(
       onTap: onPressed,
@@ -536,7 +735,8 @@ class _DangerButton extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: AppTextStyles.bodyMedium.copyWith(color: color)),
+                      style:
+                          AppTextStyles.bodyMedium.copyWith(color: color)),
                   Text(subtitle, style: AppTextStyles.caption),
                 ],
               ),

@@ -1,6 +1,8 @@
-enum RequestType { song, showPitch }
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum RequestStatus { pending, acknowledged, played }
+enum RequestType { song, showPitch, shoutout }
+
+enum RequestStatus { pending, acknowledged, played, skipped }
 
 class RequestModel {
   final String id;
@@ -18,6 +20,7 @@ class RequestModel {
   final String? contactInfo;
   final DateTime submittedAt;
   final RequestStatus status;
+  final bool isPremium;
 
   const RequestModel({
     required this.id,
@@ -35,6 +38,7 @@ class RequestModel {
     this.contactInfo,
     required this.submittedAt,
     this.status = RequestStatus.pending,
+    this.isPremium = false,
   });
 
   RequestModel copyWith({
@@ -53,6 +57,7 @@ class RequestModel {
     String? contactInfo,
     DateTime? submittedAt,
     RequestStatus? status,
+    bool? isPremium,
   }) {
     return RequestModel(
       id: id ?? this.id,
@@ -70,16 +75,48 @@ class RequestModel {
       contactInfo: contactInfo ?? this.contactInfo,
       submittedAt: submittedAt ?? this.submittedAt,
       status: status ?? this.status,
+      isPremium: isPremium ?? this.isPremium,
+    );
+  }
+
+  factory RequestModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final json = doc.data()!;
+    final ts = json['submittedAt'];
+    DateTime submitted;
+    if (ts is Timestamp) {
+      submitted = ts.toDate();
+    } else if (ts is String) {
+      submitted = DateTime.tryParse(ts) ?? DateTime.now();
+    } else {
+      submitted = DateTime.now();
+    }
+    return RequestModel(
+      id: doc.id,
+      type: _typeFromString(json['type'] as String?),
+      songTitle: json['songTitle'] as String?,
+      artistName: json['artistName'] as String?,
+      dedicatedTo: json['dedicatedTo'] as String?,
+      requesterName: json['requesterName'] as String? ?? 'Anonymous',
+      requestedShow: json['requestedShow'] as String?,
+      message: json['message'] as String?,
+      showConceptName: json['showConceptName'] as String?,
+      department: json['department'] as String?,
+      preferredSlot: json['preferredSlot'] as String?,
+      format: json['format'] as String?,
+      contactInfo: json['contactInfo'] as String?,
+      submittedAt: submitted,
+      status: _statusFromString(json['status'] as String?),
+      isPremium: json['isPremium'] as bool? ?? false,
     );
   }
 
   factory RequestModel.fromJson(Map<String, dynamic> json) => RequestModel(
         id: json['id'] as String,
-        type: RequestType.values.byName(json['type'] as String),
+        type: _typeFromString(json['type'] as String?),
         songTitle: json['songTitle'] as String?,
         artistName: json['artistName'] as String?,
         dedicatedTo: json['dedicatedTo'] as String?,
-        requesterName: json['requesterName'] as String,
+        requesterName: json['requesterName'] as String? ?? 'Anonymous',
         requestedShow: json['requestedShow'] as String?,
         message: json['message'] as String?,
         showConceptName: json['showConceptName'] as String?,
@@ -87,8 +124,9 @@ class RequestModel {
         preferredSlot: json['preferredSlot'] as String?,
         format: json['format'] as String?,
         contactInfo: json['contactInfo'] as String?,
-        submittedAt: DateTime.parse(json['submittedAt'] as String),
-        status: RequestStatus.values.byName(json['status'] as String? ?? 'pending'),
+        submittedAt: DateTime.tryParse(json['submittedAt'] as String? ?? '') ?? DateTime.now(),
+        status: _statusFromString(json['status'] as String?),
+        isPremium: json['isPremium'] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -107,5 +145,30 @@ class RequestModel {
         'contactInfo': contactInfo,
         'submittedAt': submittedAt.toIso8601String(),
         'status': status.name,
+        'isPremium': isPremium,
       };
+
+  static RequestType _typeFromString(String? s) {
+    switch (s) {
+      case 'showPitch':
+        return RequestType.showPitch;
+      case 'shoutout':
+        return RequestType.shoutout;
+      default:
+        return RequestType.song;
+    }
+  }
+
+  static RequestStatus _statusFromString(String? s) {
+    switch (s) {
+      case 'acknowledged':
+        return RequestStatus.acknowledged;
+      case 'played':
+        return RequestStatus.played;
+      case 'skipped':
+        return RequestStatus.skipped;
+      default:
+        return RequestStatus.pending;
+    }
+  }
 }

@@ -18,49 +18,12 @@ class StreamMonitorScreen extends ConsumerStatefulWidget {
 }
 
 class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
-  final _urlController = TextEditingController();
-  bool _urlInitialized = false;
-  bool _savingUrl = false;
   _TestState _testState = _TestState.idle;
 
-  @override
-  void dispose() {
-    _urlController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _saveUrl() async {
-    final url = _urlController.text.trim();
-    if (url.isEmpty) return;
-    setState(() => _savingUrl = true);
-    try {
-      await FirebaseFirestore.instance
-          .collection('stream_config')
-          .doc('current')
-          .set({'streamUrl': url}, SetOptions(merge: true));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Stream URL updated'),
-          backgroundColor: AppColors.successGreen,
-        ));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: AppColors.errorRed,
-        ));
-      }
-    } finally {
-      if (mounted) setState(() => _savingUrl = false);
-    }
-  }
-
-  Future<void> _testStream() async {
-    final url = _urlController.text.trim();
+  Future<void> _testStream(String url) async {
     if (url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Enter a stream URL first'),
+        content: Text('No stream URL configured in Admin Settings'),
       ));
       return;
     }
@@ -87,10 +50,9 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
           .doc('current')
           .set({'streamUrl': testUrl}, SetOptions(merge: true));
       if (mounted) {
-        _urlController.text = testUrl;
         setState(() => _testState = _TestState.idle);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Test stream URL loaded and saved'),
+          content: Text('Test stream URL saved — edit in Admin Settings'),
           backgroundColor: AppColors.successGreen,
         ));
       }
@@ -110,13 +72,7 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
     final urlAsync = ref.watch(liveStreamUrlProvider);
     final adminUser = ref.watch(adminUserProvider).valueOrNull;
 
-    // Pre-fill URL field from Firestore on first load
-    urlAsync.whenData((url) {
-      if (!_urlInitialized) {
-        _urlController.text = url;
-        _urlInitialized = true;
-      }
-    });
+    final currentUrl = urlAsync.valueOrNull ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
@@ -127,74 +83,50 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppDimensions.p16),
         children: [
-          // Stream URL management card
+          // Read-only URL display card
           _SectionCard(
-            title: 'STREAM URL',
+            title: 'CURRENT STREAM URL',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  controller: _urlController,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    fontFamily: 'monospace',
-                    color: AppColors.electricTeal,
+                if (urlAsync.isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.bg3,
+                      borderRadius: BorderRadius.circular(AppDimensions.r8),
+                      border: Border.all(color: AppColors.border1),
+                    ),
+                    child: Text(
+                      currentUrl.isEmpty ? '(no URL configured)' : currentUrl,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontFamily: 'monospace',
+                        color: currentUrl.isEmpty
+                            ? AppColors.textMuted
+                            : AppColors.electricTeal,
+                      ),
+                    ),
                   ),
-                  decoration: InputDecoration(
-                    hintText: 'https://your-stream-url/path',
-                    hintStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
-                    filled: true,
-                    fillColor: AppColors.bg3,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r8),
-                      borderSide: const BorderSide(color: AppColors.border1),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r8),
-                      borderSide: const BorderSide(color: AppColors.border1),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.r8),
-                      borderSide: const BorderSide(color: AppColors.lionGreen),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    suffixIcon: urlAsync.isLoading
-                        ? const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: SizedBox(
-                              width: 16, height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : null,
-                  ),
-                  onChanged: (_) => setState(() => _testState = _TestState.idle),
+                const SizedBox(height: 8),
+                Text(
+                  'To change the URL, go to Admin Settings.',
+                  style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _savingUrl ? null : _saveUrl,
-                        icon: _savingUrl
-                            ? const SizedBox(
-                                width: 14, height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.bg0),
-                              )
-                            : const Icon(Icons.save_rounded, size: 16),
-                        label: Text(_savingUrl ? 'Saving…' : 'Save URL'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.lionGreen,
-                          foregroundColor: AppColors.bg0,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _testState == _TestState.testing ? null : _testStream,
+                        onPressed: _testState == _TestState.testing
+                            ? null
+                            : () => _testStream(currentUrl),
                         icon: _testState == _TestState.testing
                             ? const SizedBox(
-                                width: 14, height: 14,
+                                width: 14,
+                                height: 14,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : Icon(
@@ -221,22 +153,26 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
                         ),
                       ),
                     ),
+                    if (adminUser?.isSuperAdmin == true) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _loadTestStream,
+                          icon: const Icon(Icons.science_rounded,
+                              size: 16, color: AppColors.warningGold),
+                          label: const Text(
+                            'Load Test Stream',
+                            style: TextStyle(
+                                color: AppColors.warningGold, fontSize: 12),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.warningGold),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-                if (adminUser?.isSuperAdmin == true) ...[
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _loadTestStream,
-                    icon: const Icon(Icons.science_rounded, size: 16, color: AppColors.warningGold),
-                    label: const Text(
-                      'Load Test Stream (Radio Paradise)',
-                      style: TextStyle(color: AppColors.warningGold, fontSize: 12),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.warningGold),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -246,7 +182,6 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
           streamStatus.when(
             data: (status) => Column(
               children: [
-                // Status indicator
                 Container(
                   padding: const EdgeInsets.all(AppDimensions.p20),
                   decoration: BoxDecoration(
@@ -267,7 +202,9 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
                         width: 12,
                         height: 12,
                         decoration: BoxDecoration(
-                          color: status.isLive ? AppColors.liveRed : AppColors.textMuted,
+                          color: status.isLive
+                              ? AppColors.liveRed
+                              : AppColors.textMuted,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -275,14 +212,15 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
                       Text(
                         status.isLive ? 'STREAM LIVE' : 'OFF AIR',
                         style: AppTextStyles.h2.copyWith(
-                          color: status.isLive ? AppColors.liveRed : AppColors.textMuted,
+                          color: status.isLive
+                              ? AppColors.liveRed
+                              : AppColors.textMuted,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: AppDimensions.p16),
-                // Metrics
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -291,21 +229,32 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
                   mainAxisSpacing: 12,
                   childAspectRatio: 1.8,
                   children: [
-                    _MetricCard(label: 'Listeners', value: '${status.listenerCount}', color: AppColors.lionGreen),
-                    _MetricCard(label: 'Bitrate', value: '${status.streamBitrate}kbps', color: AppColors.electricTeal),
-                    const _MetricCard(label: 'Uptime', value: '99.2%', color: AppColors.lionGold),
-                    const _MetricCard(label: 'Latency', value: '1.2s', color: AppColors.burntAmber),
+                    _MetricCard(
+                        label: 'Listeners',
+                        value: '${status.listenerCount}',
+                        color: AppColors.lionGreen),
+                    _MetricCard(
+                        label: 'Bitrate',
+                        value: '${status.streamBitrate}kbps',
+                        color: AppColors.electricTeal),
+                    const _MetricCard(
+                        label: 'Uptime',
+                        value: '—',
+                        color: AppColors.lionGold),
+                    const _MetricCard(
+                        label: 'Latency',
+                        value: '—',
+                        color: AppColors.burntAmber),
                   ],
                 ),
                 const SizedBox(height: AppDimensions.p16),
-                // Controls
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Stream restart requested')),
-                        ),
+                        onPressed: () => ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                                content: Text('Stream restart requested'))),
                         icon: const Icon(Icons.refresh_rounded),
                         label: const Text('Restart'),
                       ),
@@ -313,11 +262,13 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Emergency stop sent')),
-                        ),
-                        icon: const Icon(Icons.stop_rounded, color: AppColors.liveRed),
-                        label: const Text('Stop', style: TextStyle(color: AppColors.liveRed)),
+                        onPressed: () => ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                                content: Text('Emergency stop sent'))),
+                        icon: const Icon(Icons.stop_rounded,
+                            color: AppColors.liveRed),
+                        label: const Text('Stop',
+                            style: TextStyle(color: AppColors.liveRed)),
                       ),
                     ),
                   ],
@@ -325,7 +276,8 @@ class _StreamMonitorScreenState extends ConsumerState<StreamMonitorScreen> {
               ],
             ),
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e', style: AppTextStyles.body)),
+            error: (e, _) =>
+                Center(child: Text('Error: $e', style: AppTextStyles.body)),
           ),
         ],
       ),
@@ -374,7 +326,8 @@ class _MetricCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  const _MetricCard({required this.label, required this.value, required this.color});
+  const _MetricCard(
+      {required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {

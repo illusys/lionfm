@@ -56,6 +56,9 @@ class _ShowListTileState extends State<ShowListTile>
     final now = DateTime.now();
     final status = widget.show.getStatus(now);
     final isLive = status == ShowStatus.live;
+    final minsUntilStart = status == ShowStatus.upcoming
+        ? widget.show.startTime.difference(now).inMinutes
+        : null;
 
     return FadeTransition(
       opacity: _fade,
@@ -134,7 +137,8 @@ class _ShowListTileState extends State<ShowListTile>
                               ],
                             ),
                           ),
-                          _ShowStatusBadge(status: status),
+                          _ShowStatusBadge(
+                              status: status, minsUntilStart: minsUntilStart),
                         ],
                       ),
                     ),
@@ -215,10 +219,17 @@ class _StatusDotState extends State<_StatusDot>
 
 class _ShowStatusBadge extends StatelessWidget {
   final ShowStatus status;
-  const _ShowStatusBadge({required this.status});
+  final int? minsUntilStart;
+  const _ShowStatusBadge({required this.status, this.minsUntilStart});
 
   @override
   Widget build(BuildContext context) {
+    String upcomingLabel = 'NEXT';
+    if (minsUntilStart != null && minsUntilStart! <= 60) {
+      upcomingLabel =
+          minsUntilStart! <= 1 ? 'now' : 'in ${minsUntilStart}m';
+    }
+
     final (label, bgColor, textColor) = switch (status) {
       ShowStatus.live => (
           'LIVE',
@@ -226,9 +237,11 @@ class _ShowStatusBadge extends StatelessWidget {
           AppColors.liveRed
         ),
       ShowStatus.upcoming => (
-          'NEXT',
+          upcomingLabel,
           AppColors.surface3,
-          AppColors.textSecondary
+          minsUntilStart != null && minsUntilStart! <= 60
+              ? AppColors.lionGreen
+              : AppColors.textSecondary,
         ),
       ShowStatus.done => ('DONE', AppColors.surface3, AppColors.textMuted),
     };

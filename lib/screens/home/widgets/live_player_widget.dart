@@ -4,6 +4,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/models/show_model.dart';
 import '../../../providers/audio_provider.dart';
@@ -21,6 +22,27 @@ class LivePlayerWidget extends ConsumerWidget {
     final player = ref.watch(audioPlayerProvider);
     final isReconnecting = ref.watch(reconnectingProvider);
     final volume = ref.watch(volumeProvider);
+    final streamUrlAsync = ref.watch(liveStreamUrlProvider);
+
+    // Determine current stream URL
+    final streamUrl = streamUrlAsync.valueOrNull ?? '';
+    final noUrl = streamUrl.isEmpty;
+
+    if (noUrl) {
+      return Column(
+        children: [
+          const SizedBox(height: 12),
+          const Icon(Icons.wifi_off_rounded, color: AppColors.textMuted, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            AppStrings.noStreamConfigured,
+            style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+        ],
+      );
+    }
 
     return playbackState.when(
       data: (state) {
@@ -32,7 +54,6 @@ class LivePlayerWidget extends ConsumerWidget {
           children: [
             WaveformWidget(isPlaying: isPlaying && !isLoading),
             const SizedBox(height: AppDimensions.p12),
-            // Time row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -48,16 +69,12 @@ class LivePlayerWidget extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      '● LIVE',
-                      style: AppTextStyles.liveLabel,
-                    ),
+                    Text('● LIVE', style: AppTextStyles.liveLabel),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: AppDimensions.p16),
-            // Controls row
             Row(
               children: [
                 // Volume
@@ -102,10 +119,9 @@ class LivePlayerWidget extends ConsumerWidget {
                     if (isPlaying) {
                       await player.pause();
                     } else {
-                      if (player.processingState == ProcessingState.idle) {
-                        await player.setUrl(
-                          'https://stream.lionfm.unn.edu.ng/live/stream.m3u8',
-                        );
+                      if (player.processingState == ProcessingState.idle ||
+                          player.processingState == ProcessingState.completed) {
+                        await player.setUrl(streamUrl);
                       }
                       await player.play();
                     }
@@ -147,7 +163,7 @@ class LivePlayerWidget extends ConsumerWidget {
                           final title = currentShow?.title ?? 'Lion FM 91.1 MHz';
                           Share.share(
                             "I'm listening to $title on Lion FM 91.1 MHz! "
-                            "Stream live at lionfm.unn.edu.ng",
+                            "Stream live at www.lionfm.online",
                           );
                         },
                       ),

@@ -8,11 +8,13 @@ class AppConfig {
 
   static const String streamBaseUrl = String.fromEnvironment(
     'STREAM_BASE_URL',
-    defaultValue: 'https://stream.lionfm.unn.edu.ng',
+    defaultValue: '',
   );
 
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.lionfm.unn.edu.ng',
+    defaultValue: 'https://api.lionfm.online',
   );
+
+  static const String appBaseUrl = 'https://www.lionfm.online';
 }

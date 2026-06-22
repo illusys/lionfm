@@ -529,7 +529,7 @@ class _AddUserSheetState extends ConsumerState<_AddUserSheet> {
 
       // Trigger email via Firebase "Trigger Email from Firestore" extension
       final acceptUrl =
-          'https://lionfm.vercel.app/#/admin-accept-invite?email=${Uri.encodeComponent(email)}';
+          'https://www.lionfm.online/#/admin-accept-invite?email=${Uri.encodeComponent(email)}';
       await FirebaseFirestore.instance.collection('mail').add({
         'to': [email],
         'message': {

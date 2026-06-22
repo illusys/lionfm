@@ -17,7 +17,7 @@ class ScheduleScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedDay = ref.watch(selectedDayProvider);
-    final shows = ref.watch(scheduledShowsProvider(selectedDay));
+    final shows = ref.watch(scheduledShowsStreamProvider(selectedDay));
 
     return Scaffold(
       appBar: AppBar(
@@ -27,7 +27,8 @@ class ScheduleScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(right: AppDimensions.p16),
             child: Text(
               DateFormat('MMM d, y').format(DateTime.now()),
-              style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+              style: AppTextStyles.caption
+                  .copyWith(color: AppColors.textTertiary),
             ),
           ),
         ],
@@ -38,15 +39,39 @@ class ScheduleScreen extends ConsumerWidget {
           const Divider(height: 1),
           Expanded(
             child: shows.when(
-              data: (list) => ListView.builder(
-                itemCount: list.length,
-                padding: const EdgeInsets.symmetric(vertical: AppDimensions.p8),
-                itemBuilder: (_, i) => ShowListTile(
-                  show: list[i],
-                  isLast: i == list.length - 1,
-                  index: i,
-                ),
-              ),
+              data: (list) {
+                if (list.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.schedule_rounded,
+                            color: AppColors.textMuted, size: 48),
+                        const SizedBox(height: 16),
+                        Text('No shows on $selectedDay',
+                            style: AppTextStyles.bodyMedium),
+                        const SizedBox(height: 8),
+                        Text(
+                          'The schedule will appear here once\nadmin adds shows.',
+                          style: AppTextStyles.body
+                              .copyWith(color: AppColors.textMuted),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: list.length,
+                  padding: const EdgeInsets.symmetric(
+                      vertical: AppDimensions.p8),
+                  itemBuilder: (_, i) => ShowListTile(
+                    show: list[i],
+                    isLast: i == list.length - 1,
+                    index: i,
+                  ),
+                );
+              },
               loading: () => ListView(
                 children: List.generate(
                     5,
@@ -59,7 +84,8 @@ class ScheduleScreen extends ConsumerWidget {
               ),
               error: (e, _) => ErrorStateWidget(
                 message: 'Could not load schedule',
-                onRetry: () => ref.refresh(scheduledShowsProvider(selectedDay)),
+                onRetry: () => ref
+                    .refresh(scheduledShowsStreamProvider(selectedDay)),
               ),
             ),
           ),

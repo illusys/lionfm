@@ -1,17 +1,14 @@
 import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
-import '../../core/constants/app_strings.dart';
 
 class LionFMAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   final AudioPlayer _player = AudioPlayer();
 
-  static const String _primaryUrl = AppStrings.liveStreamUrl;
-  static const String _fallbackUrl = AppStrings.fallbackStreamUrl;
-
   bool _isPlayingEpisode = false;
   int _retryCount = 0;
   static const int _maxRetries = 3;
+  String _currentStreamUrl = '';
 
   LionFMAudioHandler() {
     _init();
@@ -51,6 +48,7 @@ class LionFMAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler
   }
 
   void _handleError(Object? error, StackTrace? stack) async {
+    if (_isPlayingEpisode || _currentStreamUrl.isEmpty) return;
     if (_retryCount >= _maxRetries) {
       playbackState.add(playbackState.value.copyWith(
         processingState: AudioProcessingState.error,
@@ -60,8 +58,7 @@ class LionFMAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     _retryCount++;
     await Future.delayed(const Duration(seconds: 5));
     try {
-      final url = _retryCount > 1 ? _fallbackUrl : _primaryUrl;
-      await _player.setUrl(url);
+      await _player.setUrl(_currentStreamUrl);
       await _player.play();
       _retryCount = 0;
     } catch (_) {
@@ -69,20 +66,17 @@ class LionFMAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     }
   }
 
-  String getStreamUrl(String qualityBitrate) {
-    return '$_primaryUrl?bitrate=$qualityBitrate';
-  }
-
-  Future<void> playLiveStream({String bitrate = '128'}) async {
+  Future<void> playLiveStream({required String url, String bitrate = '128'}) async {
+    if (url.isEmpty) return; // No URL configured — do not attempt
     _isPlayingEpisode = false;
     _retryCount = 0;
-    final url = getStreamUrl(bitrate);
+    _currentStreamUrl = url;
     mediaItem.add(MediaItem(
       id: 'live_stream',
       title: 'Lion FM 91.1 MHz',
       artist: 'Live Radio',
       album: 'University of Nigeria, Nsukka',
-      artUri: Uri.parse('https://lionfm.unn.edu.ng/logo.png'),
+      artUri: Uri(scheme: 'https', host: 'www.lionfm.online', path: '/logo.png'),
     ));
     try {
       await _player.setUrl(url);
@@ -110,7 +104,9 @@ class LionFMAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     await _player.play();
   }
 
-  Future<void> returnToLiveStream() => playLiveStream();
+  Future<void> returnToLiveStream(String url) async {
+    await playLiveStream(url: url);
+  }
 
   bool get isPlayingEpisode => _isPlayingEpisode;
 

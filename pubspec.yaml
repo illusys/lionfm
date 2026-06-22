@@ -74,6 +74,10 @@ dependencies:
   # CSV export
   csv: ^6.0.0
 
+  # PDF report generation
+  pdf: ^3.10.0
+  printing: ^5.11.0
+
   # RSS podcast feed parsing
   xml: ^6.5.0
 
