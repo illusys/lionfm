@@ -100,6 +100,31 @@ service cloud.firestore {
       allow write: if isBroadcaster();
     }
 
+    // Directly-uploaded podcast episodes
+    match /episodes/{doc} {
+      allow read: if true;
+      allow write: if isBroadcaster();
+    }
+
+    // Paid live events
+    match /events/{doc} {
+      allow read: if true;
+      allow write: if isStationManager();
+    }
+
+    // Event tickets — written by Cloud Functions (admin SDK bypasses rules).
+    // App reads its own ticket only.
+    match /tickets/{ticketId} {
+      allow read: if isSignedIn() && ticketId.matches(request.auth.uid + '_.*');
+      allow write: if false; // Cloud Functions only
+    }
+
+    // Podcast episodes uploaded directly to Firestore
+    match /podcasts/{doc} {
+      allow read: if true;
+      allow write: if isBroadcaster();
+    }
+
     match /mail/{doc} {
       allow create: if isSuperAdmin();
     }

@@ -24,6 +24,8 @@ import '../../screens/admin/podcast_manager_screen.dart';
 import '../../screens/admin/ad_manager_screen.dart';
 import '../../screens/admin/analytics_screen.dart';
 import '../../screens/admin/revenue_dashboard_screen.dart';
+import '../../screens/admin/events_manager_screen.dart';
+import '../../screens/events/events_screen.dart';
 import '../../widgets/common/bottom_nav_bar.dart';
 import '../../widgets/common/mini_player_bar.dart';
 import '../../widgets/common/offline_banner.dart';
@@ -145,6 +147,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: SettingsScreen()),
           ),
+          GoRoute(
+            path: '/events',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: EventsScreen()),
+          ),
         ],
       ),
       // Admin routes — wrapped in AdminShell, protected by redirect above
@@ -205,6 +212,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/settings',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: AdminSettingsScreen()),
+          ),
+          GoRoute(
+            path: '/admin/events',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: EventsManagerScreen()),
           ),
         ],
       ),

@@ -22,6 +22,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
   final _streamUrlCtrl = TextEditingController();
   final _stationNameCtrl = TextEditingController();
   final _premiumPriceCtrl = TextEditingController();
+  final _paystackPublicKeyCtrl = TextEditingController();
 
   // Revenue split controllers (superAdmin only)
   final _lionFmPctCtrl = TextEditingController();
@@ -43,6 +44,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     _streamUrlCtrl.dispose();
     _stationNameCtrl.dispose();
     _premiumPriceCtrl.dispose();
+    _paystackPublicKeyCtrl.dispose();
     _lionFmPctCtrl.dispose();
     _illusysPctCtrl.dispose();
     _unnPctCtrl.dispose();
@@ -55,11 +57,13 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
         FirebaseFirestore.instance.collection('stream_config').doc('current').get(),
         FirebaseFirestore.instance.collection('admin_config').doc('platform').get(),
         FirebaseFirestore.instance.collection('admin_config').doc('revenue').get(),
+        FirebaseFirestore.instance.collection('admin_config').doc('payments').get(),
       ]);
 
       final streamDoc = results[0];
       final platformDoc = results[1];
       final revenueDoc = results[2];
+      final paymentsDoc = results[3];
 
       if (mounted) {
         setState(() {
@@ -68,6 +72,8 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               platformDoc.data()?['stationName'] as String? ?? 'Lion FM 91.1 MHz';
           _premiumPriceCtrl.text =
               (platformDoc.data()?['premiumPriceNGN'] ?? '').toString();
+          _paystackPublicKeyCtrl.text =
+              paymentsDoc.data()?['publicKey'] as String? ?? '';
 
           final revenue = revenueDoc.data();
           _lionFmPctCtrl.text =
@@ -129,6 +135,15 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       ];
 
       if (isSuperAdmin) {
+        futures.add(
+          FirebaseFirestore.instance
+              .collection('admin_config')
+              .doc('payments')
+              .set({
+            'publicKey': _paystackPublicKeyCtrl.text.trim(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true)),
+        );
         futures.add(
           FirebaseFirestore.instance
               .collection('admin_config')
@@ -364,7 +379,40 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
           ),
           const SizedBox(height: AppDimensions.p16),
 
-          // B) Revenue Split
+          // B) Paystack Configuration (superAdmin only)
+          if (isSuperAdmin) ...[
+            _SectionHeader(title: 'Paystack Payments'),
+            const SizedBox(height: AppDimensions.p12),
+            Container(
+              padding: const EdgeInsets.all(AppDimensions.p12),
+              decoration: BoxDecoration(
+                color: AppColors.bg2,
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+                border: Border.all(color: AppColors.border1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SettingsField(
+                    label: 'Paystack Public Key',
+                    controller: _paystackPublicKeyCtrl,
+                    hint: 'pk_test_… or pk_live_…',
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'The SECRET key is set via Cloud Function config only:\n'
+                    '  firebase functions:config:set paystack.secret="sk_live_…"\n\n'
+                    'CAUTION: sk_live_* moves real money. Test with sk_test_* first.',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppDimensions.p24),
+          ],
+
+          // C) Revenue Split
           _SectionHeader(title: 'Revenue Split'),
           const SizedBox(height: AppDimensions.p12),
           if (isSuperAdmin) ...[

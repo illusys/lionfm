@@ -7,6 +7,7 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/models/show_model.dart';
+import '../../../data/services/audio_service.dart';
 import '../../../providers/audio_provider.dart';
 import '../../../providers/user_provider.dart';
 import 'waveform_widget.dart';
@@ -19,12 +20,11 @@ class LivePlayerWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playbackState = ref.watch(playbackStateStreamProvider);
-    final player = ref.watch(audioPlayerProvider);
+    final handler = ref.read(audioHandlerProvider);
     final isReconnecting = ref.watch(reconnectingProvider);
     final volume = ref.watch(volumeProvider);
     final streamUrlAsync = ref.watch(liveStreamUrlProvider);
 
-    // Determine current stream URL
     final streamUrl = streamUrlAsync.valueOrNull ?? '';
     final noUrl = streamUrl.isEmpty;
 
@@ -32,7 +32,8 @@ class LivePlayerWidget extends ConsumerWidget {
       return Column(
         children: [
           const SizedBox(height: 12),
-          const Icon(Icons.wifi_off_rounded, color: AppColors.textMuted, size: 32),
+          const Icon(Icons.wifi_off_rounded,
+              color: AppColors.textMuted, size: 32),
           const SizedBox(height: 8),
           Text(
             AppStrings.noStreamConfigured,
@@ -58,57 +59,71 @@ class LivePlayerWidget extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('LIVE', style: AppTextStyles.mono),
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.liveRed,
-                        shape: BoxShape.circle,
-                      ),
+                Row(children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppColors.liveRed,
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 4),
-                    Text('● LIVE', style: AppTextStyles.liveLabel),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text('● LIVE', style: AppTextStyles.liveLabel),
+                ]),
               ],
             ),
             const SizedBox(height: AppDimensions.p16),
             Row(
               children: [
-                // Volume
+                // Volume slider
                 Expanded(
-                  child: GestureDetector(
-                    onPanUpdate: (d) {
-                      final box = context.findRenderObject() as RenderBox;
-                      final newVol = (volume + d.delta.dx / box.size.width)
-                          .clamp(0.0, 1.0);
-                      ref.read(volumeProvider.notifier).state = newVol;
-                      player.setVolume(newVol);
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          volume > 0.6
-                              ? Icons.volume_up
-                              : volume > 0.2
-                                  ? Icons.volume_down
-                                  : Icons.volume_mute,
-                          size: 18,
-                          color: AppColors.textSecondary,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        GestureDetector(
+                          onTap: () {
+                            final muted = volume == 0.0;
+                            final newVol = muted ? 0.75 : 0.0;
+                            ref.read(volumeProvider.notifier).state = newVol;
+                            handler.setVolume(newVol);
+                          },
+                          child: Icon(
+                            volume > 0.6
+                                ? Icons.volume_up_rounded
+                                : volume > 0.0
+                                    ? Icons.volume_down_rounded
+                                    : Icons.volume_off_rounded,
+                            size: 16,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                        const SizedBox(height: 4),
-                        LinearProgressIndicator(
+                      ]),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 3,
+                          thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 6),
+                          overlayShape: const RoundSliderOverlayShape(
+                              overlayRadius: 14),
+                          activeTrackColor: AppColors.lionGold,
+                          inactiveTrackColor: AppColors.border2,
+                          thumbColor: AppColors.lionGold,
+                          overlayColor:
+                              AppColors.lionGold.withValues(alpha: 0.2),
+                        ),
+                        child: Slider(
                           value: volume,
-                          backgroundColor: AppColors.border2,
-                          color: AppColors.amberGold,
-                          minHeight: 3,
-                          borderRadius: BorderRadius.circular(2),
+                          min: 0.0,
+                          max: 1.0,
+                          onChanged: (v) {
+                            ref.read(volumeProvider.notifier).state = v;
+                            handler.setVolume(v);
+                          },
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: AppDimensions.p16),
@@ -116,14 +131,20 @@ class LivePlayerWidget extends ConsumerWidget {
                 GestureDetector(
                   onTap: () async {
                     if (isLoading) return;
+                    final source = ref.read(currentAudioSourceProvider);
                     if (isPlaying) {
-                      await player.pause();
+                      await handler.pause();
                     } else {
-                      if (player.processingState == ProcessingState.idle ||
-                          player.processingState == ProcessingState.completed) {
-                        await player.setUrl(streamUrl);
+                      if (source == AudioSourceType.podcast) {
+                        // Resume podcast
+                        await handler.play();
+                      } else {
+                        await handler.playLiveRadio(streamUrl);
+                        ref
+                            .read(currentAudioSourceProvider.notifier)
+                            .state = AudioSourceType.liveRadio;
+                        ref.read(currentEpisodeProvider.notifier).state = null;
                       }
-                      await player.play();
                     }
                   },
                   child: Container(
@@ -160,7 +181,8 @@ class LivePlayerWidget extends ConsumerWidget {
                         icon: const Icon(Icons.share, size: 20),
                         color: AppColors.textSecondary,
                         onPressed: () {
-                          final title = currentShow?.title ?? 'Lion FM 91.1 MHz';
+                          final title =
+                              currentShow?.title ?? 'Lion FM 91.1 MHz';
                           Share.share(
                             "I'm listening to $title on Lion FM 91.1 MHz! "
                             "Stream live at www.lionfm.online",
@@ -176,7 +198,7 @@ class LivePlayerWidget extends ConsumerWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  "We'll notify you 10 minutes before "
+                                  "We'll notify you before "
                                   "${currentShow?.title ?? 'this show'} next week 🔔",
                                 ),
                               ),
