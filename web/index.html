@@ -1,15 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0XKZHG6Z5K"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <!--
+  ══════════════════════════════════════════════════════════════════════════════
+  RESOURCE HINT STRATEGY
+  ══════════════════════════════════════════════════════════════════════════════
+  preconnect  → opens TCP + TLS handshake for domains we will fetch *from JS*.
+                Saves ~200–500 ms RTT per domain on mobile 4G.
+  dns-prefetch → cheaper fallback (DNS only) for domains whose timing is less
+                 certain. Zero risk — browser ignores if not needed.
+  preload     → instructs the browser to fetch the splash logo *before* it
+                parses the rest of the document so the loading screen is instant.
+  ══════════════════════════════════════════════════════════════════════════════
+  -->
 
-  gtag('config', 'G-0XKZHG6Z5K');
-</script>
+  <!-- Firebase SDK domains — opened before dart2js even starts -->
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://firebase.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fcmregistrations.googleapis.com" crossorigin>
+
+  <!-- Google Fonts (used by the app) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- DNS-only prefetch for domains whose timing is less predictable -->
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+  <link rel="dns-prefetch" href="https://accounts.google.com">
+  <link rel="dns-prefetch" href="https://storage.googleapis.com">
+
+  <!-- Preload the splash logo so the loading screen shows instantly.
+       Without this, the browser discovers the <img> only after it finishes
+       parsing the rest of <head>, causing a visible blank moment. -->
+  <link rel="preload" as="image" href="assets/assets/images/lionfm_logo.png"
+        fetchpriority="high">
+
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -33,16 +58,26 @@
   <meta name="twitter:description" content="Your Interactive Radio — University of Nigeria, Nsukka">
   <meta name="twitter:image" content="icons/Icon-512.png">
 
-  <!-- PWA / Mobile -->
-  <!-- Google Sign-In: Web Client ID (OAuth 2.0).
-       Replace with the real value from Firebase Console →
-       Authentication → Sign-in method → Google → Web SDK configuration.
-       Can also be injected via --dart-define=GOOGLE_WEB_CLIENT_ID=... -->
+  <!-- Google OAuth (Google Sign-In requires this meta tag at parse time) -->
   <meta name="google-signin-client_id"
         content="748866798356-l2d6q36gp1444loj06jujj0rgkf5aati.apps.googleusercontent.com">
 
-  <!-- Google Identity Services — required for google_sign_in on Flutter web -->
+  <!-- Google Identity Services — async + defer: downloads in parallel with
+       HTML parsing, executes only after the DOM is fully built. This prevents
+       the GIS script from blocking the Flutter bootstrap. -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Google Analytics — defer prevents gtag from stalling the parser.
+       'send_page_view: false' avoids a double page-view when Firebase Analytics
+       (loaded by the Dart bundle) also fires on the same navigation. -->
+  <script defer src="https://www.googletagmanager.com/gtag/js?id=G-0XKZHG6Z5K"></script>
+  <script>
+    // Lightweight inline config — runs after DOM is ready (paired with defer above).
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0XKZHG6Z5K', { 'send_page_view': false });
+  </script>
 
   <meta name="theme-color" content="#1E9B43">
   <meta name="mobile-web-app-capable" content="yes">
@@ -57,6 +92,7 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
+    /* ── Critical inline CSS — zero network round-trip ───────────────────── */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background-color: #0A0A0A;
@@ -77,7 +113,6 @@
     }
     #loading.hidden { opacity: 0; pointer-events: none; }
 
-    /* Glow blob */
     .glow-blob {
       position: fixed;
       width: 320px; height: 320px;
@@ -93,13 +128,12 @@
       to   { opacity: 1;   transform: translate(-50%, -50%) scale(1.1); }
     }
 
-    /* Logo image */
     .logo-img {
-      width: 180px;
-      height: 180px;
+      width: 180px; height: 180px;
       object-fit: contain;
-      image-rendering: -webkit-optimize-contrast;
-      animation: logoFloat 2.5s ease-in-out infinite alternate, logoBounce 0.6s cubic-bezier(.36,.07,.19,.97) forwards;
+      /* preloaded above — will display without a render-blocking round-trip */
+      animation: logoBounce 0.6s cubic-bezier(.36,.07,.19,.97) forwards,
+                 logoFloat 2.5s ease-in-out 0.6s infinite alternate;
     }
     @keyframes logoBounce {
       0%   { opacity: 0; transform: scale(0.5); }
@@ -111,29 +145,21 @@
       to   { transform: translateY(-8px); }
     }
 
-    /* Tagline */
     .tagline {
       color: rgba(245,244,239,0.5);
       font-size: 13px;
       font-style: italic;
       animation: fadeIn 0.5s ease 0.8s both;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* Equalizer bars */
     .equalizer {
-      display: flex;
-      align-items: flex-end;
-      gap: 4px;
-      height: 32px;
+      display: flex; align-items: flex-end;
+      gap: 4px; height: 32px;
       animation: fadeIn 0.5s ease 1s both;
     }
     .eq-bar {
-      width: 4px;
-      border-radius: 2px;
+      width: 4px; border-radius: 2px;
       animation: eqBounce var(--dur, 0.6s) ease-in-out infinite alternate;
     }
     @keyframes eqBounce {
@@ -145,10 +171,16 @@
 <body>
   <div class="glow-blob"></div>
   <div id="loading">
-    <img class="logo-img" src="assets/assets/images/lionfm_logo.png"
-         onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex';"
+    <img class="logo-img"
+         src="assets/assets/images/lionfm_logo.png"
+         fetchpriority="high"
+         onerror="this.style.display='none';
+                  document.getElementById('logo-fallback').style.display='flex';"
          alt="Lion FM">
-    <div id="logo-fallback" style="display:none;width:120px;height:120px;background:linear-gradient(135deg,#1E9B43,#28D7D2);border-radius:28px;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 0 32px rgba(30,155,67,0.4);">
+    <div id="logo-fallback" style="display:none;width:120px;height:120px;
+         background:linear-gradient(135deg,#1E9B43,#28D7D2);border-radius:28px;
+         align-items:center;justify-content:center;flex-direction:column;
+         box-shadow:0 0 32px rgba(30,155,67,0.4);">
       <span style="color:rgba(10,10,10,0.8);font-size:13px;font-weight:700;letter-spacing:3px;">LION</span>
       <span style="color:#0A0A0A;font-size:38px;font-weight:900;line-height:1;">FM</span>
       <span style="color:rgba(10,10,10,0.6);font-size:10px;letter-spacing:1px;">91.1 MHz</span>
@@ -158,25 +190,31 @@
   </div>
 
   <script>
-    // Build equalizer bars
-    var eq = document.getElementById('eq');
-    var colors = ['#1E9B43','#1E9B43','#28D7D2','#28D7D2','#C89A29','#28D7D2','#28D7D2','#1E9B43','#1E9B43'];
-    for (var i = 0; i < 9; i++) {
-      var bar = document.createElement('div');
-      bar.className = 'eq-bar';
-      var minH = (6 + Math.random() * 8).toFixed(0);
-      var maxH = (16 + Math.random() * 16).toFixed(0);
-      var dur  = (0.4 + Math.random() * 0.5).toFixed(2);
-      bar.style.cssText = '--min-h:' + minH + 'px;--max-h:' + maxH + 'px;--dur:' + dur + 's;background:' + colors[i] + ';animation-delay:' + (i * 0.07) + 's';
-      eq.appendChild(bar);
-    }
+    // Equalizer bars — pure DOM, zero library dependency
+    (function() {
+      var eq = document.getElementById('eq');
+      var colors = ['#1E9B43','#1E9B43','#28D7D2','#28D7D2','#C89A29','#28D7D2','#28D7D2','#1E9B43','#1E9B43'];
+      for (var i = 0; i < 9; i++) {
+        var bar = document.createElement('div');
+        bar.className = 'eq-bar';
+        var minH = (6  + Math.random() * 8).toFixed(0);
+        var maxH = (16 + Math.random() * 16).toFixed(0);
+        var dur  = (0.4 + Math.random() * 0.5).toFixed(2);
+        bar.style.cssText =
+          '--min-h:' + minH + 'px;--max-h:' + maxH + 'px;--dur:' + dur + 's;' +
+          'background:' + colors[i] + ';animation-delay:' + (i * 0.07) + 's';
+        eq.appendChild(bar);
+      }
+    })();
 
-    // Hide loading screen once Flutter renders first frame
+    // Fade out the loading screen once Flutter paints its first frame.
+    // 'flutter-first-frame' is dispatched by flutter_bootstrap.js.
     window.addEventListener('flutter-first-frame', function () {
-      document.getElementById('loading').classList.add('hidden');
+      var loading = document.getElementById('loading');
+      if (loading) loading.classList.add('hidden');
     });
 
-    // Unlock audio on first user gesture
+    // Unlock Web Audio API on first user gesture — required on iOS Safari.
     document.addEventListener('click', function() {
       if (window._flutterAudioUnlocked) return;
       var a = new Audio();
@@ -185,6 +223,13 @@
     }, { once: true });
   </script>
 
+  <!--
+  flutter_bootstrap.js carries the async attribute:
+  • The browser downloads it in parallel with any remaining HTML parsing.
+  • It does NOT block the parser while executing.
+  • Flutter handles the rest (loading main.dart.js, deferred chunks, CanvasKit).
+  Nothing else should be loaded synchronously after this point.
+  -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
