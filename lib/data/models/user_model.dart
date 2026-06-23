@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum AudioQuality { dataSaver, standard, high }
 
 class UserModel {
@@ -60,6 +62,32 @@ class UserModel {
       totalListeningMinutes: totalListeningMinutes ?? this.totalListeningMinutes,
       episodesPlayed: episodesPlayed ?? this.episodesPlayed,
       topCategory: topCategory ?? this.topCategory,
+    );
+  }
+
+  factory UserModel.fromFirestore(
+    String id,
+    Map<String, dynamic> json, {
+    String fallbackName = 'Lion FM Listener',
+    String fallbackEmail = '',
+  }) {
+    final expiry = json['subscriptionExpiresAt'];
+    return UserModel(
+      id: id,
+      name: json['name'] as String? ?? json['displayName'] as String? ?? fallbackName,
+      email: json['email'] as String? ?? fallbackEmail,
+      isPremium: json['isPremium'] as bool? ?? false,
+      subscriptionExpiresAt: expiry is Timestamp
+          ? expiry.toDate()
+          : DateTime.tryParse(expiry as String? ?? ''),
+      notifyShowAlerts: json['notifyShowAlerts'] as bool? ?? true,
+      notifyBreakingNews: json['notifyBreakingNews'] as bool? ?? true,
+      notifyRequestConfirmation: json['notifyRequestConfirmation'] as bool? ?? true,
+      notifySpecialEvents: json['notifySpecialEvents'] as bool? ?? true,
+      audioQuality: AudioQuality.values.byName(json['audioQuality'] as String? ?? 'standard'),
+      totalListeningMinutes: json['totalListeningMinutes'] as int? ?? 0,
+      episodesPlayed: json['episodesPlayed'] as int? ?? 0,
+      topCategory: json['topCategory'] as String? ?? 'Music',
     );
   }
 

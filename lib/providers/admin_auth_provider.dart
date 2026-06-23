@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 enum AdminRole { superAdmin, stationManager, broadcaster, unnAdmin, none }
 
@@ -99,16 +100,14 @@ final adminUserProvider = StreamProvider<AdminUser?>((ref) async* {
         // Check if any superAdmin exists — if none, signal first-time setup.
         // Wrapped separately so a permission error here doesn't prevent login.
         try {
-          final superAdminSnap = await FirebaseFirestore.instance
-              .collection('users')
-              .where('role', isEqualTo: 'superAdmin')
-              .limit(1)
-              .get();
-          if (superAdminSnap.docs.isEmpty) {
-            ref.read(needsFirstTimeSetupProvider.notifier).state = true;
-          }
+          final result = await FirebaseFunctions.instance
+              .httpsCallable('getAdminBootstrapStatus')
+              .call<Map<Object?, Object?>>();
+          final data = Map<String, dynamic>.from(result.data);
+          ref.read(needsFirstTimeSetupProvider.notifier).state =
+              data['needsFirstTimeSetup'] == true;
         } catch (e) {
-          debugPrint('AdminAuth superAdmin check error: $e');
+          debugPrint('AdminAuth bootstrap status error: $e');
         }
         yield null;
         continue;

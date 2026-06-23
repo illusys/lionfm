@@ -8,6 +8,7 @@ import '../../screens/news/news_screen.dart';
 import '../../screens/requests/requests_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/splash/splash_screen.dart';
+import '../../screens/onboarding/onboarding_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
@@ -94,6 +95,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/splash',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: SplashScreen()),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: OnboardingScreen()),
       ),
       GoRoute(
         path: '/login',

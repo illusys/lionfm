@@ -1,11 +1,39 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/audio_provider.dart';
 import '../../providers/admin_auth_provider.dart';
+
+
+final _adminStatsProvider = StreamProvider<Map<String, String>>((ref) {
+  final today = DateTime.now();
+  final key = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+  return FirebaseFirestore.instance.collection('analytics').doc(key).snapshots().map((doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return {
+      'Live now': '${(data['listeners'] as num?)?.toInt() ?? 0}',
+      'Peak today': '${(data['peakConcurrent'] as num?)?.toInt() ?? 0}',
+      'Requests': '${(data['requests'] as num?)?.toInt() ?? 0}',
+      'Premium': '${(data['premiumPurchases'] as num?)?.toInt() ?? 0}',
+    };
+  });
+});
+
+final _activityProvider = StreamProvider<List<String>>((ref) {
+  return FirebaseFirestore.instance
+      .collection('admin_audit_logs')
+      .orderBy('createdAt', descending: true)
+      .limit(5)
+      .snapshots()
+      .map((snap) => snap.docs.map((doc) {
+            final data = doc.data();
+            return '${data['action'] ?? 'activity'} · ${data['targetPath'] ?? 'system'}';
+          }).toList());
+});
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -17,21 +45,6 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   late Timer _uptimeTimer;
   Duration _uptime = Duration.zero;
-
-  final _stats = {
-    'Live now': '312',
-    'Peak today': '1,024',
-    'This week': '18,450',
-    'Premium': '47',
-  };
-
-  final _activity = [
-    ('2m ago', 'New listener joined from Enugu'),
-    ('5m ago', 'Song request: Afrobeats Mix'),
-    ('12m ago', 'Show started: Morning Vibes'),
-    ('1h ago', 'Premium subscription: +1'),
-    ('2h ago', 'Stream reconnected'),
-  ];
 
   @override
   void initState() {
@@ -58,6 +71,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     final streamStatus = ref.watch(streamStatusProvider);
     final adminUser = ref.watch(adminUserProvider).valueOrNull;
+    final statsAsync = ref.watch(_adminStatsProvider);
+    final activityAsync = ref.watch(_activityProvider);
     return Scaffold(
       backgroundColor: AppColors.bg0,
       appBar: AppBar(
@@ -125,46 +140,54 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           const SizedBox(height: AppDimensions.p16),
 
           // Stats grid
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 2.0,
-            children: _stats.entries.map((e) => Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.bg2,
-                borderRadius: BorderRadius.circular(AppDimensions.r12),
-                border: Border.all(color: AppColors.borderGreen, width: 0.5),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(e.key, style: AppTextStyles.caption),
-                  Text(e.value, style: AppTextStyles.h3.copyWith(color: AppColors.lionGold)),
-                ],
-              ),
-            )).toList(),
+          statsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Text('Stats unavailable: $e', style: AppTextStyles.caption),
+            data: (stats) => GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 2.0,
+              children: stats.entries.map((e) => Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.bg2,
+                  borderRadius: BorderRadius.circular(AppDimensions.r12),
+                  border: Border.all(color: AppColors.borderGreen, width: 0.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(e.key, style: AppTextStyles.caption),
+                    Text(e.value, style: AppTextStyles.h3.copyWith(color: AppColors.lionGold)),
+                  ],
+                ),
+              )).toList(),
+            ),
           ),
           const SizedBox(height: AppDimensions.p16),
 
           // Activity feed
           _AdminCard(
             title: 'Recent Activity',
-            child: Column(
-              children: _activity.map((item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  children: [
-                    Text(item.$1, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted, fontSize: 10)),
-                    const SizedBox(width: 10),
-                    Expanded(child: Text(item.$2, style: AppTextStyles.bodySmall)),
-                  ],
-                ),
-              )).toList(),
+            child: activityAsync.when(
+              loading: () => const CircularProgressIndicator(),
+              error: (e, _) => Text('Activity unavailable: $e', style: AppTextStyles.caption),
+              data: (items) => Column(
+                children: (items.isEmpty ? ['No recent admin activity'] : items).map((item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.history, size: 14, color: AppColors.textMuted),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(item, style: AppTextStyles.bodySmall)),
+                    ],
+                  ),
+                )).toList(),
+              ),
             ),
           ),
         ],

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
@@ -23,7 +24,7 @@ class _ShowPitchFormState extends State<ShowPitchForm> {
   String? _selectedFormat;
   bool _submitting = false;
   bool _submitted = false;
-  final _repo = MockRequestRepository();
+  final _repo = FirestoreRequestRepository();
 
   static const _slots = [
     'Weekdays 6-8AM',
@@ -63,7 +64,7 @@ class _ShowPitchFormState extends State<ShowPitchForm> {
       message: _descCtrl.text,
       contactInfo: _contactCtrl.text,
       submittedAt: DateTime.now(),
-    ));
+    ), userId: FirebaseAuth.instance.currentUser?.uid);
     if (mounted) setState(() { _submitting = false; _submitted = true; });
   }
 

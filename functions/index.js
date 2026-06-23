@@ -83,6 +83,33 @@ exports.onAdminUserCreate = functions.auth.user().onCreate(async (user) => {
   return null;
 });
 
+
+// ── Bootstrap: first-time setup status ──────────────────────────────────────
+
+exports.getAdminBootstrapStatus = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+  const snap = await admin.firestore()
+    .collection('users')
+    .where('role', '==', 'superAdmin')
+    .limit(1)
+    .get();
+  return { needsFirstTimeSetup: snap.empty };
+});
+
+// ── Audit helper ────────────────────────────────────────────────────────────
+
+async function writeAuditLog(action, actorUid, targetPath, details = {}) {
+  await admin.firestore().collection('admin_audit_logs').add({
+    action,
+    actorUid: actorUid || null,
+    targetPath: targetPath || null,
+    details,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
 // ── Paystack: initialize transaction ─────────────────────────────────────────
 // Set secret via: firebase functions:config:set paystack.secret="sk_live_..."
 // CAUTION: sk_live_* moves REAL MONEY. Test with sk_test_* first.
@@ -101,15 +128,41 @@ exports.initPaystackTransaction = functions.https.onCall(async (data, context) =
     );
   }
 
-  const { email, amountKobo, metadata } = data;
-  if (!email || !amountKobo) {
-    throw new functions.https.HttpsError('invalid-argument', 'email and amountKobo are required');
+  const { email, productType, eventId } = data;
+  if (!email || !productType) {
+    throw new functions.https.HttpsError('invalid-argument', 'email and productType are required');
+  }
+
+  const db = admin.firestore();
+  const uid = context.auth.uid;
+  let amountKobo;
+  let metadata;
+
+  if (productType === 'premium') {
+    amountKobo = 100000;
+    metadata = { type: 'premium', userId: uid };
+  } else if (productType === 'event_ticket') {
+    if (!eventId) {
+      throw new functions.https.HttpsError('invalid-argument', 'eventId is required for event tickets');
+    }
+    const eventSnap = await db.collection('events').doc(eventId).get();
+    if (!eventSnap.exists) {
+      throw new functions.https.HttpsError('not-found', 'Event not found');
+    }
+    const event = eventSnap.data();
+    amountKobo = Math.max(0, Number(event.ticketPriceNGN || 0)) * 100;
+    if (amountKobo <= 0) {
+      throw new functions.https.HttpsError('failed-precondition', 'This event does not require payment');
+    }
+    metadata = { type: 'event_ticket', userId: uid, eventId };
+  } else {
+    throw new functions.https.HttpsError('invalid-argument', 'Unsupported productType');
   }
 
   const result = await paystackRequest(
     'POST',
     '/transaction/initialize',
-    { email, amount: amountKobo, metadata: metadata || {} },
+    { email, amount: amountKobo, metadata },
     secretKey,
   );
 
@@ -117,8 +170,22 @@ exports.initPaystackTransaction = functions.https.onCall(async (data, context) =
     throw new functions.https.HttpsError('internal', result.message || 'Transaction init failed');
   }
 
+  await writeAuditLog('payment_initialized', uid, `payment_attempts/${result.data.reference}`, { productType, eventId: eventId || null, amountKobo });
+
+  await db.collection('payment_attempts').doc(result.data.reference).set({
+    uid,
+    email,
+    productType,
+    eventId: eventId || null,
+    amountKobo,
+    status: 'initialized',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
   return {
+    success: true,
     authorizationUrl: result.data.authorization_url,
+    authorization_url: result.data.authorization_url,
     accessCode: result.data.access_code,
     reference: result.data.reference,
   };
@@ -159,10 +226,20 @@ exports.verifyPaystackPayment = functions.https.onCall(async (data, context) => 
   const db = admin.firestore();
   const uid = context.auth.uid;
   const metadata = result.data.metadata || {};
+  const attemptRef = db.collection('payment_attempts').doc(reference);
+  const attemptSnap = await attemptRef.get();
+  const attempt = attemptSnap.exists ? attemptSnap.data() : null;
+  if (attempt && attempt.uid !== uid) {
+    throw new functions.https.HttpsError('permission-denied', 'Payment reference belongs to another user');
+  }
+  if (attempt && Number(attempt.amountKobo || 0) !== Number(result.data.amount || 0)) {
+    throw new functions.https.HttpsError('failed-precondition', 'Payment amount mismatch');
+  }
 
   // Record event ticket
   if (metadata.eventId) {
     const ticketId = `${uid}_${metadata.eventId}`;
+    await writeAuditLog('ticket_paid', uid, `tickets/${ticketId}`, { eventId: metadata.eventId, amountKobo: result.data.amount });
     await db.collection('tickets').doc(ticketId).set(
       {
         userId: uid,
@@ -178,14 +255,20 @@ exports.verifyPaystackPayment = functions.https.onCall(async (data, context) => 
 
   // Activate premium subscription
   if (metadata.type === 'premium') {
-    await db.collection('users').doc(uid).update({
+    await writeAuditLog('premium_activated', uid, `users/${uid}`, { reference });
+    await db.collection('users').doc(uid).set({
       isPremium: true,
       premiumSince: admin.firestore.FieldValue.serverTimestamp(),
       premiumReference: reference,
-    });
+    }, { merge: true });
+  }
+
+  if (attemptRef) {
+    await attemptRef.set({ status: 'verified', verifiedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
   }
 
   return {
+    success: true,
     status: 'success',
     amount: result.data.amount,
     reference: result.data.reference,
@@ -234,7 +317,8 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
 
     if (metadata.userId && metadata.eventId) {
       const ticketId = `${metadata.userId}_${metadata.eventId}`;
-      await db.collection('tickets').doc(ticketId).set(
+      await writeAuditLog('ticket_paid', uid, `tickets/${ticketId}`, { eventId: metadata.eventId, amountKobo: result.data.amount });
+    await db.collection('tickets').doc(ticketId).set(
         {
           userId: metadata.userId,
           eventId: metadata.eventId,
@@ -248,11 +332,11 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
     }
 
     if (metadata.userId && metadata.type === 'premium') {
-      await db.collection('users').doc(metadata.userId).update({
+      await db.collection('users').doc(metadata.userId).set({
         isPremium: true,
         premiumSince: admin.firestore.FieldValue.serverTimestamp(),
         premiumReference: data.reference,
-      });
+      }, { merge: true });
     }
   }
 

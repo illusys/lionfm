@@ -26,6 +26,35 @@ service cloud.firestore {
       return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'broadcaster', 'unnAdmin']);
     }
 
+    function signedInOwnDoc(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function safeUserSelfUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'name', 'displayName', 'email', 'photoUrl',
+        'notifyShowAlerts', 'notifyBreakingNews', 'notifyRequestConfirmation',
+        'notifySpecialEvents', 'audioQuality', 'totalListeningMinutes',
+        'episodesPlayed', 'topCategory', 'requestedPremiumUpgrade', 'updatedAt'
+      ]) && !(request.resource.data.keys().hasAny(['role', 'isActive', 'isPremium', 'premiumSince', 'premiumReference']));
+    }
+
+    function safeAdCounterUpdate() {
+      let diff = request.resource.data.diff(resource.data);
+      return isSignedIn() && diff.affectedKeys().hasOnly(['impressions', 'clicks'])
+        && (!diff.changedKeys().hasAny(['impressions']) || request.resource.data.impressions == resource.data.impressions + 1)
+        && (!diff.changedKeys().hasAny(['clicks']) || request.resource.data.clicks == resource.data.clicks + 1);
+    }
+
+    function safeAnalyticsUpdate() {
+      return isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'date', 'sessionStarts', 'totalListeningSeconds', 'uniqueListenersCount',
+        'peakConcurrent', 'listeners', 'requests', 'podcastPlays',
+        'premiumPurchases', 'eventTickets', 'platforms', 'location',
+        'platformBreakdown', 'totalListeners', 'premiumUsers', 'concurrent'
+      ]);
+    }
+
     match /shows/{doc} {
       allow read: if true;
       allow write: if isStationManager();
@@ -47,8 +76,15 @@ service cloud.firestore {
     }
 
     match /requests/{doc} {
-      allow create: if isSignedIn();
-      allow read, update: if isBroadcaster();
+      allow create: if isSignedIn()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.type in ['song', 'showPitch', 'shoutout']
+        && (!('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid);
+      allow read: if isBroadcaster();
+      allow update: if isBroadcaster()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'moderationNotes', 'assignedTo', 'updatedAt'
+        ]);
       allow delete: if isStationManager();
     }
 
@@ -56,8 +92,13 @@ service cloud.firestore {
       // Always allow reading own document — needed for role check on login
       allow read: if isSignedIn() && request.auth.uid == userId;
       allow read: if isAnyAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin() || request.auth.uid == userId;
+      allow create: if isSuperAdmin() || (signedInOwnDoc(userId) && request.resource.data.keys().hasOnly([
+        'name', 'displayName', 'email', 'photoUrl',
+        'notifyShowAlerts', 'notifyBreakingNews', 'notifyRequestConfirmation',
+        'notifySpecialEvents', 'audioQuality', 'totalListeningMinutes',
+        'episodesPlayed', 'topCategory', 'requestedPremiumUpgrade', 'updatedAt'
+      ]));
+      allow update: if isSuperAdmin() || (signedInOwnDoc(userId) && safeUserSelfUpdate());
       allow delete: if isSuperAdmin();
     }
 
@@ -70,18 +111,17 @@ service cloud.firestore {
       allow read: if true;
       // Station managers can do full writes; signed-in listeners can only increment counters
       allow write: if isStationManager();
-      allow update: if isSignedIn() &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['impressions', 'clicks']);
+      allow update: if safeAdCounterUpdate();
     }
 
     match /admin_config/{doc} {
-      allow read, write: if isSuperAdmin();
+      allow read: if doc == 'payments_public' || isSuperAdmin();
+      allow write: if isSuperAdmin();
     }
 
     match /analytics/{doc} {
       allow read: if isAnyAdmin();
-      allow write: if isSignedIn();
+      allow write: if safeAnalyticsUpdate();
     }
 
     match /admin_invites/{inviteId} {
@@ -96,12 +136,6 @@ service cloud.firestore {
     }
 
     match /podcast_feeds/{doc} {
-      allow read: if true;
-      allow write: if isBroadcaster();
-    }
-
-    // Directly-uploaded podcast episodes
-    match /episodes/{doc} {
       allow read: if true;
       allow write: if isBroadcaster();
     }
@@ -123,6 +157,16 @@ service cloud.firestore {
     match /podcasts/{doc} {
       allow read: if true;
       allow write: if isBroadcaster();
+    }
+
+    match /payment_attempts/{doc} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /admin_audit_logs/{doc} {
+      allow read: if isAnyAdmin();
+      allow write: if false;
     }
 
     match /mail/{doc} {

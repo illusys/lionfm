@@ -21,6 +21,10 @@ class RequestModel {
   final DateTime submittedAt;
   final RequestStatus status;
   final bool isPremium;
+  final String? userId;
+  final String? moderationNotes;
+  final String? assignedTo;
+  final DateTime? updatedAt;
 
   const RequestModel({
     required this.id,
@@ -39,6 +43,10 @@ class RequestModel {
     required this.submittedAt,
     this.status = RequestStatus.pending,
     this.isPremium = false,
+    this.userId,
+    this.moderationNotes,
+    this.assignedTo,
+    this.updatedAt,
   });
 
   RequestModel copyWith({
@@ -58,6 +66,10 @@ class RequestModel {
     DateTime? submittedAt,
     RequestStatus? status,
     bool? isPremium,
+    String? userId,
+    String? moderationNotes,
+    String? assignedTo,
+    DateTime? updatedAt,
   }) {
     return RequestModel(
       id: id ?? this.id,
@@ -76,6 +88,10 @@ class RequestModel {
       submittedAt: submittedAt ?? this.submittedAt,
       status: status ?? this.status,
       isPremium: isPremium ?? this.isPremium,
+      userId: userId ?? this.userId,
+      moderationNotes: moderationNotes ?? this.moderationNotes,
+      assignedTo: assignedTo ?? this.assignedTo,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -107,6 +123,10 @@ class RequestModel {
       submittedAt: submitted,
       status: _statusFromString(json['status'] as String?),
       isPremium: json['isPremium'] as bool? ?? false,
+      userId: json['userId'] as String?,
+      moderationNotes: json['moderationNotes'] as String?,
+      assignedTo: json['assignedTo'] as String?,
+      updatedAt: _dateFrom(json['updatedAt']),
     );
   }
 
@@ -127,6 +147,10 @@ class RequestModel {
         submittedAt: DateTime.tryParse(json['submittedAt'] as String? ?? '') ?? DateTime.now(),
         status: _statusFromString(json['status'] as String?),
         isPremium: json['isPremium'] as bool? ?? false,
+        userId: json['userId'] as String?,
+        moderationNotes: json['moderationNotes'] as String?,
+        assignedTo: json['assignedTo'] as String?,
+        updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
       );
 
   Map<String, dynamic> toJson() => {
@@ -146,7 +170,36 @@ class RequestModel {
         'submittedAt': submittedAt.toIso8601String(),
         'status': status.name,
         'isPremium': isPremium,
+        'userId': userId,
+        'moderationNotes': moderationNotes,
+        'assignedTo': assignedTo,
+        'updatedAt': updatedAt?.toIso8601String(),
       };
+
+  Map<String, dynamic> toFirestoreCreate({String? userId}) => {
+        'type': type.name,
+        'songTitle': songTitle,
+        'artistName': artistName,
+        'dedicatedTo': dedicatedTo,
+        'requesterName': requesterName,
+        'requestedShow': requestedShow,
+        'message': message,
+        'showConceptName': showConceptName,
+        'department': department,
+        'preferredSlot': preferredSlot,
+        'format': format,
+        'contactInfo': contactInfo,
+        'submittedAt': FieldValue.serverTimestamp(),
+        'status': RequestStatus.pending.name,
+        'isPremium': isPremium,
+        if (userId != null) 'userId': userId,
+      };
+
+  static DateTime? _dateFrom(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
 
   static RequestType _typeFromString(String? s) {
     switch (s) {
