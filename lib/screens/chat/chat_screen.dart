@@ -84,6 +84,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             uid: user.uid,
             displayName:
                 user.displayName ?? user.email?.split('@').first ?? 'Listener',
+            email: user.email ?? '',
             text: text,
             type: _pendingType,
           );

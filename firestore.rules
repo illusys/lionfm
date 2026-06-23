@@ -210,5 +210,12 @@ service cloud.firestore {
       allow read: if isAnyAdmin() || (isSignedIn() && request.auth.uid == uid);
       allow write: if isAnyAdmin();
     }
+
+    match /chat_participants/{uid} {
+      // Only admins can read the participant list (contains email addresses)
+      allow read: if isAnyAdmin();
+      // Signed-in users can upsert their own record (written by sendMessage)
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
   }
 }

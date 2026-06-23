@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../data/models/chat_message_model.dart';
+import '../../data/models/chat_participant_model.dart';
 import '../../providers/admin_auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../chat/widgets/chat_index_building_view.dart';
@@ -215,6 +217,18 @@ class _AdminChatScreenState extends ConsumerState<AdminChatScreen> {
     if (ok) await ref.read(chatRepositoryProvider).unbanUser(uid);
   }
 
+  void _showParticipantsReport(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.bg1,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _ParticipantsReportSheet(ref: ref),
+    );
+  }
+
   Future<bool> _confirm(String message, String action, Color color) async {
     final result = await showDialog<bool>(
       context: context,
@@ -263,7 +277,7 @@ class _AdminChatScreenState extends ConsumerState<AdminChatScreen> {
         actions: [
           // Stats
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: 4),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -279,6 +293,13 @@ class _AdminChatScreenState extends ConsumerState<AdminChatScreen> {
               ],
             ),
           ),
+          // Participants report
+          IconButton(
+            icon: const Icon(Icons.contact_mail_rounded, size: 20),
+            tooltip: 'User Report',
+            onPressed: () => _showParticipantsReport(context),
+          ),
+          const SizedBox(width: 4),
         ],
       ),
       body: Column(
@@ -757,6 +778,290 @@ class _ActionBtn extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Participants Report ────────────────────────────────────────────────────────
+
+class _ParticipantsReportSheet extends ConsumerWidget {
+  final WidgetRef ref;
+  const _ParticipantsReportSheet({required this.ref});
+
+  String _buildCsv(List<ChatParticipantModel> list) {
+    final buf = StringBuffer();
+    buf.writeln('Name,Email,Last Active,Messages Sent');
+    for (final p in list) {
+      String esc(String s) => '"${s.replaceAll('"', '""')}"';
+      buf.writeln([
+        esc(p.displayName),
+        esc(p.email),
+        esc(DateFormat('yyyy-MM-dd HH:mm').format(p.lastChatAt)),
+        p.messageCount,
+      ].join(','));
+    }
+    return buf.toString();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef watchRef) {
+    final participantsAsync = watchRef.watch(chatParticipantsProvider);
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollCtrl) {
+        return Column(
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 4),
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border1,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 12, 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.contact_mail_rounded,
+                      color: AppColors.lionGreen, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text('Chat Users Report',
+                        style: AppTextStyles.h3),
+                  ),
+                  participantsAsync.whenOrNull(
+                    data: (list) => TextButton.icon(
+                      icon: const Icon(Icons.copy_rounded, size: 14),
+                      label: const Text('Copy CSV'),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AppColors.lionGreen,
+                          textStyle: AppTextStyles.bodySmall),
+                      onPressed: () async {
+                        final csv = _buildCsv(list);
+                        await Clipboard.setData(ClipboardData(text: csv));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'CSV copied — ${list.length} users',
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ) ?? const SizedBox.shrink(),
+                ],
+              ),
+            ),
+
+            const Divider(height: 1, color: AppColors.border1),
+
+            // Column headers
+            participantsAsync.whenOrNull(data: (list) => list.isNotEmpty
+                ? Container(
+                    color: AppColors.bg2,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 36),
+                        Expanded(
+                          flex: 3,
+                          child: Text('Name / Email',
+                              style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text('Last Active',
+                              style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                        SizedBox(
+                          width: 48,
+                          child: Text('Msgs',
+                              textAlign: TextAlign.right,
+                              style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  )
+                : null) ?? const SizedBox.shrink(),
+
+            // List
+            Expanded(
+              child: participantsAsync.when(
+                loading: () => const Center(
+                    child: CircularProgressIndicator(
+                        color: AppColors.lionGreen)),
+                error: (e, _) => Center(
+                    child: Text('Error: $e',
+                        style: AppTextStyles.body
+                            .copyWith(color: AppColors.textSecondary))),
+                data: (list) {
+                  if (list.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.people_outline_rounded,
+                              color: AppColors.textMuted, size: 40),
+                          const SizedBox(height: 12),
+                          Text('No chat users yet.',
+                              style: AppTextStyles.body
+                                  .copyWith(color: AppColors.textMuted)),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Users appear here after they send\ntheir first message.',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodySmall
+                                .copyWith(color: AppColors.textMuted),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    controller: scrollCtrl,
+                    padding: const EdgeInsets.only(bottom: 32),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, color: AppColors.border1),
+                    itemBuilder: (_, i) =>
+                        _ParticipantRow(participant: list[i]),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ParticipantRow extends StatelessWidget {
+  final ChatParticipantModel participant;
+  const _ParticipantRow({required this.participant});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = [
+      AppColors.lionGreen,
+      AppColors.electricTeal,
+      AppColors.warningGold,
+      AppColors.deepOrange,
+      AppColors.unnDeepBlue,
+    ];
+    final avatarColor = participant.uid.isNotEmpty
+        ? colors[participant.uid.codeUnitAt(0) % colors.length]
+        : AppColors.lionGreen;
+
+    final initial = participant.displayName.isNotEmpty
+        ? participant.displayName[0].toUpperCase()
+        : '?';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: avatarColor,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(initial,
+                style: AppTextStyles.bodySmall.copyWith(
+                    fontWeight: FontWeight.w700, color: AppColors.bg0)),
+          ),
+          const SizedBox(width: 12),
+
+          // Name + email
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  participant.displayName.isNotEmpty
+                      ? participant.displayName
+                      : 'Unknown',
+                  style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                GestureDetector(
+                  onLongPress: () {
+                    Clipboard.setData(
+                        ClipboardData(text: participant.email));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${participant.email} copied'),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    participant.email.isNotEmpty
+                        ? participant.email
+                        : '—',
+                    style: AppTextStyles.caption.copyWith(
+                        color: AppColors.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Last active
+          Expanded(
+            flex: 2,
+            child: Text(
+              DateFormat('MMM d, HH:mm').format(participant.lastChatAt),
+              style: AppTextStyles.caption
+                  .copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+
+          // Message count
+          SizedBox(
+            width: 48,
+            child: Text(
+              '${participant.messageCount}',
+              textAlign: TextAlign.right,
+              style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.electricTeal,
+                  fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
       ),
     );
   }

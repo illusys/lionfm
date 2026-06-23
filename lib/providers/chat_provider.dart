@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/chat_config_model.dart';
 import '../data/models/chat_message_model.dart';
+import '../data/models/chat_participant_model.dart';
 import '../data/repositories/chat_repository.dart';
 
 final chatRepositoryProvider = Provider<ChatRepository>(
@@ -24,6 +25,11 @@ final bannedStatusProvider =
     StreamProvider.family<bool, String>((ref, uid) {
   if (uid.isEmpty) return Stream.value(false);
   return ref.watch(chatRepositoryProvider).watchBanStatus(uid);
+});
+
+final chatParticipantsProvider =
+    StreamProvider<List<ChatParticipantModel>>((ref) {
+  return ref.watch(chatRepositoryProvider).watchParticipants();
 });
 
 // Derived: pinned message (single, first pinned found)

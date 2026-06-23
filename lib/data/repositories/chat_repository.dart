@@ -1,16 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/chat_config_model.dart';
 import '../models/chat_message_model.dart';
+import '../models/chat_participant_model.dart';
 import '../models/request_model.dart';
 
 abstract class ChatRepository {
   Stream<ChatConfigModel> watchConfig();
   Stream<List<ChatMessageModel>> watchMessages();
   Stream<List<ChatMessageModel>> watchAllMessagesForAdmin();
+  Stream<List<ChatParticipantModel>> watchParticipants();
   Stream<bool> watchBanStatus(String uid);
   Future<void> sendMessage({
     required String uid,
     required String displayName,
+    required String email,
     required String text,
     required ChatMessageType type,
   });
@@ -73,6 +76,16 @@ class FirestoreChatRepository implements ChatRepository {
   }
 
   @override
+  Stream<List<ChatParticipantModel>> watchParticipants() {
+    return _db
+        .collection('chat_participants')
+        .orderBy('lastChatAt', descending: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map(ChatParticipantModel.fromFirestore).toList());
+  }
+
+  @override
   Stream<bool> watchBanStatus(String uid) {
     return _db
         .collection('banned_users')
@@ -85,6 +98,7 @@ class FirestoreChatRepository implements ChatRepository {
   Future<void> sendMessage({
     required String uid,
     required String displayName,
+    required String email,
     required String text,
     required ChatMessageType type,
   }) async {
@@ -96,7 +110,19 @@ class FirestoreChatRepository implements ChatRepository {
       type: type,
       createdAt: DateTime.now(),
     );
-    await _db.collection('chat_messages').add(msg.toFirestoreCreate());
+
+    await Future.wait([
+      // Write the chat message
+      _db.collection('chat_messages').add(msg.toFirestoreCreate()),
+      // Upsert participant record — tracks name, email, activity, message count
+      _db.collection('chat_participants').doc(uid).set({
+        'uid': uid,
+        'displayName': displayName,
+        'email': email,
+        'lastChatAt': FieldValue.serverTimestamp(),
+        'messageCount': FieldValue.increment(1),
+      }, SetOptions(merge: true)),
+    ]);
 
     // Mirror song requests into the requests collection so the Request Queue
     // continues to capture them.
