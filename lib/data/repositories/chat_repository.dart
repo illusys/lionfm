@@ -47,14 +47,18 @@ class FirestoreChatRepository implements ChatRepository {
 
   @override
   Stream<List<ChatMessageModel>> watchMessages() {
+    // Single-field orderBy only — Firestore auto-indexes this, no composite
+    // index required. isHidden filtering is done client-side on the 200-message
+    // window, which is negligible and avoids the (isHidden, createdAt) index.
     return _db
         .collection('chat_messages')
-        .where('isHidden', isEqualTo: false)
         .orderBy('createdAt', descending: false)
         .limitToLast(200)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map(ChatMessageModel.fromFirestore).toList());
+        .map((snap) => snap.docs
+            .map(ChatMessageModel.fromFirestore)
+            .where((m) => !m.isHidden)
+            .toList());
   }
 
   @override

@@ -73,7 +73,8 @@ class ChatIndexBuildingView extends StatelessWidget {
 /// permanent application error.
 bool isChatIndexBuilding(Object error) {
   final msg = error.toString().toLowerCase();
-  return msg.contains('failed-precondition') ||
-      msg.contains('requires an index') ||
-      msg.contains('index');
+  // Match only the specific Firestore composite-index error, not any error
+  // that happens to contain the word "index".
+  return msg.contains('failed-precondition') &&
+      msg.contains('requires an index');
 }
