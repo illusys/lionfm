@@ -30,7 +30,7 @@ class LoginScreen extends ConsumerWidget {
                         gradient: AppColors.greenGlow, shape: BoxShape.circle),
                   ),
                   Image.asset(
-                    'assets/images/lionfm_logo.png',
+                    'assets/images/lion_fm_logo.webp',
                     width: 160,
                     height: 160,
                     fit: BoxFit.contain,

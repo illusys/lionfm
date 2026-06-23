@@ -79,8 +79,8 @@ class NowPlayingCard extends ConsumerWidget {
               ),
               const SizedBox(width: 12),
               Image.asset(
-                'assets/images/lionfm_logo.png',
-                height: 40,
+                'assets/images/lion_fm_logo.webp',
+                height: 64,
                 fit: BoxFit.contain,
               ),
             ],

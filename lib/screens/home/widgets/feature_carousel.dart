@@ -233,7 +233,7 @@ class _SlideView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/images/lionfm_logo.png',
+              'assets/images/lion_fm_logo.webp',
               width: 120,
               fit: BoxFit.contain,
             ),
@@ -327,7 +327,7 @@ class _ImageSlide extends StatelessWidget {
             decoration: const BoxDecoration(gradient: AppColors.heroGradient),
             child: Center(
               child: Image.asset(
-                'assets/images/lionfm_logo.png',
+                'assets/images/lion_fm_logo.webp',
                 width: 80,
                 fit: BoxFit.contain,
                 opacity: const AlwaysStoppedAnimation(0.4),

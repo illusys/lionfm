@@ -32,8 +32,8 @@
   <!-- Preload the splash logo so the loading screen shows instantly.
        Without this, the browser discovers the <img> only after it finishes
        parsing the rest of <head>, causing a visible blank moment. -->
-  <link rel="preload" as="image" href="assets/assets/images/lionfm_logo.png"
-        fetchpriority="high">
+  <link rel="preload" as="image" href="assets/assets/images/lion_fm_logo.webp"
+        fetchpriority="high" type="image/webp">
 
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
@@ -132,7 +132,7 @@
     }
 
     .logo-img {
-      width: 180px; height: 180px;
+      width: 240px; height: 240px;
       object-fit: contain;
       /* preloaded above — will display without a render-blocking round-trip */
       animation: logoBounce 0.6s cubic-bezier(.36,.07,.19,.97) forwards,
@@ -174,12 +174,15 @@
 <body>
   <div class="glow-blob"></div>
   <div id="loading">
-    <img class="logo-img"
-         src="assets/assets/images/lionfm_logo.png"
-         fetchpriority="high"
-         onerror="this.style.display='none';
-                  document.getElementById('logo-fallback').style.display='flex';"
-         alt="Lion FM">
+    <picture>
+      <source srcset="assets/assets/images/lion_fm_logo.webp" type="image/webp">
+      <img class="logo-img"
+           src="assets/assets/images/lionfm_logo.png"
+           fetchpriority="high"
+           onerror="this.style.display='none';
+                    document.getElementById('logo-fallback').style.display='flex';"
+           alt="Lion FM">
+    </picture>
     <div id="logo-fallback" style="display:none;width:120px;height:120px;
          background:linear-gradient(135deg,#1E9B43,#28D7D2);border-radius:28px;
          align-items:center;justify-content:center;flex-direction:column;

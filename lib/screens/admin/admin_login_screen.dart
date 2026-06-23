@@ -116,7 +116,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                 children: [
                   Center(
                     child: Image.asset(
-                      'assets/images/lionfm_logo.png',
+                      'assets/images/lion_fm_logo.webp',
                       width: 120,
                       errorBuilder: (_, __, ___) => Container(
                         width: 80,

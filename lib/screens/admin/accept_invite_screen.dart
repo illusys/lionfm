@@ -130,7 +130,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
               children: [
                 Center(
                   child: Image.asset(
-                    'assets/images/lionfm_logo.png',
+                    'assets/images/lion_fm_logo.webp',
                     width: 100,
                     errorBuilder: (_, __, ___) => Container(
                       width: 64,

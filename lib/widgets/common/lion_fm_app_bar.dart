@@ -14,9 +14,11 @@ class LionFmAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.bottom,
   });
 
+  static const double _barHeight = 70;
+
   @override
   Size get preferredSize => Size.fromHeight(
-        kToolbarHeight + (bottom?.preferredSize.height ?? 0),
+        _barHeight + (bottom?.preferredSize.height ?? 0),
       );
 
   @override
@@ -24,6 +26,7 @@ class LionFmAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppColors.bg0,
       elevation: 0,
+      toolbarHeight: _barHeight,
       shape: const Border(
         bottom: BorderSide(color: AppColors.borderGreen, width: 0.5),
       ),
@@ -32,10 +35,10 @@ class LionFmAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         ...?extra,
         Padding(
-          padding: const EdgeInsets.only(right: 16),
+          padding: const EdgeInsets.only(right: 12),
           child: Image.asset(
-            'assets/images/lionfm_logo.png',
-            height: 28,
+            'assets/images/lion_fm_logo.webp',
+            height: 62,
             fit: BoxFit.contain,
           ),
         ),
