@@ -43,5 +43,5 @@ flutter pub get
 
 echo "▸ Building Flutter Web (release)..."
 flutter build web --release \
-  --pwa-strategy=none \
+  --pwa-strategy=offline-first \
   --dart-define=GOOGLE_WEB_CLIENT_ID="748866798356-l2d6q36gp1444loj06jujj0rgkf5aati.apps.googleusercontent.com"

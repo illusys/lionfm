@@ -37,6 +37,9 @@
 
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma"        content="no-cache">
+  <meta http-equiv="Expires"       content="0">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -221,6 +224,20 @@
       a.play().catch(function(){});
       window._flutterAudioUnlocked = true;
     }, { once: true });
+
+    // Reload the page when a new service worker takes over an existing tab so
+    // users automatically receive the latest build without a manual hard-refresh.
+    // We snapshot the controller before registration so we only reload on an
+    // UPDATE (controller already existed), not on the very first SW install.
+    if ('serviceWorker' in navigator) {
+      var _swPrevController = navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (_swPrevController && !window._swReloading) {
+          window._swReloading = true;
+          window.location.reload();
+        }
+      });
+    }
   </script>
 
   <!--
