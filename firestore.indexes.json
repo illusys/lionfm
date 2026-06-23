@@ -1,10 +1,11 @@
 {
   "indexes": [
+
     {
       "collectionGroup": "ads",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "type",      "order": "ASCENDING"  },
         { "fieldPath": "startDate", "order": "DESCENDING" }
       ]
     },
@@ -13,28 +14,56 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "placement", "order": "ASCENDING" },
-        { "fieldPath": "isActive", "order": "ASCENDING" },
-        { "fieldPath": "endDate", "order": "ASCENDING" }
+        { "fieldPath": "isActive",  "order": "ASCENDING" },
+        { "fieldPath": "endDate",   "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "ads",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "type", "order": "ASCENDING" },
-        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "type",      "order": "ASCENDING" },
+        { "fieldPath": "isActive",  "order": "ASCENDING" },
         { "fieldPath": "placement", "order": "ASCENDING" },
-        { "fieldPath": "endDate", "order": "ASCENDING" }
+        { "fieldPath": "endDate",   "order": "ASCENDING" }
       ]
     },
+
     {
       "collectionGroup": "admin_invites",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "status",    "order": "ASCENDING"  },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+
+    {
+      "collectionGroup": "chat_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isHidden",  "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "chat_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type",      "order": "ASCENDING"  },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+
+    {
+      "collectionGroup": "requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status",      "order": "ASCENDING"  },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
     }
+
   ],
   "fieldOverrides": []
 }

@@ -7,6 +7,7 @@ import '../../core/theme/text_styles.dart';
 import '../../data/models/chat_message_model.dart';
 import '../../providers/admin_auth_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../chat/widgets/chat_index_building_view.dart';
 
 // ── Providers local to this screen ──────────────────────────────────────────
 
@@ -431,10 +432,16 @@ class _AdminChatScreenState extends ConsumerState<AdminChatScreen> {
               loading: () => const Center(
                   child: CircularProgressIndicator(
                       color: AppColors.lionGreen)),
-              error: (e, _) => Center(
+              error: (e, _) {
+                if (isChatIndexBuilding(e)) {
+                  return const ChatIndexBuildingView();
+                }
+                return Center(
                   child: Text('Error: $e',
                       style: AppTextStyles.body
-                          .copyWith(color: AppColors.textSecondary))),
+                          .copyWith(color: AppColors.textSecondary)),
+                );
+              },
               data: (msgs) {
                 if (msgs.isEmpty) {
                   return Center(

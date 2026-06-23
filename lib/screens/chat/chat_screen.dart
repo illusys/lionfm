@@ -8,6 +8,7 @@ import '../../providers/chat_provider.dart';
 import '../../widgets/common/lion_fm_app_bar.dart';
 import '../../widgets/common/login_prompt_sheet.dart';
 import 'widgets/chat_inactive_view.dart';
+import 'widgets/chat_index_building_view.dart';
 import 'widgets/chat_input_bar.dart';
 import 'widgets/chat_message_bubble.dart';
 import 'widgets/pinned_message_bar.dart';
@@ -204,11 +205,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   loading: () => const Center(
                       child: CircularProgressIndicator(
                           color: AppColors.lionGreen)),
-                  error: (e, _) => Center(
-                    child: Text('Error: $e',
-                        style: AppTextStyles.body.copyWith(
-                            color: AppColors.textSecondary)),
-                  ),
+                  error: (e, _) {
+                    if (isChatIndexBuilding(e)) {
+                      return const ChatIndexBuildingView();
+                    }
+                    return Center(
+                      child: Text('Error: $e',
+                          style: AppTextStyles.body.copyWith(
+                              color: AppColors.textSecondary)),
+                    );
+                  },
                   data: (messages) {
                     if (messages.isEmpty) {
                       return Center(
