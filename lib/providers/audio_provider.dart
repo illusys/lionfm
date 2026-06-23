@@ -5,6 +5,7 @@ import '../data/models/episode_model.dart';
 import '../data/models/stream_status_model.dart';
 import '../data/repositories/stream_repository.dart';
 import '../data/services/audio_service.dart';
+import '../core/utils/app_logger.dart';
 
 // ─── Core handler (singleton) ─────────────────────────────────────────────────
 
@@ -79,7 +80,9 @@ final streamStatusProvider = StreamProvider<StreamStatusModel>((ref) async* {
   while (true) {
     try {
       yield await repo.getStreamStatus();
-    } catch (_) {}
+    } catch (e, st) {
+      AppLogger.warning('Stream status poll failed', e, st);
+    }
     await Future.delayed(const Duration(seconds: 30));
   }
 });

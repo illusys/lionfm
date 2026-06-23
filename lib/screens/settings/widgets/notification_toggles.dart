@@ -5,6 +5,7 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../providers/user_provider.dart';
+import '../../../data/services/notification_permission_service.dart';
 
 class NotificationToggles extends ConsumerWidget {
   const NotificationToggles({super.key});
@@ -25,17 +26,24 @@ class NotificationToggles extends ConsumerWidget {
             title: AppStrings.showAlerts,
             subtitle: AppStrings.showAlertsSubtitle,
             value: user.notifyShowAlerts,
-            onToggle: () =>
-                ref.read(userProvider.notifier).toggleNotification('showAlerts'),
+            onToggle: () async {
+              if (!user.notifyShowAlerts) {
+                await NotificationPermissionService.requestContextualPermission();
+              }
+              await ref.read(userProvider.notifier).toggleNotification('showAlerts');
+            },
           ),
           _ToggleRow(
             icon: Icons.article,
             title: AppStrings.breakingNews,
             subtitle: AppStrings.breakingNewsSubtitle,
             value: user.notifyBreakingNews,
-            onToggle: () => ref
-                .read(userProvider.notifier)
-                .toggleNotification('breakingNews'),
+            onToggle: () async {
+              if (!user.notifyBreakingNews) {
+                await NotificationPermissionService.requestContextualPermission();
+              }
+              await ref.read(userProvider.notifier).toggleNotification('breakingNews');
+            },
           ),
           _ToggleRow(
             icon: Icons.music_note,
@@ -66,7 +74,7 @@ class _ToggleRow extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool value;
-  final VoidCallback onToggle;
+  final Future<void> Function() onToggle;
 
   const _ToggleRow({
     required this.icon,
@@ -102,14 +110,14 @@ class _ToggleRow extends StatelessWidget {
 
 class _BrandToggle extends StatelessWidget {
   final bool value;
-  final VoidCallback onToggle;
+  final Future<void> Function() onToggle;
 
   const _BrandToggle({required this.value, required this.onToggle});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onToggle,
+      onTap: () => onToggle(),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: AppDimensions.toggleWidth,

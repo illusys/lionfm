@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/news_model.dart';
+import '../../core/utils/app_logger.dart';
 
 abstract class NewsRepository {
   Future<List<NewsModel>> getNews();
@@ -42,7 +43,8 @@ class FirestoreNewsRepository implements NewsRepository {
           readTimeMinutes: d['readTimeMinutes'] as int? ?? 2,
         );
       }).toList();
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.warning('News fetch failed; showing labelled sample content', e, st);
       return _fallback();
     }
   }
@@ -60,7 +62,7 @@ class FirestoreNewsRepository implements NewsRepository {
     return [
       NewsModel(
         id: 'news_01',
-        headline: 'UNN CS Dept Wins National Hackathon Third Year Running',
+        headline: '[Sample] UNN CS Dept Wins National Hackathon Third Year Running',
         summary:
             "The University of Nigeria, Nsukka's Computer Science department "
             'has clinched the top prize at the 2025 National Tech Innovation '
@@ -73,7 +75,7 @@ class FirestoreNewsRepository implements NewsRepository {
       ),
       NewsModel(
         id: 'news_02',
-        headline: 'Registration Portal Opens Monday — Engineering Deadline Extended',
+        headline: '[Sample] Registration Portal Opens Monday — Engineering Deadline Extended',
         summary:
             'The Academic Affairs division has announced an extension of the '
             'course registration deadline for Engineering students to June 28, 2025.',
@@ -84,7 +86,7 @@ class FirestoreNewsRepository implements NewsRepository {
       ),
       NewsModel(
         id: 'news_03',
-        headline: 'UNN FC Defeats UNIZIK 3-1 in NUGA Qualifier',
+        headline: '[Sample] UNN FC Defeats UNIZIK 3-1 in NUGA Qualifier',
         summary:
             "UNN's football team produced a commanding display against UNIZIK, "
             'securing their place in the NUGA Games knockout stage with a 3-1 victory.',
@@ -95,7 +97,7 @@ class FirestoreNewsRepository implements NewsRepository {
       ),
       NewsModel(
         id: 'news_04',
-        headline: '2025 Convocation July 18-20, 8,400 Graduands Expected',
+        headline: '[Sample] 2025 Convocation July 18-20, 8,400 Graduands Expected',
         summary:
             'The University has confirmed dates for the 2025 Convocation Ceremony. '
             'Over 8,400 students from the 2020/2021 session will receive their degrees.',
@@ -106,7 +108,7 @@ class FirestoreNewsRepository implements NewsRepository {
       ),
       NewsModel(
         id: 'news_05',
-        headline: 'University Health Centre: Free Malaria Testing This Week',
+        headline: '[Sample] University Health Centre: Free Malaria Testing This Week',
         summary:
             'The UNN Health Centre is offering free malaria rapid diagnostic tests '
             'to all students and staff from June 19-23, 2025.',

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
@@ -26,7 +27,7 @@ class _SongRequestFormState extends ConsumerState<SongRequestForm> {
   String? _selectedShow;
   bool _submitting = false;
   bool _submitted = false;
-  final _repo = MockRequestRepository();
+  final _repo = FirestoreRequestRepository();
 
   static const _shows = [
     'Afternoon Drive (4PM)',
@@ -66,7 +67,7 @@ class _SongRequestFormState extends ConsumerState<SongRequestForm> {
       requestedShow: _selectedShow,
       message: _messageCtrl.text.isEmpty ? null : _messageCtrl.text,
       submittedAt: DateTime.now(),
-    ));
+    ), userId: FirebaseAuth.instance.currentUser?.uid);
     if (mounted) setState(() { _submitting = false; _submitted = true; });
   }
 

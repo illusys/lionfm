@@ -32,10 +32,10 @@ Future<void> main() async {
     }
   }
 
-  // FCM: request permission and subscribe to broadcast topics
+  // FCM topic subscription is silent on mobile. Permission prompts are shown
+  // contextually from Settings when a listener enables notification categories.
   try {
     final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission(alert: true, badge: true, sound: true);
     if (!kIsWeb) {
       await messaging.subscribeToTopic('all_listeners');
       await messaging.subscribeToTopic('show_alerts');

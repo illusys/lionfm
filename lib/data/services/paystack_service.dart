@@ -41,7 +41,7 @@ class PaystackService {
   /// Reads the public key stored in admin_config by the superAdmin.
   static Future<String> _getPublicKey() async {
     try {
-      final doc = await _db.collection('admin_config').doc('payments').get();
+      final doc = await _db.collection('admin_config').doc('payments_public').get();
       return doc.data()?['publicKey'] as String? ?? '';
     } catch (_) {
       return '';
@@ -59,7 +59,7 @@ class PaystackService {
       email: email,
       userId: userId,
       amountKobo: 100000, // ₦1,000 × 100 kobo
-      metadata: {'type': 'premium', 'userId': userId},
+      metadata: {'type': 'premium'},
     );
   }
 
@@ -74,7 +74,7 @@ class PaystackService {
       email: email,
       userId: userId,
       amountKobo: ticketPriceNGN * 100,
-      metadata: {'type': 'event_ticket', 'userId': userId, 'eventId': eventId},
+      metadata: {'type': 'event_ticket', 'eventId': eventId},
     );
   }
 
@@ -95,13 +95,12 @@ class PaystackService {
       final callable = _functions.httpsCallable('initPaystackTransaction');
       final result = await callable.call<Map<Object?, Object?>>({
         'email': email,
-        'amountKobo': amountKobo,
-        'metadata': metadata,
-        'publicKey': publicKey,
+        'productType': metadata['type'],
+        if (metadata['eventId'] != null) 'eventId': metadata['eventId'],
       });
 
       final data = Map<String, dynamic>.from(result.data);
-      final authorizationUrl = data['authorization_url'] as String?;
+      final authorizationUrl = (data['authorizationUrl'] ?? data['authorization_url']) as String?;
       final reference = data['reference'] as String?;
 
       if (authorizationUrl == null || reference == null) {
@@ -135,7 +134,7 @@ class PaystackService {
       final callable = _functions.httpsCallable('verifyPaystackPayment');
       final result = await callable.call<Map<Object?, Object?>>({'reference': reference});
       final data = Map<String, dynamic>.from(result.data);
-      if (data['success'] == true) {
+      if (data['success'] == true || data['status'] == 'success') {
         return PaymentSuccess(reference: reference);
       }
       return PaymentResult.error(message: data['message'] as String? ?? 'Verification failed.');
