@@ -14,7 +14,7 @@ class AppBottomNavBar extends StatelessWidget {
         route: '/schedule'),
     _NavItem(icon: Icons.mic_rounded, label: 'Podcasts', route: '/podcasts'),
     _NavItem(icon: Icons.article_rounded, label: 'News', route: '/news'),
-    _NavItem(icon: Icons.send_rounded, label: 'Request', route: '/requests'),
+    _NavItem(icon: Icons.chat_rounded, label: 'Chat', route: '/chat'),
   ];
 
   @override

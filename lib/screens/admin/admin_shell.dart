@@ -17,6 +17,7 @@ class AdminShell extends ConsumerWidget {
     _AdminNavItem(icon: Icons.radio_rounded, label: 'Stream', route: '/admin/stream'),
     _AdminNavItem(icon: Icons.notifications_rounded, label: 'Notify', route: '/admin/notifications'),
     _AdminNavItem(icon: Icons.music_note_rounded, label: 'Requests', route: '/admin/requests'),
+    _AdminNavItem(icon: Icons.chat_rounded, label: 'Live Chat', route: '/admin/chat'),
     _AdminNavItem(icon: Icons.mic_rounded, label: 'Podcasts', route: '/admin/podcasts'),
     _AdminNavItem(icon: Icons.campaign_rounded, label: 'Ads', route: '/admin/ads'),
     _AdminNavItem(icon: Icons.event_rounded, label: 'Events', route: '/admin/events'),

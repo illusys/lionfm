@@ -6,6 +6,8 @@ import '../../screens/schedule/schedule_screen.dart';
 import '../../screens/podcasts/podcasts_screen.dart';
 import '../../screens/news/news_screen.dart';
 import '../../screens/requests/requests_screen.dart';
+import '../../screens/chat/chat_screen.dart';
+import '../../screens/admin/admin_chat_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/splash/splash_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
@@ -157,6 +159,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const NoTransitionPage(child: RequestsScreen()),
           ),
           GoRoute(
+            path: '/chat',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ChatScreen()),
+          ),
+          GoRoute(
             path: '/settings',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: SettingsScreen()),
@@ -231,6 +238,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/events',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: EventsManagerScreen()),
+          ),
+          GoRoute(
+            path: '/admin/chat',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AdminChatScreen()),
           ),
         ],
       ),

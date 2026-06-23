@@ -40,9 +40,9 @@ const List<NavDestination> navDestinations = [
     route: '/news',
   ),
   NavDestination(
-    label: 'Requests',
-    icon: Icons.music_note_outlined,
-    activeIcon: Icons.music_note,
-    route: '/requests',
+    label: 'Chat',
+    icon: Icons.chat_bubble_outline_rounded,
+    activeIcon: Icons.chat_bubble_rounded,
+    route: '/chat',
   ),
 ];

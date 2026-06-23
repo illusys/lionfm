@@ -172,5 +172,43 @@ service cloud.firestore {
     match /mail/{doc} {
       allow create: if isSuperAdmin();
     }
+
+    // ── Live Chat ────────────────────────────────────────────────────────────
+
+    function isChatActive() {
+      return get(/databases/$(database)/documents/chat_config/current).data.isActive == true;
+    }
+
+    function isNotBanned() {
+      return !exists(/databases/$(database)/documents/banned_users/$(request.auth.uid));
+    }
+
+    match /chat_config/{doc} {
+      allow read: if true;
+      allow write: if isAnyAdmin();
+    }
+
+    match /chat_messages/{msgId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && isNotBanned()
+        && isChatActive()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 300
+        && request.resource.data.type in ['chat', 'song_request', 'pitch']
+        && request.resource.data.isPinned == false
+        && request.resource.data.isHidden == false;
+      allow update: if isAnyAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['isPinned', 'isHidden']);
+      allow delete: if isAnyAdmin();
+    }
+
+    match /banned_users/{uid} {
+      allow read: if isAnyAdmin() || (isSignedIn() && request.auth.uid == uid);
+      allow write: if isAnyAdmin();
+    }
   }
 }
