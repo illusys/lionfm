@@ -105,10 +105,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   List<Widget> _buildNotes() {
     return [
-      _buildNote('♪', left: 40, top: 120, color: AppColors.lionGreen, delay: 0.0),
-      _buildNote('♫', right: 60, top: 100, color: AppColors.electricTeal, delay: 0.3),
-      _buildNote('♩', right: 40, bottom: 160, color: AppColors.lionGold, delay: 0.6),
-      _buildNote('♬', left: 50, bottom: 140, color: AppColors.lionGreen, delay: 0.9),
+      _buildNote('♪', left: 40, top: 120, color: AppColors.bg0.withValues(alpha: 0.6), delay: 0.0),
+      _buildNote('♫', right: 60, top: 100, color: AppColors.bg0.withValues(alpha: 0.5), delay: 0.3),
+      _buildNote('♩', right: 40, bottom: 160, color: AppColors.bg0.withValues(alpha: 0.7), delay: 0.6),
+      _buildNote('♬', left: 50, bottom: 140, color: AppColors.bg0.withValues(alpha: 0.5), delay: 0.9),
     ];
   }
 
@@ -142,15 +142,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   Widget _buildEqualizer() {
     final bars = [
-      (AppColors.lionGreen, 8.0, 0.0),
-      (AppColors.electricTeal, 16.0, 0.1),
-      (AppColors.lionGreen, 12.0, 0.2),
-      (AppColors.lionGold, 20.0, 0.3),
-      (AppColors.lionGreen, 10.0, 0.4),
-      (AppColors.electricTeal, 18.0, 0.15),
-      (AppColors.lionGreen, 14.0, 0.25),
-      (AppColors.lionGold, 8.0, 0.35),
-      (AppColors.electricTeal, 20.0, 0.05),
+      (AppColors.bg0.withValues(alpha: 0.7), 8.0, 0.0),
+      (AppColors.bg0.withValues(alpha: 0.5), 16.0, 0.1),
+      (AppColors.bg0.withValues(alpha: 0.7), 12.0, 0.2),
+      (AppColors.bg0.withValues(alpha: 0.6), 20.0, 0.3),
+      (AppColors.bg0.withValues(alpha: 0.7), 10.0, 0.4),
+      (AppColors.bg0.withValues(alpha: 0.5), 18.0, 0.15),
+      (AppColors.bg0.withValues(alpha: 0.7), 14.0, 0.25),
+      (AppColors.bg0.withValues(alpha: 0.6), 8.0, 0.35),
+      (AppColors.bg0.withValues(alpha: 0.5), 20.0, 0.05),
     ];
     return FadeTransition(
       opacity: _eqOpacity,
@@ -181,19 +181,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg0,
-      body: Stack(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppColors.splashGradient),
+        child: Stack(
         fit: StackFit.expand,
         children: [
-          // Background glow
+          // Ambient amber glow at center
           Container(
             decoration: const BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,
-                radius: 0.8,
+                radius: 0.7,
                 colors: [
-                  Color(0x141E9B43),
-                  Color(0x0A28D7D2),
+                  Color(0x30000000),
                   Colors.transparent,
                 ],
               ),
@@ -208,9 +211,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 children: [
                   ...[0.0, 0.33, 0.66].asMap().entries.map((e) {
                     final colors = [
-                      AppColors.lionGreen,
-                      AppColors.electricTeal,
-                      AppColors.lionGold,
+                      AppColors.bg0,
+                      AppColors.bg1,
+                      AppColors.bg0,
                     ];
                     final progress = (_ringCtrl.value + e.key * 0.33) % 1.0;
                     final scale = 1.0 + progress * 2.2;
@@ -269,7 +272,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       letterSpacing: 2.0,
-                      color: AppColors.textSecondary,
+                      color: AppColors.bg0.withValues(alpha: 0.75),
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -281,6 +284,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             ),
           ),
         ],
+        ),
       ),
     );
   }

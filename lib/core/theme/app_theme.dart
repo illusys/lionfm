@@ -11,22 +11,33 @@ class AppTheme {
 
   static ThemeData get dark {
     final colorScheme = ColorScheme.dark(
-      primary: AppColors.lionGreen,
-      secondary: AppColors.electricTeal,
-      tertiary: AppColors.lionGold,
-      surface: AppColors.bg2,
-      error: AppColors.errorRed,
+      primary: AppColors.lionGold,
       onPrimary: AppColors.bg0,
-      onSecondary: AppColors.bg0,
+      primaryContainer: AppColors.darkGold,
+      onPrimaryContainer: const Color(0xFFFFDEA0),
+      secondary: AppColors.pepperRed,
+      onSecondary: AppColors.textPrimary,
+      secondaryContainer: AppColors.deepRed,
+      onSecondaryContainer: const Color(0xFFFFCCB5),
+      tertiary: AppColors.onAirGreen,
+      onTertiary: const Color(0xFF003828),
+      tertiaryContainer: const Color(0xFF00523A),
+      onTertiaryContainer: const Color(0xFF70EFC5),
+      surface: AppColors.bg2,
       onSurface: AppColors.textPrimary,
+      surfaceContainerLow: AppColors.bg1,
+      surfaceContainerHigh: AppColors.bg3,
+      error: AppColors.errorRed,
       onError: AppColors.textPrimary,
+      outline: AppColors.warmBorder,
+      outlineVariant: AppColors.border2,
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.bg0,
-      primaryColor: AppColors.lionGreen,
+      primaryColor: AppColors.lionGold,
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
 
       appBarTheme: AppBarTheme(
@@ -45,13 +56,13 @@ class AppTheme {
           statusBarBrightness: Brightness.dark,
         ),
         shape: const Border(
-          bottom: BorderSide(color: AppColors.borderGreen, width: 1),
+          bottom: BorderSide(color: AppColors.borderGold, width: 1),
         ),
       ),
 
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.bg1,
-        selectedItemColor: AppColors.lionGreen,
+        selectedItemColor: AppColors.lionGold,
         unselectedItemColor: AppColors.textMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
@@ -64,14 +75,14 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r16),
-          side: const BorderSide(color: AppColors.borderGreen, width: 0.5),
+          side: const BorderSide(color: AppColors.borderGold, width: 0.5),
         ),
         margin: EdgeInsets.zero,
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.lionGreen,
+          backgroundColor: AppColors.lionGold,
           foregroundColor: AppColors.bg0,
           elevation: 0,
           minimumSize: const Size(double.infinity, 48),
@@ -108,7 +119,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
-          borderSide: const BorderSide(color: AppColors.borderGreen, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.borderGold, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
@@ -151,12 +162,19 @@ class AppTheme {
       iconTheme: const IconThemeData(color: AppColors.textSecondary),
 
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.lionGreen,
+        backgroundColor: AppColors.lionGold,
         foregroundColor: AppColors.bg0,
       ),
 
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.lionGreen,
+        color: AppColors.lionGold,
+      ),
+
+      sliderTheme: const SliderThemeData(
+        activeTrackColor: AppColors.lionGold,
+        inactiveTrackColor: AppColors.bg3,
+        thumbColor: AppColors.lionGold,
+        overlayColor: Color(0x29F5A623),
       ),
     );
   }
