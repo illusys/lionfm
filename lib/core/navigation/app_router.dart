@@ -135,7 +135,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/admin-login',
         pageBuilder: (context, state) => NoTransitionPage(
           child: DeferredWidget(
-            loader: adminLogin.loadLibrary,
+            loader: () => adminLogin.loadLibrary(),
             builder: (_) => adminLogin.AdminLoginScreen(),
           ),
         ),
@@ -144,7 +144,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/admin-setup',
         pageBuilder: (context, state) => NoTransitionPage(
           child: DeferredWidget(
-            loader: adminSetup.loadLibrary,
+            loader: () => adminSetup.loadLibrary(),
             builder: (_) => adminSetup.FirstTimeSetupScreen(),
           ),
         ),
@@ -152,12 +152,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin-accept-invite',
         pageBuilder: (context, state) {
-          // Capture route params before the async boundary so they are
-          // available when the deferred builder finally runs.
           final email = state.uri.queryParameters['email'] ?? '';
           return NoTransitionPage(
             child: DeferredWidget(
-              loader: acceptInvite.loadLibrary,
+              loader: () => acceptInvite.loadLibrary(),
               builder: (_) => acceptInvite.AcceptInviteScreen(email: email),
             ),
           );
@@ -222,7 +220,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: adminDashboard.loadLibrary,
+                loader: () => adminDashboard.loadLibrary(),
                 builder: (_) => adminDashboard.AdminDashboardScreen(),
               ),
             ),
@@ -231,7 +229,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/schedule',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: scheduleMgr.loadLibrary,
+                loader: () => scheduleMgr.loadLibrary(),
                 builder: (_) => scheduleMgr.ScheduleManagerScreen(),
               ),
             ),
@@ -240,7 +238,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/stream',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: streamMonitor.loadLibrary,
+                loader: () => streamMonitor.loadLibrary(),
                 builder: (_) => streamMonitor.StreamMonitorScreen(),
               ),
             ),
@@ -249,7 +247,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/notifications',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: notifySender.loadLibrary,
+                loader: () => notifySender.loadLibrary(),
                 builder: (_) => notifySender.NotificationSenderScreen(),
               ),
             ),
@@ -258,7 +256,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/requests',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: requestQueue.loadLibrary,
+                loader: () => requestQueue.loadLibrary(),
                 builder: (_) => requestQueue.RequestQueueScreen(),
               ),
             ),
@@ -267,7 +265,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/podcasts',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: podcastMgr.loadLibrary,
+                loader: () => podcastMgr.loadLibrary(),
                 builder: (_) => podcastMgr.PodcastManagerScreen(),
               ),
             ),
@@ -276,7 +274,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/ads',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: adMgr.loadLibrary,
+                loader: () => adMgr.loadLibrary(),
                 builder: (_) => adMgr.AdManagerScreen(),
               ),
             ),
@@ -285,7 +283,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/events',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: eventsMgr.loadLibrary,
+                loader: () => eventsMgr.loadLibrary(),
                 builder: (_) => eventsMgr.EventsManagerScreen(),
               ),
             ),
@@ -294,7 +292,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/chat',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: adminChat.loadLibrary,
+                loader: () => adminChat.loadLibrary(),
                 builder: (_) => adminChat.AdminChatScreen(),
               ),
             ),
@@ -305,7 +303,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/analytics',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: analyticsScreen.loadLibrary,
+                loader: () => analyticsScreen.loadLibrary(),
                 builder: (_) => analyticsScreen.AnalyticsScreen(),
               ),
             ),
@@ -314,7 +312,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/revenue',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: revenueScreen.loadLibrary,
+                loader: () => revenueScreen.loadLibrary(),
                 builder: (_) => revenueScreen.RevenueDashboardScreen(),
               ),
             ),
@@ -323,7 +321,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/users',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: userMgmt.loadLibrary,
+                loader: () => userMgmt.loadLibrary(),
                 builder: (_) => userMgmt.UserManagementScreen(),
               ),
             ),
@@ -332,7 +330,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/settings',
             pageBuilder: (context, state) => NoTransitionPage(
               child: DeferredWidget(
-                loader: adminSettings.loadLibrary,
+                loader: () => adminSettings.loadLibrary(),
                 builder: (_) => adminSettings.AdminSettingsScreen(),
               ),
             ),
