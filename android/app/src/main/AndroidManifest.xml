@@ -20,6 +20,12 @@
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="false">
 
+        <!-- AdMob App ID — replace with real ID from AdMob console before publishing -->
+        <!-- Test ID used here so the app runs on emulators without a live AdMob account -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
