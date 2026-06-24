@@ -54,4 +54,5 @@ lib/firebase_options.dart
 *.env
 *.jks
 *.keystore
+android/key.properties
 !assets/images/lionfm_logo.png

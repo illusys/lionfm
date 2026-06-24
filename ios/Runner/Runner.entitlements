@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Universal Links — routes https://lionfm.online/* directly into the app via GoRouter -->
+	<!-- Prerequisite: host AASA file at https://lionfm.online/.well-known/apple-app-site-association -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:lionfm.online</string>
+	</array>
+	<!-- Push Notifications entitlement — required for FCM on a real device -->
+	<key>aps-environment</key>
+	<string>production</string>
+</dict>
+</plist>

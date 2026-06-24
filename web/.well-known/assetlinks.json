@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "ng.edu.unn.lionfm",
+    "sha256_cert_fingerprints": ["69:E1:F3:19:6D:11:91:89:0E:0B:92:31:E8:03:85:71:C7:B3:2C:6E:4C:7A:34:75:66:6C:D5:FD:39:DB:1A:9A"]
+  }
+}]

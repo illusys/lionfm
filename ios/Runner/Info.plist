@@ -28,6 +28,12 @@
 	<string>Lion FM uses the microphone for future live call-in features.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Lion FM uses local network for stream discovery.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Lion FM accesses your photo library so you can set a profile picture.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Lion FM can save artwork and event images to your photo library.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Lion FM uses anonymous usage data to improve your experience and serve relevant content.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
@@ -51,6 +57,20 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<!-- Custom URL scheme — fallback deep link before HTTPS Universal Links are verified -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>ng.edu.unn.lionfm</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>lionfm</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>https</string>

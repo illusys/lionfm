@@ -21,8 +21,19 @@
 # Connectivity
 -keep class dev.fluttercommunity.plus.connectivity.** { *; }
 
+# flutter_local_notifications
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
+
+# flutter_secure_storage
+-keep class com.it_nomads.fluttersecurestorage.** { *; }
+
 # General rules
 -keepattributes Signature
 -keepattributes *Annotation*
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes EnclosingMethod
 -dontwarn sun.misc.**
 -dontwarn java.lang.invoke.**
+# Kotlin metadata preserved for reflection-based serialisation
+-keep class kotlin.Metadata { *; }
+-keepclassmembers class **$WhenMappings { <fields>; }

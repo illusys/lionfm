@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["YOUR_TEAM_ID.ng.edu.unn.lionfm"],
+        "components": [
+          { "/": "/*", "comment": "Match all paths for GoRouter deep links" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["YOUR_TEAM_ID.ng.edu.unn.lionfm"]
+  }
+}
