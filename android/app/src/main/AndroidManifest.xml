@@ -59,9 +59,10 @@
             </intent-filter>
         </activity>
 
-        <!-- Audio service -->
+        <!-- Audio service (just_audio_background / audio_service v0.18+) -->
         <service
-            android:name="com.ryanheise.audioservice.AudioServiceBackgroundTask"
+            android:name="com.ryanheise.audioservice.AudioService"
+            android:foregroundServiceType="mediaPlayback"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService"/>

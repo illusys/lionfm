@@ -33,6 +33,19 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ── Step 0: Background audio — must complete before any playback attempt ───
+  // JustAudioBackground.init() registers the Android service and sets up the
+  // notification channel. Running it unawaited caused a race where a user
+  // tapping play before init completed crashed the app.
+  if (!kIsWeb) {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'ng.edu.unn.lionfm.channel.audio',
+      androidNotificationChannelName: 'LionFM Audio Playback',
+      androidNotificationOngoing: true,
+      androidNotificationIcon: 'drawable/ic_notification',
+    );
+  }
+
   // ── Step 1: Parallelise the only two truly blocking boot tasks ─────────────
   // Firebase.initializeApp() and setPreferredOrientations() are completely
   // independent. Running them concurrently saves the orientation-lock cost
@@ -79,18 +92,6 @@ Future<void> main() async {
 /// Initialises mobile-only services that have no bearing on the initial render.
 /// Runs fully in the background via unawaited() so it never delays runApp().
 Future<void> _initMobileServices() async {
-  // Background audio notification channel
-  try {
-    await JustAudioBackground.init(
-      androidNotificationChannelId: 'online.lionfm.channel',
-      androidNotificationChannelName: 'Lion FM',
-      androidNotificationOngoing: true,
-      preloadArtwork: true,
-    );
-  } catch (e) {
-    debugPrint('JustAudioBackground init error (non-fatal): $e');
-  }
-
   // FCM topic subscriptions — run the three in parallel, not sequentially.
   // Previously three sequential awaits added ~200–400 ms of sequential latency
   // even though the subscribes are completely independent of each other.
