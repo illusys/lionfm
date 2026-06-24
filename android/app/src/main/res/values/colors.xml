@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Adaptive icon background — dark gold matches the Lion FM Midnight Gold palette -->
+    <color name="ic_launcher_background">#1A1206</color>
+    <!-- FCM notification accent color -->
+    <color name="notification_color">#C9972B</color>
+</resources>
