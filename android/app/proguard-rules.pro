@@ -37,3 +37,9 @@
 # Kotlin metadata preserved for reflection-based serialisation
 -keep class kotlin.Metadata { *; }
 -keepclassmembers class **$WhenMappings { <fields>; }
+
+# Flutter Play Core (deferred components) — classes referenced by the Flutter
+# engine but not present when deferred loading is disabled; suppress R8 warnings.
+-dontwarn com.google.android.play.core.splitcompat.**
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
