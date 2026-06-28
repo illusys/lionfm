@@ -275,9 +275,110 @@ exports.verifyPaystackPayment = functions.https.onCall(async (data, context) => 
   };
 });
 
+// ── Paystack: initialize station subscription billing ────────────────────────
+// Platform owner only. Generates a Paystack payment link for a station's
+// monthly subscription fee. Secret must be set via functions:config.
+
+const STATION_PLAN_PRICES_KOBO = {
+  starter:     500000,  // ₦5,000 / month
+  pro:        2000000,  // ₦20,000 / month
+  enterprise: 5000000,  // ₦50,000 / month
+};
+
+exports.initStationBilling = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+
+  const uid = context.auth.uid;
+  const db = admin.firestore();
+
+  // Only platform owners may generate billing links
+  const userSnap = await db.collection('users').doc(uid).get();
+  const role = userSnap.exists ? userSnap.data().role : 'none';
+  if (role !== 'platformOwner') {
+    throw new functions.https.HttpsError('permission-denied', 'Platform owner only');
+  }
+
+  const config = functions.config();
+  const secretKey = config.paystack && config.paystack.secret;
+  if (!secretKey) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'Paystack secret not configured. Run: firebase functions:config:set paystack.secret="sk_..."',
+    );
+  }
+
+  const { stationId, plan, billingEmail } = data;
+  if (!stationId || !plan) {
+    throw new functions.https.HttpsError('invalid-argument', 'stationId and plan are required');
+  }
+
+  const amountKobo = STATION_PLAN_PRICES_KOBO[plan];
+  if (!amountKobo) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      `No billing required for plan: ${plan}. Use 'starter', 'pro', or 'enterprise'.`,
+    );
+  }
+
+  const stationSnap = await db.collection('stations').doc(stationId).get();
+  if (!stationSnap.exists) {
+    throw new functions.https.HttpsError('not-found', `Station "${stationId}" not found`);
+  }
+  const station = stationSnap.data();
+  const email = billingEmail || station.contactEmail;
+  if (!email) {
+    throw new functions.https.HttpsError('invalid-argument', 'No billing email available for this station');
+  }
+
+  const result = await paystackRequest(
+    'POST',
+    '/transaction/initialize',
+    {
+      email,
+      amount: amountKobo,
+      metadata: {
+        type: 'station_subscription',
+        stationId,
+        plan,
+        initiatedBy: uid,
+      },
+    },
+    secretKey,
+  );
+
+  if (!result.status) {
+    throw new functions.https.HttpsError('internal', result.message || 'Paystack transaction init failed');
+  }
+
+  const reference = result.data.reference;
+
+  await writeAuditLog('station_billing_initialized', uid, `station_payments/${reference}`, {
+    stationId, plan, amountKobo,
+  });
+
+  await db.collection('station_payments').doc(reference).set({
+    stationId,
+    plan,
+    amountKobo,
+    billingEmail: email,
+    initiatedBy: uid,
+    status: 'initialized',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {
+    success: true,
+    authorizationUrl: result.data.authorization_url,
+    reference,
+  };
+});
+
 // ── Paystack: webhook endpoint ────────────────────────────────────────────────
 // Register this URL in your Paystack Dashboard → Settings → Webhooks.
 // Verifies the x-paystack-signature header with HMAC-SHA512.
+// Handles: event_ticket, premium, station_subscription
 
 exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
   if (req.method !== 'POST') {
@@ -315,10 +416,13 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
     const metadata = (data && data.metadata) || {};
     const db = admin.firestore();
 
+    // ── Event ticket ──────────────────────────────────────────────────────────
     if (metadata.userId && metadata.eventId) {
       const ticketId = `${metadata.userId}_${metadata.eventId}`;
-      await writeAuditLog('ticket_paid', uid, `tickets/${ticketId}`, { eventId: metadata.eventId, amountKobo: result.data.amount });
-    await db.collection('tickets').doc(ticketId).set(
+      await writeAuditLog('ticket_paid', metadata.userId, `tickets/${ticketId}`, {
+        eventId: metadata.eventId, amountKobo: data.amount,
+      });
+      await db.collection('tickets').doc(ticketId).set(
         {
           userId: metadata.userId,
           eventId: metadata.eventId,
@@ -331,12 +435,43 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
       );
     }
 
+    // ── Listener premium subscription ─────────────────────────────────────────
     if (metadata.userId && metadata.type === 'premium') {
+      await writeAuditLog('premium_activated', metadata.userId, `users/${metadata.userId}`, {
+        reference: data.reference,
+      });
       await db.collection('users').doc(metadata.userId).set({
         isPremium: true,
         premiumSince: admin.firestore.FieldValue.serverTimestamp(),
         premiumReference: data.reference,
       }, { merge: true });
+    }
+
+    // ── Station subscription ──────────────────────────────────────────────────
+    if (metadata.type === 'station_subscription' && metadata.stationId && metadata.plan) {
+      const expectedKobo = STATION_PLAN_PRICES_KOBO[metadata.plan];
+      if (expectedKobo && data.amount >= expectedKobo) {
+        await db.collection('stations').doc(metadata.stationId).update({
+          plan: metadata.plan,
+          planStatus: 'active',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        await db.collection('station_payments').doc(data.reference).set({
+          stationId: metadata.stationId,
+          plan: metadata.plan,
+          amountKobo: data.amount,
+          billingEmail: data.customer && data.customer.email,
+          reference: data.reference,
+          status: 'paid',
+          paidAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await writeAuditLog(
+          'station_billing_paid',
+          metadata.initiatedBy || null,
+          `stations/${metadata.stationId}`,
+          { plan: metadata.plan, amountKobo: data.amount, reference: data.reference },
+        );
+      }
     }
   }
 

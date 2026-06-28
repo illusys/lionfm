@@ -1,7 +1,11 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
+import '../../core/constants/billing_plans.dart';
 import '../../core/theme/text_styles.dart';
 import '../../models/station.dart';
 import '../../providers/station_provider.dart';
@@ -21,6 +25,7 @@ class _PlatformStationDetailScreenState
   StationPlanStatus? _planStatus;
   bool? _isActive;
   bool _saving = false;
+  bool _generatingLink = false;
 
   void _initFrom(Station s) {
     _plan ??= s.plan;
@@ -71,6 +76,46 @@ class _PlatformStationDetailScreenState
       }
     }
     if (mounted) setState(() => _saving = false);
+  }
+
+  Future<void> _generatePaymentLink(Station station) async {
+    final plan = _plan ?? station.plan;
+    if (plan == StationPlan.free) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Free plan has no billing.'),
+        backgroundColor: AppColors.warningGold,
+      ));
+      return;
+    }
+    setState(() => _generatingLink = true);
+    try {
+      final result = await FirebaseFunctions.instance
+          .httpsCallable('initStationBilling')
+          .call<Map<Object?, Object?>>({
+        'stationId': widget.stationId,
+        'plan': BillingPlans.planKey(plan),
+        'billingEmail': station.contactEmail,
+      });
+      final url = (Map<String, dynamic>.from(result.data))['authorizationUrl'] as String?;
+      if (url != null && mounted) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      }
+    } on FirebaseFunctionsException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.message ?? 'Billing error'),
+          backgroundColor: AppColors.errorRed,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.errorRed,
+        ));
+      }
+    }
+    if (mounted) setState(() => _generatingLink = false);
   }
 
   @override
@@ -182,6 +227,54 @@ class _PlatformStationDetailScreenState
                       activeThumbColor: AppColors.lionGold,
                     ),
                   ],
+                ),
+                const SizedBox(height: AppDimensions.p24),
+                _SectionHeader('Billing'),
+                const SizedBox(height: AppDimensions.p12),
+                // Plan price display
+                if ((_plan ?? station.plan) != StationPlan.free)
+                  _InfoRow(
+                    'Monthly Fee',
+                    '₦${BillingPlans.priceForPlan(_plan ?? station.plan).toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},')} / month',
+                  ),
+                if ((_plan ?? station.plan) == StationPlan.free)
+                  _InfoRow('Monthly Fee', 'Free — no charge'),
+                const SizedBox(height: AppDimensions.p12),
+                // Generate payment link
+                if ((_plan ?? station.plan) != StationPlan.free)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _generatingLink
+                          ? null
+                          : () => _generatePaymentLink(station),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.lionGold,
+                        foregroundColor: AppColors.bg0,
+                      ),
+                      icon: _generatingLink
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: AppColors.bg0),
+                            )
+                          : const Icon(Icons.link_rounded, size: 18),
+                      label: Text(_generatingLink
+                          ? 'Generating…'
+                          : 'Generate Payment Link'),
+                    ),
+                  ),
+                const SizedBox(height: AppDimensions.p8),
+                // Payment history link
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => context
+                        .push('/platform/station/${widget.stationId}/billing'),
+                    icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                    label: const Text('View Payment History'),
+                  ),
                 ),
               ],
             ),

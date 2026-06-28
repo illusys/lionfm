@@ -181,6 +181,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── Station subscription billing ─────────────────────────────────────────
+    match /station_payments/{docId} {
+      allow read: if isPlatformOwner();
+      allow write: if false; // Cloud Functions only
+    }
+
     match /mail/{doc} {
       allow create: if isSuperAdmin();
     }

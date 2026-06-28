@@ -22,6 +22,7 @@ import '../../screens/admin/admin_shell.dart';
 import '../../screens/platform/platform_shell.dart';
 import '../../screens/platform/platform_stations_screen.dart';
 import '../../screens/platform/platform_station_detail_screen.dart';
+import '../../screens/platform/platform_billing_screen.dart';
 
 // ── Admin auth screens ────────────────────────────────────────────────────────
 import '../../screens/admin/admin_login_screen.dart';
@@ -270,6 +271,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/platform/station/:id',
             pageBuilder: (context, state) => NoTransitionPage(
               child: PlatformStationDetailScreen(
+                stationId: state.pathParameters['id']!,
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/platform/station/:id/billing',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: PlatformBillingScreen(
                 stationId: state.pathParameters['id']!,
               ),
             ),
