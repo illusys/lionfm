@@ -56,3 +56,4 @@ lib/firebase_options.dart
 *.keystore
 android/key.properties
 !assets/images/lionfm_logo.png
+flutter/
