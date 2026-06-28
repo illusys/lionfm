@@ -5,17 +5,58 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_dimensions.dart';
+import '../../models/station.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get dark {
+  /// Lion FM default — hard-coded Midnight Gold palette.
+  static ThemeData get dark => _buildTheme(
+        primary: AppColors.lionGold,
+        onPrimary: AppColors.bg0,
+        primaryContainer: AppColors.darkGold,
+        secondary: AppColors.pepperRed,
+        accentBorder: AppColors.borderGold,
+        focusBorder: AppColors.borderGold,
+      );
+
+  /// Per-tenant theme built from a station's brand colors.
+  /// Falls back gracefully: any color not in the brand palette keeps
+  /// the Lion FM default so the FMStream dark surface system is preserved.
+  static ThemeData fromBrandColors(StationBrandColors colors) {
+    final primary = colors.primaryColor;
+    final secondary = colors.secondaryColor;
+    // Compute readable text on primary based on luminance
+    final onPrimary = primary.computeLuminance() > 0.4 ? AppColors.bg0 : Colors.white;
+    // Derive a container color: blend primary into the darkest surface
+    final primaryContainer = Color.alphaBlend(primary.withValues(alpha: 0.25), AppColors.bg0);
+    final accentBorder = primary.withValues(alpha: 0.6);
+    final focusBorder = primary.withValues(alpha: 0.6);
+
+    return _buildTheme(
+      primary: primary,
+      onPrimary: onPrimary,
+      primaryContainer: primaryContainer,
+      secondary: secondary,
+      accentBorder: accentBorder,
+      focusBorder: focusBorder,
+    );
+  }
+
+  static ThemeData _buildTheme({
+    required Color primary,
+    required Color onPrimary,
+    required Color primaryContainer,
+    required Color secondary,
+    required Color accentBorder,
+    required Color focusBorder,
+  }) {
     final colorScheme = ColorScheme.dark(
-      primary: AppColors.lionGold,
-      onPrimary: AppColors.bg0,
-      primaryContainer: AppColors.darkGold,
+      primary: primary,
+      onPrimary: onPrimary,
+      primaryContainer: primaryContainer,
       onPrimaryContainer: const Color(0xFFFFDEA0),
-      secondary: AppColors.pepperRed,
+      secondary: secondary,
       onSecondary: AppColors.textPrimary,
       secondaryContainer: AppColors.deepRed,
       onSecondaryContainer: const Color(0xFFFFCCB5),
@@ -37,7 +78,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.bg0,
-      primaryColor: AppColors.lionGold,
+      primaryColor: primary,
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
 
       appBarTheme: AppBarTheme(
@@ -55,14 +96,14 @@ class AppTheme {
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-        shape: const Border(
-          bottom: BorderSide(color: AppColors.borderGold, width: 1),
+        shape: Border(
+          bottom: BorderSide(color: accentBorder, width: 1),
         ),
       ),
 
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.bg1,
-        selectedItemColor: AppColors.lionGold,
+        selectedItemColor: primary,
         unselectedItemColor: AppColors.textMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
@@ -75,15 +116,15 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r16),
-          side: const BorderSide(color: AppColors.borderGold, width: 0.5),
+          side: BorderSide(color: accentBorder, width: 0.5),
         ),
         margin: EdgeInsets.zero,
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.lionGold,
-          foregroundColor: AppColors.bg0,
+          backgroundColor: primary,
+          foregroundColor: onPrimary,
           elevation: 0,
           minimumSize: const Size(double.infinity, 48),
           textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
@@ -119,7 +160,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
-          borderSide: const BorderSide(color: AppColors.borderGold, width: 1.5),
+          borderSide: BorderSide(color: focusBorder, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.r10),
@@ -161,20 +202,20 @@ class AppTheme {
 
       iconTheme: const IconThemeData(color: AppColors.textSecondary),
 
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.lionGold,
-        foregroundColor: AppColors.bg0,
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primary,
+        foregroundColor: onPrimary,
       ),
 
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.lionGold,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: primary,
       ),
 
-      sliderTheme: const SliderThemeData(
-        activeTrackColor: AppColors.lionGold,
+      sliderTheme: SliderThemeData(
+        activeTrackColor: primary,
         inactiveTrackColor: AppColors.bg3,
-        thumbColor: AppColors.lionGold,
-        overlayColor: Color(0x29F5A623),
+        thumbColor: primary,
+        overlayColor: primary.withValues(alpha: 0.16),
       ),
     );
   }
