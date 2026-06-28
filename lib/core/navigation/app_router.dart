@@ -23,6 +23,9 @@ import '../../screens/platform/platform_shell.dart';
 import '../../screens/platform/platform_stations_screen.dart';
 import '../../screens/platform/platform_station_detail_screen.dart';
 import '../../screens/platform/platform_billing_screen.dart';
+import '../../screens/platform/platform_onboarding_screen.dart';
+import '../../screens/platform/platform_onboard_detail_screen.dart';
+import '../../screens/onboarding/station_onboard_screen.dart';
 
 // ── Admin auth screens ────────────────────────────────────────────────────────
 import '../../screens/admin/admin_login_screen.dart';
@@ -115,6 +118,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/login',
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: LoginScreen()),
+      ),
+
+      // ── Public station onboarding form ──────────────────────────────────
+      GoRoute(
+        path: '/onboard',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: StationOnboardScreen()),
       ),
 
       // ── Admin auth routes ────────────────────────────────────────────────
@@ -280,6 +290,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => NoTransitionPage(
               child: PlatformBillingScreen(
                 stationId: state.pathParameters['id']!,
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/platform/onboarding',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PlatformOnboardingScreen()),
+          ),
+          GoRoute(
+            path: '/platform/onboarding/:id',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: PlatformOnboardDetailScreen(
+                onboardingId: state.pathParameters['id']!,
               ),
             ),
           ),

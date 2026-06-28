@@ -13,6 +13,7 @@ class PlatformShell extends ConsumerWidget {
 
   static const _navItems = [
     _NavItem(icon: Icons.radio_rounded, label: 'Stations', route: '/platform'),
+    _NavItem(icon: Icons.assignment_rounded, label: 'Onboarding', route: '/platform/onboarding'),
   ];
 
   @override
@@ -20,7 +21,9 @@ class PlatformShell extends ConsumerWidget {
     final adminUser = ref.watch(adminUserProvider).valueOrNull;
     final location = GoRouterState.of(context).matchedLocation;
 
-    int selectedIdx = _navItems.indexWhere((i) => i.route == location);
+    int selectedIdx = _navItems.indexWhere((i) =>
+        i.route == location ||
+        (i.route != '/platform' && location.startsWith(i.route)));
     if (selectedIdx < 0) selectedIdx = 0;
 
     return Scaffold(

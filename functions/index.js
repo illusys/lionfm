@@ -275,6 +275,113 @@ exports.verifyPaystackPayment = functions.https.onCall(async (data, context) => 
   };
 });
 
+// ── Onboarding: provision a new station ──────────────────────────────────────
+// Platform owner only. Creates the station doc, admin invite, and marks the
+// onboarding request as provisioned.
+
+exports.onboardStation = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  }
+
+  const uid = context.auth.uid;
+  const db = admin.firestore();
+
+  const userSnap = await db.collection('users').doc(uid).get();
+  const role = userSnap.exists ? userSnap.data().role : 'none';
+  if (role !== 'platformOwner') {
+    throw new functions.https.HttpsError('permission-denied', 'Platform owner only');
+  }
+
+  const { onboardingId, slug, plan, trialDays } = data;
+  if (!onboardingId || !slug) {
+    throw new functions.https.HttpsError('invalid-argument', 'onboardingId and slug are required');
+  }
+
+  // Validate slug: lowercase alphanumeric + hyphens
+  if (!/^[a-z0-9-]{2,30}$/.test(slug)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Slug must be 2–30 lowercase letters, numbers, or hyphens');
+  }
+
+  // Ensure slug is not already taken
+  const existingStation = await db.collection('stations').doc(slug).get();
+  if (existingStation.exists) {
+    throw new functions.https.HttpsError('already-exists', `Slug "${slug}" is already taken`);
+  }
+
+  // Get the onboarding request
+  const onboardingSnap = await db.collection('station_onboarding').doc(onboardingId).get();
+  if (!onboardingSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Onboarding request not found');
+  }
+  const ob = onboardingSnap.data();
+  if (ob.status === 'provisioned') {
+    throw new functions.https.HttpsError('already-exists', 'This request has already been provisioned');
+  }
+
+  // Calculate trial end date
+  const trialEnd = new Date();
+  trialEnd.setDate(trialEnd.getDate() + (Number(trialDays) || 30));
+
+  const finalPlan = plan || ob.planPreference || 'starter';
+
+  // Create station document
+  await db.collection('stations').doc(slug).set({
+    stationId: slug,
+    name: ob.stationName || slug,
+    slug,
+    frequency: ob.frequency || '',
+    tagline: 'Your Interactive Radio',
+    logoUrl: '',
+    faviconUrl: '',
+    brandColors: {
+      primary: '#1E9B43',
+      secondary: '#28D7D2',
+      accent: '#C89A29',
+      background: '#0A0A0A',
+    },
+    streamUrl: '',
+    streamType: 'byo',
+    plan: finalPlan,
+    planStatus: 'trialing',
+    trialEndsAt: admin.firestore.Timestamp.fromDate(trialEnd),
+    ownerUid: '',
+    contactEmail: ob.contactEmail || '',
+    customDomain: null,
+    isActive: true,
+    isFeatured: false,
+    listenerCount: 0,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Create admin invite so the station owner can sign in and get superAdmin role
+  if (ob.contactEmail) {
+    await db.collection('admin_invites').doc(ob.contactEmail).set({
+      email: ob.contactEmail,
+      role: 'superAdmin',
+      stationId: slug,
+      invitedBy: uid,
+      status: 'pending',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  }
+
+  // Mark onboarding as provisioned
+  await db.collection('station_onboarding').doc(onboardingId).update({
+    status: 'provisioned',
+    provisionedSlug: slug,
+    reviewedBy: uid,
+    reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  await writeAuditLog('station_provisioned', uid, `stations/${slug}`, {
+    onboardingId, plan: finalPlan, trialDays: trialDays || 30,
+  });
+
+  return { success: true, stationId: slug };
+});
+
 // ── Paystack: initialize station subscription billing ────────────────────────
 // Platform owner only. Generates a Paystack payment link for a station's
 // monthly subscription fee. Secret must be set via functions:config.

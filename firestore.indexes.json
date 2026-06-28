@@ -11,6 +11,15 @@
     },
 
     {
+      "collectionGroup": "station_onboarding",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status",     "order": "ASCENDING"  },
+        { "fieldPath": "createdAt",  "order": "DESCENDING" }
+      ]
+    },
+
+    {
       "collectionGroup": "stations",
       "queryScope": "COLLECTION",
       "fields": [

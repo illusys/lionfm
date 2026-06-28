@@ -187,6 +187,14 @@ service cloud.firestore {
       allow write: if false; // Cloud Functions only
     }
 
+    // ── Station onboarding requests ───────────────────────────────────────────
+    // Public create so any prospective station can submit the form.
+    // Only platform owner can read and update (approve/reject/provision).
+    match /station_onboarding/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isPlatformOwner();
+    }
+
     match /mail/{doc} {
       allow create: if isSuperAdmin();
     }
