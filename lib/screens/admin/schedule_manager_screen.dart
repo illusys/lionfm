@@ -7,7 +7,7 @@ import '../../core/theme/text_styles.dart';
 import '../../providers/current_station_provider.dart';
 
 final _showsStreamProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
-  final stationId = ref.watch(currentStationIdProvider);
+  final stationId = ref.watch(currentStationIdProvider) ?? 'lion';
   return FirebaseFirestore.instance
       .collection('shows')
       .where('stationId', isEqualTo: stationId)
@@ -612,7 +612,7 @@ class _AddShowSheetState extends ConsumerState<_AddShowSheet> {
     setState(() => _saving = true);
     try {
       await FirebaseFirestore.instance.collection('shows').add({
-        'stationId': ref.read(currentStationIdProvider),
+        'stationId': ref.read(currentStationIdProvider) ?? 'lion',
         'title': _titleCtrl.text.trim(),
         'host': _hostCtrl.text.trim(),
         'presenter': _presenterCtrl.text.trim(),

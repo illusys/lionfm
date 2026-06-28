@@ -5,7 +5,7 @@ import '../data/models/event_model.dart';
 import 'current_station_provider.dart';
 
 final eventsStreamProvider = StreamProvider<List<EventModel>>((ref) {
-  final stationId = ref.watch(currentStationIdProvider);
+  final stationId = ref.watch(currentStationIdProvider) ?? 'lion';
   return FirebaseFirestore.instance
       .collection('events')
       .where('stationId', isEqualTo: stationId)

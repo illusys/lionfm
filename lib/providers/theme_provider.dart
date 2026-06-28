@@ -8,7 +8,7 @@ import 'station_provider.dart';
 /// Falls back to AppTheme.dark while the station document is loading
 /// or if the station is not found.
 final stationThemeProvider = Provider<ThemeData>((ref) {
-  final stationId = ref.watch(currentStationIdProvider);
+  final stationId = ref.watch(currentStationIdProvider) ?? 'lion';
   final stationAsync = ref.watch(stationProvider(stationId));
   return stationAsync.whenOrNull(
         data: (station) => AppTheme.fromBrandColors(station.brandColors),

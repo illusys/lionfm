@@ -7,7 +7,7 @@ import 'current_station_provider.dart';
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return FirestoreChatRepository(
-      stationId: ref.watch(currentStationIdProvider));
+      stationId: ref.watch(currentStationIdProvider) ?? 'lion');
 });
 
 final chatConfigProvider = StreamProvider<ChatConfigModel>((ref) {

@@ -12,7 +12,7 @@ import '../../providers/user_provider.dart';
 
 final _activeAdsProvider =
     StreamProvider.family<List<DirectBannerAd>, String>((ref, placement) {
-  final stationId = ref.watch(currentStationIdProvider);
+  final stationId = ref.watch(currentStationIdProvider) ?? 'lion';
   final now = Timestamp.now();
   return FirebaseFirestore.instance
       .collection('ads')

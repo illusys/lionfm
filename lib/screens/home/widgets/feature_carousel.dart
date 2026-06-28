@@ -75,7 +75,7 @@ class _FeatureCarouselState extends ConsumerState<FeatureCarousel> {
 
     // 2. Latest news from Firestore
     try {
-      final stationId = ref.read(currentStationIdProvider);
+      final stationId = ref.read(currentStationIdProvider) ?? 'lion';
       final snap = await FirebaseFirestore.instance
           .collection('news')
           .where('stationId', isEqualTo: stationId)
@@ -94,7 +94,7 @@ class _FeatureCarouselState extends ConsumerState<FeatureCarousel> {
 
     // 3. Live event or upcoming event from Firestore
     try {
-      final stationId = ref.read(currentStationIdProvider);
+      final stationId = ref.read(currentStationIdProvider) ?? 'lion';
       QuerySnapshot<Map<String, dynamic>> eventSnap = await FirebaseFirestore
           .instance
           .collection('events')

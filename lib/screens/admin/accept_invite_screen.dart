@@ -118,7 +118,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg0,
+      backgroundColor: const Color(0xFF0B1639),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppDimensions.p32),
@@ -129,18 +129,28 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
-                  child: Image.asset(
-                    'assets/images/lion_fm_logo.webp',
-                    width: 100,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        gradient: AppColors.greenTealGradient,
-                        borderRadius: BorderRadius.circular(AppDimensions.r16),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text('LF', style: AppTextStyles.h1.copyWith(color: AppColors.bg0)),
+                  child: RichText(
+                    text: const TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'FM',
+                          style: TextStyle(
+                            color: Color(0xFF15E0B4),
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Stream',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -152,7 +162,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
                 ),
                 const SizedBox(height: AppDimensions.p8),
                 Text(
-                  'Lion FM Admin Portal',
+                  'FMStream Admin Portal',
                   textAlign: TextAlign.center,
                   style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
                 ),
@@ -213,9 +223,10 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _activate,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.lionGreen,
-                      foregroundColor: AppColors.bg0,
-                      disabledBackgroundColor: AppColors.lionGreen.withValues(alpha: 0.5),
+                      backgroundColor: const Color(0xFF15E0B4),
+                      foregroundColor: const Color(0xFF06112B),
+                      disabledBackgroundColor:
+                          const Color(0xFF15E0B4).withValues(alpha: 0.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppDimensions.r12),
                       ),
@@ -228,7 +239,8 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
                           )
                         : Text(
                             'Activate Account',
-                            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.bg0),
+                            style: AppTextStyles.bodyMedium
+                                .copyWith(color: const Color(0xFF06112B)),
                           ),
                   ),
                 ),
@@ -270,7 +282,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppDimensions.r12),
-        borderSide: const BorderSide(color: AppColors.lionGreen, width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF15E0B4), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.p16,
