@@ -18,6 +18,11 @@ import '../../screens/events/events_screen.dart';
 // ── Admin shell ───────────────────────────────────────────────────────────────
 import '../../screens/admin/admin_shell.dart';
 
+// ── Platform shell ────────────────────────────────────────────────────────────
+import '../../screens/platform/platform_shell.dart';
+import '../../screens/platform/platform_stations_screen.dart';
+import '../../screens/platform/platform_station_detail_screen.dart';
+
 // ── Admin auth screens ────────────────────────────────────────────────────────
 import '../../screens/admin/admin_login_screen.dart';
 import '../../screens/admin/first_time_setup_screen.dart';
@@ -60,9 +65,16 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final adminUser = adminAsync.valueOrNull;
       final isAdminRoute = loc == '/admin' || loc.startsWith('/admin/');
+      final isPlatformRoute = loc == '/platform' || loc.startsWith('/platform/');
       final isLoginRoute = loc == '/admin-login';
       final isSetupRoute = loc == '/admin-setup';
       final isAcceptRoute = loc == '/admin-accept-invite';
+
+      // Platform routes — platform owner only
+      if (isPlatformRoute) {
+        if (adminUser == null || !adminUser.isActive) return '/admin-login';
+        if (!adminUser.isPlatformOwner) return '/admin';
+      }
 
       if (isAdminRoute && !isSetupRoute && needsSetup) return '/admin-setup';
 
@@ -80,7 +92,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (isLoginRoute && adminUser != null && adminUser.isActive) {
-        return '/admin';
+        // Platform owners land on the platform dashboard
+        return adminUser.isPlatformOwner ? '/platform' : '/admin';
       }
 
       return null;
@@ -240,6 +253,26 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/settings',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: AdminSettingsScreen()),
+          ),
+        ],
+      ),
+
+      // ── Platform shell (iLLuSys platform owner) ──────────────────────────
+      ShellRoute(
+        builder: (context, state, child) => PlatformShell(child: child),
+        routes: [
+          GoRoute(
+            path: '/platform',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PlatformStationsScreen()),
+          ),
+          GoRoute(
+            path: '/platform/station/:id',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: PlatformStationDetailScreen(
+                stationId: state.pathParameters['id']!,
+              ),
+            ),
           ),
         ],
       ),

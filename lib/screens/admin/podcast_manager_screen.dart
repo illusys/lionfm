@@ -7,11 +7,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
+import '../../providers/current_station_provider.dart';
 import '../../services/rss_service.dart';
 
 final _podcastFeedsProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final stationId = ref.watch(currentStationIdProvider);
   return FirebaseFirestore.instance
       .collection('podcast_feeds')
+      .where('stationId', isEqualTo: stationId)
       .snapshots()
       .map((snap) => snap.docs
           .map<Map<String, dynamic>>(
@@ -109,6 +112,7 @@ class _RssFeedsTabState extends ConsumerState<_RssFeedsTab> {
     setState(() => _adding = true);
     try {
       await FirebaseFirestore.instance.collection('podcast_feeds').add({
+        'stationId': ref.read(currentStationIdProvider),
         'url': url,
         'name': _nameCtrl.text.trim().isEmpty ? url : _nameCtrl.text.trim(),
         'isActive': true,
@@ -485,6 +489,7 @@ class _UploadedTabState extends ConsumerState<_UploadedTab> {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
       await FirebaseFirestore.instance.collection('episodes').add({
+        'stationId': ref.read(currentStationIdProvider),
         'title': _titleCtrl.text.trim(),
         'showName': _showCtrl.text.trim().isEmpty ? 'Lion FM' : _showCtrl.text.trim(),
         'showId': uid,

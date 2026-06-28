@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/episode_model.dart';
 import '../data/repositories/podcast_repository.dart';
+import 'current_station_provider.dart';
 
 final podcastRepositoryProvider = Provider<PodcastRepository>((ref) {
-  return FirestoreEpisodeRepository();
+  return FirestoreEpisodeRepository(
+      stationId: ref.watch(currentStationIdProvider));
 });
 
 final episodesProvider = FutureProvider<List<EpisodeModel>>((ref) async {
@@ -36,7 +38,6 @@ final filteredEpisodesProvider =
   });
 });
 
-// Latest 4 episodes for the home page preview
 final latestEpisodesProvider = FutureProvider<List<EpisodeModel>>((ref) async {
   final all = await ref.watch(episodesProvider.future);
   return all.take(4).toList();

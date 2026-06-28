@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../data/models/event_model.dart';
+import '../../providers/current_station_provider.dart';
 import '../../providers/events_provider.dart';
 
 class EventsManagerScreen extends ConsumerWidget {
@@ -25,7 +26,8 @@ class EventsManagerScreen extends ConsumerWidget {
         automaticallyImplyLeading: false,
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateSheet(context),
+        onPressed: () =>
+            _showCreateSheet(context, ref.read(currentStationIdProvider)),
         backgroundColor: AppColors.lionGreen,
         foregroundColor: AppColors.bg0,
         icon: const Icon(Icons.add),
@@ -62,7 +64,7 @@ class EventsManagerScreen extends ConsumerWidget {
     );
   }
 
-  void _showCreateSheet(BuildContext context) {
+  void _showCreateSheet(BuildContext context, String stationId) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -70,7 +72,7 @@ class EventsManagerScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
           borderRadius:
               BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => const _CreateEventSheet(),
+      builder: (_) => _CreateEventSheet(stationId: stationId),
     );
   }
 }
@@ -189,7 +191,8 @@ class _EventTile extends StatelessWidget {
 // ─── Create event sheet ───────────────────────────────────────────────────────
 
 class _CreateEventSheet extends StatefulWidget {
-  const _CreateEventSheet();
+  final String stationId;
+  const _CreateEventSheet({required this.stationId});
 
   @override
   State<_CreateEventSheet> createState() => _CreateEventSheetState();
@@ -312,7 +315,7 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
       );
       await FirebaseFirestore.instance
           .collection('events')
-          .add(event.toFirestore());
+          .add({...event.toFirestore(), 'stationId': widget.stationId});
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) _snack('Error: $e');

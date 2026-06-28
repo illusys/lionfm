@@ -1,20 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/request_model.dart';
-import '../../../data/repositories/request_repository.dart';
+import '../../../providers/request_provider.dart';
 import 'success_confirmation.dart';
 
-class ShowPitchForm extends StatefulWidget {
+class ShowPitchForm extends ConsumerStatefulWidget {
   const ShowPitchForm({super.key});
 
   @override
-  State<ShowPitchForm> createState() => _ShowPitchFormState();
+  ConsumerState<ShowPitchForm> createState() => _ShowPitchFormState();
 }
 
-class _ShowPitchFormState extends State<ShowPitchForm> {
+class _ShowPitchFormState extends ConsumerState<ShowPitchForm> {
   final _formKey = GlobalKey<FormState>();
   final _conceptCtrl = TextEditingController();
   final _deptCtrl = TextEditingController();
@@ -24,7 +25,6 @@ class _ShowPitchFormState extends State<ShowPitchForm> {
   String? _selectedFormat;
   bool _submitting = false;
   bool _submitted = false;
-  final _repo = FirestoreRequestRepository();
 
   static const _slots = [
     'Weekdays 6-8AM',
@@ -53,7 +53,7 @@ class _ShowPitchFormState extends State<ShowPitchForm> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
-    await _repo.submitRequest(RequestModel(
+    await ref.read(requestRepositoryProvider).submitRequest(RequestModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       type: RequestType.showPitch,
       requesterName: _deptCtrl.text,

@@ -7,13 +7,16 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../data/models/direct_banner_ad_model.dart';
+import '../../providers/current_station_provider.dart';
 import '../../providers/user_provider.dart';
 
 final _activeAdsProvider =
     StreamProvider.family<List<DirectBannerAd>, String>((ref, placement) {
+  final stationId = ref.watch(currentStationIdProvider);
   final now = Timestamp.now();
   return FirebaseFirestore.instance
       .collection('ads')
+      .where('stationId', isEqualTo: stationId)
       .where('placement', isEqualTo: placement)
       .where('isActive', isEqualTo: true)
       .where('endDate', isGreaterThan: now)

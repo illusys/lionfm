@@ -3,10 +3,12 @@ import '../data/models/chat_config_model.dart';
 import '../data/models/chat_message_model.dart';
 import '../data/models/chat_participant_model.dart';
 import '../data/repositories/chat_repository.dart';
+import 'current_station_provider.dart';
 
-final chatRepositoryProvider = Provider<ChatRepository>(
-  (_) => FirestoreChatRepository(),
-);
+final chatRepositoryProvider = Provider<ChatRepository>((ref) {
+  return FirestoreChatRepository(
+      stationId: ref.watch(currentStationIdProvider));
+});
 
 final chatConfigProvider = StreamProvider<ChatConfigModel>((ref) {
   return ref.watch(chatRepositoryProvider).watchConfig();
@@ -32,7 +34,6 @@ final chatParticipantsProvider =
   return ref.watch(chatRepositoryProvider).watchParticipants();
 });
 
-// Derived: pinned message (single, first pinned found)
 final pinnedMessageProvider = Provider<ChatMessageModel?>((ref) {
   final msgs = ref.watch(chatMessagesProvider).valueOrNull ?? [];
   try {

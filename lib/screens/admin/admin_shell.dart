@@ -182,6 +182,7 @@ class _RolePill extends StatelessWidget {
 
   Color _roleColor(AdminRole r) {
     switch (r) {
+      case AdminRole.platformOwner: return AppColors.lionGold;
       case AdminRole.superAdmin: return AppColors.lionGreen;
       case AdminRole.stationManager: return AppColors.electricTeal;
       case AdminRole.broadcaster: return AppColors.warningGold;
@@ -192,6 +193,7 @@ class _RolePill extends StatelessWidget {
 
   String _shortLabel(AdminRole r) {
     switch (r) {
+      case AdminRole.platformOwner: return 'OWNER';
       case AdminRole.superAdmin: return 'SUPER';
       case AdminRole.stationManager: return 'MGR';
       case AdminRole.broadcaster: return 'BCST';

@@ -6,13 +6,16 @@ abstract class NewsRepository {
   Future<List<NewsModel>> getNews();
 }
 
-/// Real Firestore-backed repository reading from 'news' collection.
 class FirestoreNewsRepository implements NewsRepository {
+  final String stationId;
+  FirestoreNewsRepository({required this.stationId});
+
   @override
   Future<List<NewsModel>> getNews() async {
     try {
       final snap = await FirebaseFirestore.instance
           .collection('news')
+          .where('stationId', isEqualTo: stationId)
           .orderBy('publishedAt', descending: true)
           .limit(30)
           .get();
@@ -56,7 +59,6 @@ class FirestoreNewsRepository implements NewsRepository {
     );
   }
 
-  /// Seed data shown while the 'news' Firestore collection is empty.
   List<NewsModel> _fallback() {
     final now = DateTime.now();
     return [
@@ -120,4 +122,3 @@ class FirestoreNewsRepository implements NewsRepository {
     ];
   }
 }
-

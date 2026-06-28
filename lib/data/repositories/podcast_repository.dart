@@ -7,6 +7,9 @@ abstract class PodcastRepository {
 }
 
 class FirestoreEpisodeRepository implements PodcastRepository {
+  final String stationId;
+  FirestoreEpisodeRepository({required this.stationId});
+
   final _rss = RssService();
 
   @override
@@ -24,6 +27,7 @@ class FirestoreEpisodeRepository implements PodcastRepository {
     try {
       final feedsSnap = await FirebaseFirestore.instance
           .collection('podcast_feeds')
+          .where('stationId', isEqualTo: stationId)
           .where('isActive', isEqualTo: true)
           .get();
 
@@ -57,6 +61,7 @@ class FirestoreEpisodeRepository implements PodcastRepository {
     try {
       final snap = await FirebaseFirestore.instance
           .collection('podcasts')
+          .where('stationId', isEqualTo: stationId)
           .orderBy('publishedAt', descending: true)
           .limit(50)
           .get();
@@ -103,7 +108,6 @@ class FirestoreEpisodeRepository implements PodcastRepository {
   }
 }
 
-// Kept for fallback only; replaced by FirestoreEpisodeRepository
 class MockPodcastRepository implements PodcastRepository {
   @override
   Future<List<EpisodeModel>> getEpisodes() async {

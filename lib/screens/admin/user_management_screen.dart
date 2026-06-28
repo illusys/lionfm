@@ -298,6 +298,7 @@ class _InitialsAvatar extends StatelessWidget {
 
   Color _roleColor(AdminRole r) {
     switch (r) {
+      case AdminRole.platformOwner: return AppColors.lionGold;
       case AdminRole.superAdmin:
         return AppColors.lionGreen;
       case AdminRole.stationManager:
@@ -339,6 +340,7 @@ class _RoleBadge extends StatelessWidget {
 
   Color _roleColor(AdminRole r) {
     switch (r) {
+      case AdminRole.platformOwner: return AppColors.lionGold;
       case AdminRole.superAdmin:
         return AppColors.lionGreen;
       case AdminRole.stationManager:

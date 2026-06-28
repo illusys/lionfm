@@ -9,13 +9,14 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../data/models/audio_ad_model.dart';
 import '../../data/models/direct_banner_ad_model.dart';
+import '../../providers/current_station_provider.dart';
 import '../../widgets/common/index_building_placeholder.dart';
 
 final _bannerAdsProvider = StreamProvider<List<DirectBannerAd>>((ref) {
-  // Fetch all ads ordered by date, filter out audio_instream in Dart.
-  // Avoids a composite index and handles legacy docs with no 'type' field.
+  final stationId = ref.watch(currentStationIdProvider);
   return FirebaseFirestore.instance
       .collection('ads')
+      .where('stationId', isEqualTo: stationId)
       .orderBy('startDate', descending: true)
       .snapshots()
       .map((s) => s.docs
@@ -25,8 +26,10 @@ final _bannerAdsProvider = StreamProvider<List<DirectBannerAd>>((ref) {
 });
 
 final _audioAdsProvider = StreamProvider<List<AudioAdModel>>((ref) {
+  final stationId = ref.watch(currentStationIdProvider);
   return FirebaseFirestore.instance
       .collection('ads')
+      .where('stationId', isEqualTo: stationId)
       .where('type', isEqualTo: 'audio_instream')
       .orderBy('startDate', descending: true)
       .snapshots()
@@ -111,7 +114,8 @@ class _AdManagerScreenState extends ConsumerState<AdManagerScreen>
       backgroundColor: AppColors.bg2,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => const _CreateAdSheet(),
+      builder: (_) =>
+          _CreateAdSheet(stationId: ref.read(currentStationIdProvider)),
     );
   }
 
@@ -122,7 +126,8 @@ class _AdManagerScreenState extends ConsumerState<AdManagerScreen>
       backgroundColor: AppColors.bg2,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => const _CreateAudioAdSheet(),
+      builder: (_) =>
+          _CreateAudioAdSheet(stationId: ref.read(currentStationIdProvider)),
     );
   }
 }
@@ -356,7 +361,8 @@ class _AudioAdCard extends StatelessWidget {
 // ─── Create Audio Ad Sheet ────────────────────────────────────────────────────
 
 class _CreateAudioAdSheet extends StatefulWidget {
-  const _CreateAudioAdSheet();
+  final String stationId;
+  const _CreateAudioAdSheet({required this.stationId});
 
   @override
   State<_CreateAudioAdSheet> createState() => _CreateAudioAdSheetState();
@@ -486,7 +492,10 @@ class _CreateAudioAdSheetState extends State<_CreateAudioAdSheet> {
         endDate: _endDate,
         isActive: _isActive,
       );
-      await FirebaseFirestore.instance.collection('ads').add(ad.toFirestore());
+      await FirebaseFirestore.instance.collection('ads').add({
+        ...ad.toFirestore(),
+        'stationId': widget.stationId,
+      });
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) _snack('Error: $e');
@@ -818,7 +827,8 @@ class _AdStat extends StatelessWidget {
 // ─── Create Ad Sheet ──────────────────────────────────────────────────────────
 
 class _CreateAdSheet extends StatefulWidget {
-  const _CreateAdSheet();
+  final String stationId;
+  const _CreateAdSheet({required this.stationId});
 
   @override
   State<_CreateAdSheet> createState() => _CreateAdSheetState();
@@ -929,7 +939,10 @@ class _CreateAdSheetState extends State<_CreateAdSheet> {
         endDate: _endDate,
         isActive: _isActive,
       );
-      await FirebaseFirestore.instance.collection('ads').add(ad.toFirestore());
+      await FirebaseFirestore.instance.collection('ads').add({
+        ...ad.toFirestore(),
+        'stationId': widget.stationId,
+      });
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) _snack('Error: $e');

@@ -26,7 +26,7 @@ class LoginPromptSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.p24),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -14,14 +14,18 @@ abstract class RequestRepository {
 }
 
 class FirestoreRequestRepository implements RequestRepository {
-  FirestoreRequestRepository({FirebaseFirestore? firestore})
+  final String stationId;
+  FirestoreRequestRepository({required this.stationId, FirebaseFirestore? firestore})
       : _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _db;
 
   @override
   Future<void> submitRequest(RequestModel request, {String? userId}) async {
-    final data = request.toFirestoreCreate(userId: userId);
+    final data = {
+      ...request.toFirestoreCreate(userId: userId),
+      'stationId': stationId,
+    };
     await _db.collection('requests').add(data);
   }
 
@@ -29,6 +33,7 @@ class FirestoreRequestRepository implements RequestRepository {
   Future<List<RequestModel>> getRecentRequests() async {
     final snap = await _db
         .collection('requests')
+        .where('stationId', isEqualTo: stationId)
         .orderBy('submittedAt', descending: true)
         .limit(50)
         .get();
@@ -37,20 +42,23 @@ class FirestoreRequestRepository implements RequestRepository {
 
   @override
   Stream<List<RequestModel>> watchRequests({String? status}) {
-    Query<Map<String, dynamic>> query = _db
-        .collection('requests')
-        .orderBy('submittedAt', descending: true)
-        .limit(200);
     if (status != null) {
-      query = _db
+      return _db
           .collection('requests')
+          .where('stationId', isEqualTo: stationId)
           .where('status', isEqualTo: status)
           .orderBy('submittedAt', descending: true)
-          .limit(200);
+          .limit(200)
+          .snapshots()
+          .map((snap) => snap.docs.map(RequestModel.fromFirestore).toList());
     }
-    return query.snapshots().map(
-          (snap) => snap.docs.map(RequestModel.fromFirestore).toList(),
-        );
+    return _db
+        .collection('requests')
+        .where('stationId', isEqualTo: stationId)
+        .orderBy('submittedAt', descending: true)
+        .limit(200)
+        .snapshots()
+        .map((snap) => snap.docs.map(RequestModel.fromFirestore).toList());
   }
 
   @override
@@ -69,7 +77,6 @@ class FirestoreRequestRepository implements RequestRepository {
   }
 }
 
-// Kept for tests only. Production code should use FirestoreRequestRepository.
 class MockRequestRepository implements RequestRepository {
   final List<RequestModel> _requests = [];
 

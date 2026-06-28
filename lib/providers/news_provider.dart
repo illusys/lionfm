@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/news_model.dart';
 import '../data/repositories/news_repository.dart';
+import 'current_station_provider.dart';
 
 final newsRepositoryProvider = Provider<NewsRepository>((ref) {
-  return FirestoreNewsRepository();
+  return FirestoreNewsRepository(
+      stationId: ref.watch(currentStationIdProvider));
 });
 
 final newsItemsProvider = FutureProvider<List<NewsModel>>((ref) async {

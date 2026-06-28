@@ -5,8 +5,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/request_model.dart';
-import '../../../data/repositories/request_repository.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/request_provider.dart';
 import '../../../widgets/common/login_prompt_sheet.dart';
 import 'success_confirmation.dart';
 
@@ -27,7 +27,6 @@ class _SongRequestFormState extends ConsumerState<SongRequestForm> {
   String? _selectedShow;
   bool _submitting = false;
   bool _submitted = false;
-  final _repo = FirestoreRequestRepository();
 
   static const _shows = [
     'Afternoon Drive (4PM)',
@@ -57,7 +56,7 @@ class _SongRequestFormState extends ConsumerState<SongRequestForm> {
       return;
     }
     setState(() => _submitting = true);
-    await _repo.submitRequest(RequestModel(
+    await ref.read(requestRepositoryProvider).submitRequest(RequestModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       type: RequestType.song,
       songTitle: _songCtrl.text,

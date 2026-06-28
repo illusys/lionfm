@@ -11,6 +11,9 @@ class AnalyticsService {
   static final _db = FirebaseFirestore.instance;
   static final _fa = FirebaseAnalytics.instance;
 
+  // Phase 2 stub — Phase 3 updates this via the station context.
+  static const _stationId = 'lion';
+
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
   static String _todayKey() {
@@ -46,7 +49,6 @@ class AnalyticsService {
     debugPrint('[Analytics] initialized');
   }
 
-  /// Ensures today's daily doc exists (first-run sentinel).
   static Future<void> ensureTodayDoc() async {
     try {
       final key = _todayKey();
@@ -54,6 +56,7 @@ class AnalyticsService {
       final snap = await ref.get();
       if (!snap.exists) {
         await ref.set({
+          'stationId': _stationId,
           'date': key,
           'sessionStarts': 0,
           'totalListeningSeconds': 0,
@@ -73,13 +76,16 @@ class AnalyticsService {
 
   // ─── Listening heartbeat ───────────────────────────────────────────────────
 
-  /// Call every 30 seconds while audio is playing to accumulate TLH.
   static Future<void> logListeningHeartbeat(int seconds) async {
     if (seconds <= 0) return;
     try {
       final key = _todayKey();
       await _db.collection('analytics').doc(key).set(
-        {'date': key, 'totalListeningSeconds': FieldValue.increment(seconds)},
+        {
+          'stationId': _stationId,
+          'date': key,
+          'totalListeningSeconds': FieldValue.increment(seconds),
+        },
         SetOptions(merge: true),
       );
     } catch (_) {}
@@ -87,7 +93,6 @@ class AnalyticsService {
 
   // ─── Session events ────────────────────────────────────────────────────────
 
-  /// Fired when the user presses play on a live stream or podcast.
   static Future<void> logListenStart({required String showTitle}) async {
     try {
       final key = _todayKey();
@@ -96,6 +101,7 @@ class AnalyticsService {
 
       await _db.collection('analytics').doc(key).set(
         {
+          'stationId': _stationId,
           'date': key,
           'sessionStarts': FieldValue.increment(1),
           'listeners': FieldValue.increment(1),
@@ -105,7 +111,7 @@ class AnalyticsService {
         SetOptions(merge: true),
       );
       await _db.collection('analytics').doc('summary').set(
-        {'totalListeners': FieldValue.increment(1)},
+        {'stationId': _stationId, 'totalListeners': FieldValue.increment(1)},
         SetOptions(merge: true),
       );
 
@@ -116,11 +122,10 @@ class AnalyticsService {
     } catch (_) {}
   }
 
-  /// Fired when the session ends (pause / app close / track switch).
   static Future<void> logSessionEnd() async {
     try {
       await _db.collection('analytics').doc('live').set(
-        {'concurrent': FieldValue.increment(-1)},
+        {'stationId': _stationId, 'concurrent': FieldValue.increment(-1)},
         SetOptions(merge: true),
       );
     } catch (_) {}
@@ -142,7 +147,7 @@ class AnalyticsService {
     try {
       final key = _todayKey();
       await _db.collection('analytics').doc(key).set(
-        {'date': key, 'podcastPlays': FieldValue.increment(1)},
+        {'stationId': _stationId, 'date': key, 'podcastPlays': FieldValue.increment(1)},
         SetOptions(merge: true),
       );
       await _fa.logEvent(
@@ -155,7 +160,7 @@ class AnalyticsService {
     try {
       final key = _todayKey();
       await _db.collection('analytics').doc(key).set(
-        {'date': key, 'requests': FieldValue.increment(1)},
+        {'stationId': _stationId, 'date': key, 'requests': FieldValue.increment(1)},
         SetOptions(merge: true),
       );
       await _fa.logEvent(name: 'song_request', parameters: {'show': showName});
@@ -174,11 +179,11 @@ class AnalyticsService {
     try {
       final key = _todayKey();
       await _db.collection('analytics').doc(key).set(
-        {'date': key, 'premiumPurchases': FieldValue.increment(1)},
+        {'stationId': _stationId, 'date': key, 'premiumPurchases': FieldValue.increment(1)},
         SetOptions(merge: true),
       );
       await _db.collection('analytics').doc('summary').set(
-        {'premiumUsers': FieldValue.increment(1)},
+        {'stationId': _stationId, 'premiumUsers': FieldValue.increment(1)},
         SetOptions(merge: true),
       );
       await _fa.logPurchase(currency: 'NGN', value: 1000);
@@ -190,7 +195,7 @@ class AnalyticsService {
     try {
       final key = _todayKey();
       await _db.collection('analytics').doc(key).set(
-        {'date': key, 'eventTickets': FieldValue.increment(1)},
+        {'stationId': _stationId, 'date': key, 'eventTickets': FieldValue.increment(1)},
         SetOptions(merge: true),
       );
       await _fa.logPurchase(
@@ -215,7 +220,10 @@ class AnalyticsService {
     try {
       final platform = _platformKey();
       await _db.collection('analytics').doc('summary').set(
-        {'platformBreakdown.$platform': FieldValue.increment(1)},
+        {
+          'stationId': _stationId,
+          'platformBreakdown.$platform': FieldValue.increment(1),
+        },
         SetOptions(merge: true),
       );
     } catch (_) {}
@@ -223,8 +231,6 @@ class AnalyticsService {
 
   // ─── Private helpers ───────────────────────────────────────────────────────
 
-  /// Counts this device as a unique listener once per calendar day using
-  /// SharedPreferences as a local flag — avoids double-counting on re-opens.
   static Future<void> _maybeCountUniqueListener() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -234,14 +240,16 @@ class AnalyticsService {
 
       final todayKey = _todayKey();
       await _db.collection('analytics').doc(todayKey).set(
-        {'date': todayKey, 'uniqueListenersCount': FieldValue.increment(1)},
+        {
+          'stationId': _stationId,
+          'date': todayKey,
+          'uniqueListenersCount': FieldValue.increment(1),
+        },
         SetOptions(merge: true),
       );
     } catch (_) {}
   }
 
-  /// Increments the live concurrent counter and updates today's peak if the
-  /// new value exceeds the stored maximum.
   static Future<void> _trackConcurrentPing() async {
     try {
       final liveRef = _db.collection('analytics').doc('live');
@@ -252,13 +260,15 @@ class AnalyticsService {
         final live = await tx.get(liveRef);
         final current =
             ((live.data()?['concurrent'] as num?)?.toInt() ?? 0) + 1;
-        tx.set(liveRef, {'concurrent': current}, SetOptions(merge: true));
+        tx.set(liveRef, {'stationId': _stationId, 'concurrent': current},
+            SetOptions(merge: true));
 
         final today = await tx.get(todayRef);
         final storedPeak =
             (today.data()?['peakConcurrent'] as num?)?.toInt() ?? 0;
         if (current > storedPeak) {
-          tx.set(todayRef, {'date': todayKey, 'peakConcurrent': current},
+          tx.set(todayRef,
+              {'stationId': _stationId, 'date': todayKey, 'peakConcurrent': current},
               SetOptions(merge: true));
         }
       });

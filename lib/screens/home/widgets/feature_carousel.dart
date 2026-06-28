@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../providers/current_station_provider.dart';
 import '../../../providers/schedule_provider.dart';
 
 // ─── Slide models ─────────────────────────────────────────────────────────────
@@ -74,8 +75,10 @@ class _FeatureCarouselState extends ConsumerState<FeatureCarousel> {
 
     // 2. Latest news from Firestore
     try {
+      final stationId = ref.read(currentStationIdProvider);
       final snap = await FirebaseFirestore.instance
           .collection('news')
+          .where('stationId', isEqualTo: stationId)
           .orderBy('publishedAt', descending: true)
           .limit(1)
           .get();
@@ -91,9 +94,11 @@ class _FeatureCarouselState extends ConsumerState<FeatureCarousel> {
 
     // 3. Live event or upcoming event from Firestore
     try {
+      final stationId = ref.read(currentStationIdProvider);
       QuerySnapshot<Map<String, dynamic>> eventSnap = await FirebaseFirestore
           .instance
           .collection('events')
+          .where('stationId', isEqualTo: stationId)
           .where('isLive', isEqualTo: true)
           .limit(1)
           .get();
@@ -101,6 +106,7 @@ class _FeatureCarouselState extends ConsumerState<FeatureCarousel> {
       if (eventSnap.docs.isEmpty) {
         eventSnap = await FirebaseFirestore.instance
             .collection('events')
+            .where('stationId', isEqualTo: stationId)
             .orderBy('startTime')
             .limit(1)
             .get();

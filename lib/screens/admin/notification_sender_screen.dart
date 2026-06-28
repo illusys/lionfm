@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
+import '../../providers/current_station_provider.dart';
 
 final _notifHistoryProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final stationId = ref.watch(currentStationIdProvider);
   return FirebaseFirestore.instance
       .collection('notification_queue')
+      .where('stationId', isEqualTo: stationId)
       .orderBy('createdAt', descending: true)
       .limit(20)
       .snapshots()
@@ -65,6 +68,7 @@ class _NotificationSenderScreenState
     setState(() => _sending = true);
     try {
       await FirebaseFirestore.instance.collection('notification_queue').add({
+        'stationId': ref.read(currentStationIdProvider),
         'type': _notifType,
         'title': title.isEmpty ? _defaultTitle(_notifType) : title,
         'body': body,

@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
-enum AdminRole { superAdmin, stationManager, broadcaster, unnAdmin, none }
+enum AdminRole { platformOwner, superAdmin, stationManager, broadcaster, unnAdmin, none }
 
 class AdminUser {
   final String uid;
@@ -21,16 +21,19 @@ class AdminUser {
     required this.isActive,
   });
 
-  bool get isSuperAdmin => role == AdminRole.superAdmin;
+  bool get isPlatformOwner => role == AdminRole.platformOwner;
+  bool get isSuperAdmin => role == AdminRole.superAdmin || role == AdminRole.platformOwner;
   bool get canManageSchedule => role != AdminRole.unnAdmin;
   bool get canManageRevenue =>
-      role == AdminRole.superAdmin || role == AdminRole.unnAdmin;
-  bool get canManageUsers => role == AdminRole.superAdmin;
+      isSuperAdmin || role == AdminRole.unnAdmin;
+  bool get canManageUsers => isSuperAdmin;
   bool get canSendNotifications =>
-      role == AdminRole.superAdmin || role == AdminRole.stationManager;
+      isSuperAdmin || role == AdminRole.stationManager;
 
   static AdminRole roleFromString(String? s) {
     switch (s) {
+      case 'platformOwner':
+        return AdminRole.platformOwner;
       case 'superAdmin':
         return AdminRole.superAdmin;
       case 'stationManager':
@@ -46,6 +49,8 @@ class AdminUser {
 
   static String roleToString(AdminRole r) {
     switch (r) {
+      case AdminRole.platformOwner:
+        return 'platformOwner';
       case AdminRole.superAdmin:
         return 'superAdmin';
       case AdminRole.stationManager:
@@ -61,6 +66,8 @@ class AdminUser {
 
   static String roleDisplayName(AdminRole r) {
     switch (r) {
+      case AdminRole.platformOwner:
+        return 'Platform Owner';
       case AdminRole.superAdmin:
         return 'Super Admin';
       case AdminRole.stationManager:
@@ -124,6 +131,7 @@ final adminUserProvider = StreamProvider<AdminUser?>((ref) async* {
         yield null;
         continue;
       }
+      // platformOwner docs may not have stationId scoping — always allow
 
       final isActive = data['isActive'] as bool? ?? true;
       if (!isActive) {

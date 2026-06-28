@@ -202,6 +202,7 @@ class _AdminBadge extends StatelessWidget {
 
   Color get _roleColor {
     switch (adminUser.role) {
+      case AdminRole.platformOwner: return AppColors.lionGold;
       case AdminRole.superAdmin: return AppColors.lionGreen;
       case AdminRole.stationManager: return AppColors.electricTeal;
       case AdminRole.broadcaster: return AppColors.warningGold;

@@ -32,9 +32,10 @@ abstract class ChatRepository {
 }
 
 class FirestoreChatRepository implements ChatRepository {
-  FirestoreChatRepository({FirebaseFirestore? db})
+  FirestoreChatRepository({required this.stationId, FirebaseFirestore? db})
       : _db = db ?? FirebaseFirestore.instance;
 
+  final String stationId;
   final FirebaseFirestore _db;
 
   @override
@@ -50,11 +51,11 @@ class FirestoreChatRepository implements ChatRepository {
 
   @override
   Stream<List<ChatMessageModel>> watchMessages() {
-    // Single-field orderBy only — Firestore auto-indexes this, no composite
-    // index required. isHidden filtering is done client-side on the 200-message
-    // window, which is negligible and avoids the (isHidden, createdAt) index.
+    // stationId equality + createdAt orderBy — needs composite index (stationId, createdAt).
+    // isHidden filtering is done client-side to avoid a three-field index.
     return _db
         .collection('chat_messages')
+        .where('stationId', isEqualTo: stationId)
         .orderBy('createdAt', descending: false)
         .limitToLast(200)
         .snapshots()
@@ -68,6 +69,7 @@ class FirestoreChatRepository implements ChatRepository {
   Stream<List<ChatMessageModel>> watchAllMessagesForAdmin() {
     return _db
         .collection('chat_messages')
+        .where('stationId', isEqualTo: stationId)
         .orderBy('createdAt', descending: true)
         .limit(300)
         .snapshots()
@@ -112,9 +114,10 @@ class FirestoreChatRepository implements ChatRepository {
     );
 
     await Future.wait([
-      // Write the chat message
-      _db.collection('chat_messages').add(msg.toFirestoreCreate()),
-      // Upsert participant record — tracks name, email, activity, message count
+      _db.collection('chat_messages').add({
+        ...msg.toFirestoreCreate(),
+        'stationId': stationId,
+      }),
       _db.collection('chat_participants').doc(uid).set({
         'uid': uid,
         'displayName': displayName,
@@ -124,10 +127,9 @@ class FirestoreChatRepository implements ChatRepository {
       }, SetOptions(merge: true)),
     ]);
 
-    // Mirror song requests into the requests collection so the Request Queue
-    // continues to capture them.
     if (type == ChatMessageType.songRequest) {
       await _db.collection('requests').add({
+        'stationId': stationId,
         'type': RequestType.song.name,
         'requesterName': displayName,
         'message': text,
@@ -143,6 +145,7 @@ class FirestoreChatRepository implements ChatRepository {
   @override
   Future<void> activateChat({String? activeLabel}) async {
     await _db.collection('chat_config').doc('current').set({
+      'stationId': stationId,
       'isActive': true,
       'activeSince': FieldValue.serverTimestamp(),
       if (activeLabel != null && activeLabel.isNotEmpty)
@@ -153,6 +156,7 @@ class FirestoreChatRepository implements ChatRepository {
   @override
   Future<void> deactivateChat() async {
     await _db.collection('chat_config').doc('current').set({
+      'stationId': stationId,
       'isActive': false,
     }, SetOptions(merge: true));
   }
@@ -160,6 +164,7 @@ class FirestoreChatRepository implements ChatRepository {
   @override
   Future<void> setNextSessionNote(String note) async {
     await _db.collection('chat_config').doc('current').set({
+      'stationId': stationId,
       'nextSessionNote': note.isEmpty ? null : note,
     }, SetOptions(merge: true));
   }
@@ -192,6 +197,7 @@ class FirestoreChatRepository implements ChatRepository {
     required String reason,
   }) async {
     await _db.collection('banned_users').doc(uid).set({
+      'stationId': stationId,
       'bannedBy': bannedBy,
       'bannedAt': FieldValue.serverTimestamp(),
       'reason': reason,

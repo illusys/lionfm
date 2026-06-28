@@ -6,11 +6,13 @@ import '../data/models/stream_status_model.dart';
 import '../data/repositories/stream_repository.dart';
 import '../data/services/audio_service.dart';
 import '../core/utils/app_logger.dart';
+import 'current_station_provider.dart';
 
 // ─── Core handler (singleton) ─────────────────────────────────────────────────
 
 final audioHandlerProvider = Provider<LionFMAudioHandler>((ref) {
   final handler = LionFMAudioHandler();
+  handler.stationId = ref.read(currentStationIdProvider);
 
   // Wire Riverpod state so any widget can react to source/episode changes
   handler.onSourceChanged = (source, episode, adDurationSec) {

@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
+import '../../providers/current_station_provider.dart';
 
 final _showsStreamProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final stationId = ref.watch(currentStationIdProvider);
   return FirebaseFirestore.instance
       .collection('shows')
+      .where('stationId', isEqualTo: stationId)
       .where('isActive', isEqualTo: true)
       .snapshots()
       .map((snap) => snap.docs
@@ -609,6 +612,7 @@ class _AddShowSheetState extends ConsumerState<_AddShowSheet> {
     setState(() => _saving = true);
     try {
       await FirebaseFirestore.instance.collection('shows').add({
+        'stationId': ref.read(currentStationIdProvider),
         'title': _titleCtrl.text.trim(),
         'host': _hostCtrl.text.trim(),
         'presenter': _presenterCtrl.text.trim(),

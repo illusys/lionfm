@@ -10,20 +10,24 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
+    function isPlatformOwner() {
+      return isSignedIn() && getUserRole() == 'platformOwner';
+    }
+
     function isSuperAdmin() {
-      return isSignedIn() && getUserRole() == 'superAdmin';
+      return isSignedIn() && (getUserRole() == 'superAdmin' || getUserRole() == 'platformOwner');
     }
 
     function isStationManager() {
-      return isSignedIn() && (getUserRole() == 'superAdmin' || getUserRole() == 'stationManager');
+      return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'platformOwner']);
     }
 
     function isBroadcaster() {
-      return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'broadcaster']);
+      return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'broadcaster', 'platformOwner']);
     }
 
     function isAnyAdmin() {
-      return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'broadcaster', 'unnAdmin']);
+      return isSignedIn() && (getUserRole() in ['superAdmin', 'stationManager', 'broadcaster', 'unnAdmin', 'platformOwner']);
     }
 
     function signedInOwnDoc(userId) {
@@ -48,11 +52,18 @@ service cloud.firestore {
 
     function safeAnalyticsUpdate() {
       return isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        'date', 'sessionStarts', 'totalListeningSeconds', 'uniqueListenersCount',
+        'stationId', 'date', 'sessionStarts', 'totalListeningSeconds', 'uniqueListenersCount',
         'peakConcurrent', 'listeners', 'requests', 'podcastPlays',
         'premiumPurchases', 'eventTickets', 'platforms', 'location',
         'platformBreakdown', 'totalListeners', 'premiumUsers', 'concurrent'
       ]);
+    }
+
+    // ── Multi-tenant station registry ────────────────────────────────────────
+
+    match /stations/{stationId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
     }
 
     match /shows/{doc} {
@@ -81,10 +92,11 @@ service cloud.firestore {
         && request.resource.data.type in ['song', 'showPitch', 'shoutout']
         && (!('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid);
       allow read: if isBroadcaster();
-      allow update: if isBroadcaster()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'status', 'moderationNotes', 'assignedTo', 'updatedAt'
-        ]);
+      allow update: if isSuperAdmin()
+        || (isBroadcaster()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'moderationNotes', 'assignedTo', 'updatedAt'
+            ]));
       allow delete: if isStationManager();
     }
 
@@ -200,9 +212,10 @@ service cloud.firestore {
         && request.resource.data.type in ['chat', 'song_request', 'pitch']
         && request.resource.data.isPinned == false
         && request.resource.data.isHidden == false;
-      allow update: if isAnyAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['isPinned', 'isHidden']);
+      allow update: if isSuperAdmin()
+        || (isAnyAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['isPinned', 'isHidden']));
       allow delete: if isAnyAdmin();
     }
 

@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/show_model.dart';
 import '../data/repositories/schedule_repository.dart';
+import 'current_station_provider.dart';
 
 final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) {
-  return FirestoreScheduleRepository();
+  return FirestoreScheduleRepository(
+      stationId: ref.watch(currentStationIdProvider));
 });
 
 final selectedDayProvider = StateProvider<String>((ref) {
@@ -22,7 +24,8 @@ final selectedDayProvider = StateProvider<String>((ref) {
 // Real-time stream from Firestore
 final scheduledShowsStreamProvider =
     StreamProvider.family<List<ShowModel>, String>((ref, dayOfWeek) {
-  return watchShowsForDay(dayOfWeek);
+  final stationId = ref.watch(currentStationIdProvider);
+  return watchShowsForDay(dayOfWeek, stationId: stationId);
 });
 
 // FutureProvider for compatibility with schedule screen

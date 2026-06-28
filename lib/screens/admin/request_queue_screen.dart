@@ -6,20 +6,21 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../data/models/request_model.dart';
+import '../../providers/current_station_provider.dart';
 
 // ─── Providers ───────────────────────────────────────────────────────────────
 
 final _statusFilterProvider = StateProvider<String?>((ref) => null); // null = all
 
-final _requestsStreamProvider =
-    StreamProvider<List<RequestModel>>((ref) {
-  Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+final _requestsStreamProvider = StreamProvider<List<RequestModel>>((ref) {
+  final stationId = ref.watch(currentStationIdProvider);
+  return FirebaseFirestore.instance
       .collection('requests')
-      .orderBy('submittedAt', descending: true);
-
-  return query.snapshots().map((snap) => snap.docs
-      .map((d) => RequestModel.fromFirestore(d))
-      .toList());
+      .where('stationId', isEqualTo: stationId)
+      .orderBy('submittedAt', descending: true)
+      .snapshots()
+      .map((snap) =>
+          snap.docs.map((d) => RequestModel.fromFirestore(d)).toList());
 });
 
 final _filteredRequestsProvider = Provider<AsyncValue<List<RequestModel>>>((ref) {

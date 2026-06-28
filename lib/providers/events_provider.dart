@@ -2,10 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/event_model.dart';
+import 'current_station_provider.dart';
 
 final eventsStreamProvider = StreamProvider<List<EventModel>>((ref) {
+  final stationId = ref.watch(currentStationIdProvider);
   return FirebaseFirestore.instance
       .collection('events')
+      .where('stationId', isEqualTo: stationId)
       .orderBy('startTime', descending: false)
       .snapshots()
       .map((snap) =>
@@ -25,7 +28,6 @@ final liveEventsProvider = Provider<AsyncValue<List<EventModel>>>((ref) {
   );
 });
 
-/// Whether the signed-in user holds a paid ticket for [eventId].
 final ticketProvider =
     FutureProvider.family<bool, String>((ref, eventId) async {
   try {

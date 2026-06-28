@@ -2,30 +2,19 @@
   "indexes": [
 
     {
-      "collectionGroup": "ads",
+      "collectionGroup": "stations",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "type",      "order": "ASCENDING"  },
-        { "fieldPath": "startDate", "order": "DESCENDING" }
+        { "fieldPath": "isActive",   "order": "ASCENDING" },
+        { "fieldPath": "createdAt",  "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "ads",
+      "collectionGroup": "stations",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "placement", "order": "ASCENDING" },
-        { "fieldPath": "isActive",  "order": "ASCENDING" },
-        { "fieldPath": "endDate",   "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "ads",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "type",      "order": "ASCENDING" },
-        { "fieldPath": "isActive",  "order": "ASCENDING" },
-        { "fieldPath": "placement", "order": "ASCENDING" },
-        { "fieldPath": "endDate",   "order": "ASCENDING" }
+        { "fieldPath": "isActive",   "order": "ASCENDING" },
+        { "fieldPath": "isFeatured", "order": "ASCENDING" }
       ]
     },
 
@@ -39,19 +28,103 @@
     },
 
     {
-      "collectionGroup": "chat_messages",
+      "collectionGroup": "shows",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "isHidden",  "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "ASCENDING" }
+        { "fieldPath": "stationId", "order": "ASCENDING" },
+        { "fieldPath": "isActive",  "order": "ASCENDING" }
       ]
     },
+
+    {
+      "collectionGroup": "news",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId",   "order": "ASCENDING"  },
+        { "fieldPath": "publishedAt", "order": "DESCENDING" }
+      ]
+    },
+
+    {
+      "collectionGroup": "podcasts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId",   "order": "ASCENDING"  },
+        { "fieldPath": "publishedAt", "order": "DESCENDING" }
+      ]
+    },
+
+    {
+      "collectionGroup": "podcast_feeds",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId", "order": "ASCENDING" },
+        { "fieldPath": "isActive",  "order": "ASCENDING" }
+      ]
+    },
+
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId",  "order": "ASCENDING" },
+        { "fieldPath": "startTime",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId", "order": "ASCENDING" },
+        { "fieldPath": "isLive",    "order": "ASCENDING" }
+      ]
+    },
+
+    {
+      "collectionGroup": "ads",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId",  "order": "ASCENDING"  },
+        { "fieldPath": "startDate",  "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ads",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId", "order": "ASCENDING"  },
+        { "fieldPath": "type",      "order": "ASCENDING"  },
+        { "fieldPath": "startDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ads",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId", "order": "ASCENDING" },
+        { "fieldPath": "placement", "order": "ASCENDING" },
+        { "fieldPath": "isActive",  "order": "ASCENDING" },
+        { "fieldPath": "endDate",   "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ads",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId", "order": "ASCENDING" },
+        { "fieldPath": "type",      "order": "ASCENDING" },
+        { "fieldPath": "isActive",  "order": "ASCENDING" },
+        { "fieldPath": "placement", "order": "ASCENDING" },
+        { "fieldPath": "endDate",   "order": "ASCENDING" }
+      ]
+    },
+
     {
       "collectionGroup": "chat_messages",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "type",      "order": "ASCENDING"  },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        { "fieldPath": "stationId",  "order": "ASCENDING" },
+        { "fieldPath": "createdAt",  "order": "ASCENDING" }
       ]
     },
 
@@ -59,8 +132,35 @@
       "collectionGroup": "requests",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "stationId",   "order": "ASCENDING"  },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId",   "order": "ASCENDING"  },
         { "fieldPath": "status",      "order": "ASCENDING"  },
         { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+
+    {
+      "collectionGroup": "analytics",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId", "order": "ASCENDING" },
+        { "fieldPath": "date",      "order": "ASCENDING" }
+      ]
+    },
+
+    {
+      "collectionGroup": "notification_queue",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId",  "order": "ASCENDING"  },
+        { "fieldPath": "createdAt",  "order": "DESCENDING" }
       ]
     }
 

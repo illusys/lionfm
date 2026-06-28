@@ -13,6 +13,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../core/utils/web_downloader.dart';
+import '../../providers/current_station_provider.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 
@@ -20,12 +21,14 @@ final _dateRangeProvider = StateProvider<int>((ref) => 7); // 7 / 30 / 90
 
 final _analyticsSnapshotProvider =
     FutureProvider.family<_AnalyticsSnapshot, int>((ref, days) async {
+  final stationId = ref.read(currentStationIdProvider);
   final now = DateTime.now();
   final cutoffKey = DateFormat('yyyy-MM-dd')
       .format(now.subtract(Duration(days: days)));
 
   final snap = await FirebaseFirestore.instance
       .collection('analytics')
+      .where('stationId', isEqualTo: stationId)
       .where('date', isGreaterThanOrEqualTo: cutoffKey)
       .orderBy('date')
       .get();

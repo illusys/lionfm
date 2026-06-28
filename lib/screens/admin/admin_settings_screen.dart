@@ -8,7 +8,9 @@ import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
+import '../../data/repositories/station_repository.dart';
 import '../../providers/admin_auth_provider.dart';
+import '../../providers/current_station_provider.dart';
 
 class AdminSettingsScreen extends ConsumerStatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -32,6 +34,10 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
   bool _loading = true;
   bool _saving = false;
+  bool _seedingStation = false;
+  String? _seedStatus;
+  bool _stampingDocs = false;
+  String? _stampStatus;
 
   @override
   void initState() {
@@ -117,6 +123,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
     if (isSuperAdmin && !_validateRevenueSplit()) return;
 
+    final stationId = ref.read(currentStationIdProvider);
     setState(() => _saving = true);
     try {
       final futures = <Future>[
@@ -129,6 +136,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
             .collection('admin_config')
             .doc('platform')
             .set({
+          'stationId': stationId,
           'stationName': _stationNameCtrl.text.trim(),
           'premiumPriceNGN': int.tryParse(_premiumPriceCtrl.text.trim()) ?? 0,
         }, SetOptions(merge: true)),
@@ -140,6 +148,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               .collection('admin_config')
               .doc('payments')
               .set({
+            'stationId': stationId,
             'publicKey': _paystackPublicKeyCtrl.text.trim(),
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true)),
@@ -149,6 +158,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
               .collection('admin_config')
               .doc('revenue')
               .set({
+            'stationId': stationId,
             'lionFmPct': int.tryParse(_lionFmPctCtrl.text.trim()) ?? 45,
             'illusysPct': int.tryParse(_illusysPctCtrl.text.trim()) ?? 40,
             'unnPct': int.tryParse(_unnPctCtrl.text.trim()) ?? 15,
@@ -202,13 +212,16 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     if (confirmed != true || !mounted) return;
 
     try {
+      final stationId = ref.read(currentStationIdProvider);
       final futures = await Future.wait([
         FirebaseFirestore.instance
             .collection('requests')
+            .where('stationId', isEqualTo: stationId)
             .where('status', isEqualTo: 'played')
             .get(),
         FirebaseFirestore.instance
             .collection('requests')
+            .where('stationId', isEqualTo: stationId)
             .where('status', isEqualTo: 'skipped')
             .get(),
       ]);
@@ -285,6 +298,38 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
           backgroundColor: AppColors.errorRed,
         ));
       }
+    }
+  }
+
+  Future<void> _seedLionFmStation() async {
+    setState(() {
+      _seedingStation = true;
+      _seedStatus = null;
+    });
+    try {
+      final message = await StationRepository().seedLionFmStation();
+      if (mounted) {
+        setState(() => _seedStatus = message ?? 'Lion FM seeded successfully.');
+      }
+    } catch (e) {
+      if (mounted) setState(() => _seedStatus = 'Error: $e');
+    } finally {
+      if (mounted) setState(() => _seedingStation = false);
+    }
+  }
+
+  Future<void> _stampTenantDocs() async {
+    setState(() {
+      _stampingDocs = true;
+      _stampStatus = null;
+    });
+    try {
+      final result = await StationRepository().stampTenantDocs();
+      if (mounted) setState(() => _stampStatus = result);
+    } catch (e) {
+      if (mounted) setState(() => _stampStatus = 'Error: $e');
+    } finally {
+      if (mounted) setState(() => _stampingDocs = false);
     }
   }
 
@@ -534,7 +579,105 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
           ),
           const SizedBox(height: AppDimensions.p24),
 
-          // D) Danger Zone
+          // D) FMStream Migration (superAdmin only)
+          if (isSuperAdmin) ...[
+            _SectionHeader(title: 'FMStream Migration'),
+            const SizedBox(height: AppDimensions.p12),
+            Container(
+              padding: const EdgeInsets.all(AppDimensions.p12),
+              decoration: BoxDecoration(
+                color: AppColors.bg2,
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+                border: Border.all(color: AppColors.borderGold),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Seed Lion FM as tenant #1 in the stations collection. '
+                    'Safe to run multiple times — skips if already seeded.',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _seedingStation ? null : _seedLionFmStation,
+                      icon: _seedingStation
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.lionGold),
+                            )
+                          : const Icon(Icons.cloud_upload_rounded, size: 16),
+                      label: const Text('Seed Lion FM Station'),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.borderGold),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                  if (_seedStatus != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _seedStatus!,
+                      style: AppTextStyles.caption.copyWith(
+                        color: _seedStatus!.startsWith('Error')
+                            ? AppColors.errorRed
+                            : AppColors.successGreen,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Text(
+                    'Stamp stationId="lion" on all existing documents that '
+                    'are missing it. Safe to run more than once.',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _stampingDocs ? null : _stampTenantDocs,
+                      icon: _stampingDocs
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.lionGold),
+                            )
+                          : const Icon(Icons.label_outline_rounded, size: 16),
+                      label: const Text('Stamp Tenant Docs'),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.borderGold),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                  if (_stampStatus != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _stampStatus!,
+                      style: AppTextStyles.caption.copyWith(
+                        color: _stampStatus!.startsWith('Error')
+                            ? AppColors.errorRed
+                            : AppColors.successGreen,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: AppDimensions.p24),
+          ],
+
+          // E) Danger Zone
           _SectionHeader(title: 'Danger Zone', color: AppColors.errorRed),
           const SizedBox(height: AppDimensions.p12),
           Container(

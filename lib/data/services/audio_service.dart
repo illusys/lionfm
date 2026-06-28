@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audio_service/audio_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,6 +45,9 @@ class LionFMAudioHandler {
 
   // ─── Public getters ────────────────────────────────────────────────────────
 
+  // Set by audioHandlerProvider after creation; used to scope ad queries.
+  String stationId = 'lion';
+
   AudioPlayer get player => _player;
   AudioSourceType get currentSource => _currentSource;
   EpisodeModel? get currentEpisode => _currentEpisode;
@@ -77,7 +81,14 @@ class LionFMAudioHandler {
     _retryCount++;
     await Future.delayed(const Duration(seconds: 5));
     try {
-      await _player.setUrl(_currentStreamUrl);
+      await _player.setAudioSource(AudioSource.uri(
+        Uri.parse(_currentStreamUrl),
+        tag: const MediaItem(
+          id: 'live_radio',
+          title: 'Lion FM Live',
+          album: 'Lion FM 91.1 MHz',
+        ),
+      ));
       await _player.play();
       _retryCount = 0;
     } catch (_) {
@@ -96,7 +107,14 @@ class LionFMAudioHandler {
     _retryCount = 0;
     onSourceChanged?.call(AudioSourceType.liveRadio, null, 0);
     try {
-      await _player.setUrl(url);
+      await _player.setAudioSource(AudioSource.uri(
+        Uri.parse(url),
+        tag: const MediaItem(
+          id: 'live_radio',
+          title: 'Lion FM Live',
+          album: 'Lion FM 91.1 MHz',
+        ),
+      ));
       await _player.play();
     } catch (_) {
       _scheduleRetry();
@@ -116,7 +134,14 @@ class LionFMAudioHandler {
         _pendingEpisodeAfterAd = episode;
         onSourceChanged?.call(AudioSourceType.ad, null, ad.durationSec);
         try {
-          await _player.setUrl(ad.audioUrl);
+          await _player.setAudioSource(AudioSource.uri(
+            Uri.parse(ad.audioUrl),
+            tag: const MediaItem(
+              id: 'ad',
+              title: 'Sponsored',
+              album: 'Lion FM',
+            ),
+          ));
           await _player.play();
           _trackAdImpression(ad.id);
           return;
@@ -133,7 +158,17 @@ class LionFMAudioHandler {
     _currentSource = AudioSourceType.podcast;
     _currentEpisode = episode;
     onSourceChanged?.call(AudioSourceType.podcast, episode, 0);
-    await _player.setUrl(episode.audioUrl);
+    await _player.setAudioSource(AudioSource.uri(
+      Uri.parse(episode.audioUrl),
+      tag: MediaItem(
+        id: episode.id,
+        title: episode.title,
+        album: episode.showName,
+        artUri: episode.imageUrl != null
+            ? Uri.tryParse(episode.imageUrl!)
+            : null,
+      ),
+    ));
     await _player.play();
   }
 
@@ -186,6 +221,7 @@ class LionFMAudioHandler {
     try {
       final snap = await FirebaseFirestore.instance
           .collection('ads')
+          .where('stationId', isEqualTo: stationId)
           .where('type', isEqualTo: 'audio_instream')
           .where('isActive', isEqualTo: true)
           .where('placement', isEqualTo: 'preroll')

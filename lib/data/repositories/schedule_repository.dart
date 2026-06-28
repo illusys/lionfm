@@ -7,6 +7,9 @@ abstract class ScheduleRepository {
 }
 
 class FirestoreScheduleRepository implements ScheduleRepository {
+  final String stationId;
+  FirestoreScheduleRepository({required this.stationId});
+
   static const _dayCodeMap = {
     'Monday': 'mon',
     'Tuesday': 'tue',
@@ -23,6 +26,7 @@ class FirestoreScheduleRepository implements ScheduleRepository {
     try {
       final snap = await FirebaseFirestore.instance
           .collection('shows')
+          .where('stationId', isEqualTo: stationId)
           .where('isActive', isEqualTo: true)
           .get();
 
@@ -126,7 +130,8 @@ class FirestoreScheduleRepository implements ScheduleRepository {
 }
 
 // Stream-based variant for reactive listeners
-Stream<List<ShowModel>> watchShowsForDay(String dayOfWeek) {
+Stream<List<ShowModel>> watchShowsForDay(String dayOfWeek,
+    {required String stationId}) {
   const dayCodeMap = {
     'Monday': 'mon',
     'Tuesday': 'tue',
@@ -141,6 +146,7 @@ Stream<List<ShowModel>> watchShowsForDay(String dayOfWeek) {
 
   return FirebaseFirestore.instance
       .collection('shows')
+      .where('stationId', isEqualTo: stationId)
       .where('isActive', isEqualTo: true)
       .snapshots()
       .map((snap) {
@@ -208,7 +214,6 @@ ShowCategory _parseCategoryStatic(String s) {
   }
 }
 
-// Legacy mock kept to avoid removing the import in any files
 class MockScheduleRepository implements ScheduleRepository {
   @override
   Future<List<ShowModel>> getShowsForDay(String dayOfWeek) async => [];
