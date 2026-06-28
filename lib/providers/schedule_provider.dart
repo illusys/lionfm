@@ -5,7 +5,7 @@ import 'current_station_provider.dart';
 
 final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) {
   return FirestoreScheduleRepository(
-      stationId: ref.watch(currentStationIdProvider));
+      stationId: ref.watch(currentStationIdProvider) ?? 'lion');
 });
 
 final selectedDayProvider = StateProvider<String>((ref) {
@@ -24,7 +24,7 @@ final selectedDayProvider = StateProvider<String>((ref) {
 // Real-time stream from Firestore
 final scheduledShowsStreamProvider =
     StreamProvider.family<List<ShowModel>, String>((ref, dayOfWeek) {
-  final stationId = ref.watch(currentStationIdProvider);
+  final stationId = ref.watch(currentStationIdProvider) ?? 'lion';
   return watchShowsForDay(dayOfWeek, stationId: stationId);
 });
 

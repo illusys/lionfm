@@ -7,7 +7,7 @@ import '../../core/theme/text_styles.dart';
 import '../../providers/current_station_provider.dart';
 
 final _notifHistoryProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
-  final stationId = ref.watch(currentStationIdProvider);
+  final stationId = ref.watch(currentStationIdProvider) ?? 'lion';
   return FirebaseFirestore.instance
       .collection('notification_queue')
       .where('stationId', isEqualTo: stationId)
@@ -68,7 +68,7 @@ class _NotificationSenderScreenState
     setState(() => _sending = true);
     try {
       await FirebaseFirestore.instance.collection('notification_queue').add({
-        'stationId': ref.read(currentStationIdProvider),
+        'stationId': ref.read(currentStationIdProvider) ?? 'lion',
         'type': _notifType,
         'title': title.isEmpty ? _defaultTitle(_notifType) : title,
         'body': body,

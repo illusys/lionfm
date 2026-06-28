@@ -5,7 +5,7 @@ import 'current_station_provider.dart';
 
 final newsRepositoryProvider = Provider<NewsRepository>((ref) {
   return FirestoreNewsRepository(
-      stationId: ref.watch(currentStationIdProvider));
+      stationId: ref.watch(currentStationIdProvider) ?? 'lion');
 });
 
 final newsItemsProvider = FutureProvider<List<NewsModel>>((ref) async {

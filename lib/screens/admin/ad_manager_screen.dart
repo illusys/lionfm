@@ -13,7 +13,7 @@ import '../../providers/current_station_provider.dart';
 import '../../widgets/common/index_building_placeholder.dart';
 
 final _bannerAdsProvider = StreamProvider<List<DirectBannerAd>>((ref) {
-  final stationId = ref.watch(currentStationIdProvider);
+  final stationId = ref.watch(currentStationIdProvider) ?? 'lion';
   return FirebaseFirestore.instance
       .collection('ads')
       .where('stationId', isEqualTo: stationId)
@@ -26,7 +26,7 @@ final _bannerAdsProvider = StreamProvider<List<DirectBannerAd>>((ref) {
 });
 
 final _audioAdsProvider = StreamProvider<List<AudioAdModel>>((ref) {
-  final stationId = ref.watch(currentStationIdProvider);
+  final stationId = ref.watch(currentStationIdProvider) ?? 'lion';
   return FirebaseFirestore.instance
       .collection('ads')
       .where('stationId', isEqualTo: stationId)
@@ -115,7 +115,7 @@ class _AdManagerScreenState extends ConsumerState<AdManagerScreen>
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) =>
-          _CreateAdSheet(stationId: ref.read(currentStationIdProvider)),
+          _CreateAdSheet(stationId: ref.read(currentStationIdProvider) ?? 'lion'),
     );
   }
 
@@ -127,7 +127,7 @@ class _AdManagerScreenState extends ConsumerState<AdManagerScreen>
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) =>
-          _CreateAudioAdSheet(stationId: ref.read(currentStationIdProvider)),
+          _CreateAudioAdSheet(stationId: ref.read(currentStationIdProvider) ?? 'lion'),
     );
   }
 }

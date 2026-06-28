@@ -4,5 +4,5 @@ import 'current_station_provider.dart';
 
 final requestRepositoryProvider = Provider<RequestRepository>((ref) {
   return FirestoreRequestRepository(
-      stationId: ref.watch(currentStationIdProvider));
+      stationId: ref.watch(currentStationIdProvider) ?? 'lion');
 });

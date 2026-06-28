@@ -13,7 +13,7 @@ import '../../providers/current_station_provider.dart';
 final _statusFilterProvider = StateProvider<String?>((ref) => null); // null = all
 
 final _requestsStreamProvider = StreamProvider<List<RequestModel>>((ref) {
-  final stationId = ref.watch(currentStationIdProvider);
+  final stationId = ref.watch(currentStationIdProvider) ?? 'lion';
   return FirebaseFirestore.instance
       .collection('requests')
       .where('stationId', isEqualTo: stationId)

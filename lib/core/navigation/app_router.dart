@@ -52,6 +52,8 @@ import '../../widgets/common/bottom_nav_bar.dart';
 import '../../widgets/common/mini_player_bar.dart';
 import '../../widgets/common/offline_banner.dart';
 import '../../providers/admin_auth_provider.dart';
+import '../../providers/current_station_provider.dart';
+import '../../screens/onboarding/get_started_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = _RouterNotifier(ref);
@@ -61,9 +63,22 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     errorBuilder: (context, state) => _GoRouterErrorPage(state: state),
     redirect: (context, state) {
+      final stationId = ref.read(currentStationIdProvider);
       final adminAsync = ref.read(adminUserProvider);
       final needsSetup = ref.read(needsFirstTimeSetupProvider);
       final loc = state.matchedLocation;
+
+      // Platform level (app.fmstream.online) — only allow specific routes
+      if (stationId == null) {
+        const allowed = [
+          '/get-started',
+          '/admin-login',
+          '/platform',
+          '/admin-accept-invite',
+        ];
+        final isAllowed = allowed.any((r) => loc.startsWith(r));
+        if (!isAllowed) return '/get-started';
+      }
 
       if (adminAsync.isLoading) return null;
 
@@ -103,6 +118,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // ── Platform onboarding (app.fmstream.online only) ─────────────────
+      GoRoute(
+        path: '/get-started',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: GetStartedScreen()),
+      ),
+
       // ── Public / listener routes ────────────────────────────────────────
       GoRoute(
         path: '/splash',

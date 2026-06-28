@@ -123,7 +123,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
     if (isSuperAdmin && !_validateRevenueSplit()) return;
 
-    final stationId = ref.read(currentStationIdProvider);
+    final stationId = ref.read(currentStationIdProvider) ?? 'lion';
     setState(() => _saving = true);
     try {
       final futures = <Future>[
@@ -212,7 +212,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     if (confirmed != true || !mounted) return;
 
     try {
-      final stationId = ref.read(currentStationIdProvider);
+      final stationId = ref.read(currentStationIdProvider) ?? 'lion';
       final futures = await Future.wait([
         FirebaseFirestore.instance
             .collection('requests')

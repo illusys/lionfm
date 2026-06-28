@@ -27,7 +27,7 @@ class EventsManagerScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () =>
-            _showCreateSheet(context, ref.read(currentStationIdProvider)),
+            _showCreateSheet(context, ref.read(currentStationIdProvider) ?? 'lion'),
         backgroundColor: AppColors.lionGreen,
         foregroundColor: AppColors.bg0,
         icon: const Icon(Icons.add),

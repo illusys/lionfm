@@ -180,7 +180,7 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
                 _Label('Plan Preference'),
                 const SizedBox(height: AppDimensions.p12),
                 DropdownButtonFormField<StationPlan>(
-                  value: _plan,
+                  initialValue: _plan,
                   dropdownColor: AppColors.bg3,
                   decoration: const InputDecoration(),
                   items: StationPlan.values

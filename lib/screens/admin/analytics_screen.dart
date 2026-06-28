@@ -21,7 +21,7 @@ final _dateRangeProvider = StateProvider<int>((ref) => 7); // 7 / 30 / 90
 
 final _analyticsSnapshotProvider =
     FutureProvider.family<_AnalyticsSnapshot, int>((ref, days) async {
-  final stationId = ref.read(currentStationIdProvider);
+  final stationId = ref.read(currentStationIdProvider) ?? 'lion';
   final now = DateTime.now();
   final cutoffKey = DateFormat('yyyy-MM-dd')
       .format(now.subtract(Duration(days: days)));

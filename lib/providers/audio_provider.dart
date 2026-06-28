@@ -12,7 +12,7 @@ import 'current_station_provider.dart';
 
 final audioHandlerProvider = Provider<LionFMAudioHandler>((ref) {
   final handler = LionFMAudioHandler();
-  handler.stationId = ref.read(currentStationIdProvider);
+  handler.stationId = ref.read(currentStationIdProvider) ?? 'lion';
 
   // Wire Riverpod state so any widget can react to source/episode changes
   handler.onSourceChanged = (source, episode, adDurationSec) {

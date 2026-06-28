@@ -5,7 +5,7 @@ import 'current_station_provider.dart';
 
 final podcastRepositoryProvider = Provider<PodcastRepository>((ref) {
   return FirestoreEpisodeRepository(
-      stationId: ref.watch(currentStationIdProvider));
+      stationId: ref.watch(currentStationIdProvider) ?? 'lion');
 });
 
 final episodesProvider = FutureProvider<List<EpisodeModel>>((ref) async {

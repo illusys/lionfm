@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
+import '../../providers/admin_auth_provider.dart';
+import '../../providers/current_station_provider.dart';
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -45,12 +47,20 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
       debugPrint('SIGNIN SUCCESS: uid=${credential.user?.uid}');
 
-      // Give the auth state a moment, then navigate.
-      // Do NOT read providers here — let the router redirect handle it.
+      // Give the auth state a moment to propagate, then navigate.
       if (!mounted) return;
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
-      context.go('/admin');
+
+      final stationId = ref.read(currentStationIdProvider);
+      final adminUser = ref.read(adminUserProvider).valueOrNull;
+      if (adminUser != null &&
+          adminUser.isPlatformOwner &&
+          stationId == null) {
+        context.go('/platform');
+      } else {
+        context.go('/admin');
+      }
     } on FirebaseAuthException catch (e) {
       debugPrint('SIGNIN FirebaseAuthException: ${e.code} ${e.message}');
       if (mounted) _showError('${e.code}: ${e.message ?? "Auth failed"}');
