@@ -104,12 +104,23 @@ service cloud.firestore {
       // Always allow reading own document — needed for role check on login
       allow read: if isSignedIn() && request.auth.uid == userId;
       allow read: if isAnyAdmin();
-      allow create: if isSuperAdmin() || (signedInOwnDoc(userId) && request.resource.data.keys().hasOnly([
-        'name', 'displayName', 'email', 'photoUrl',
-        'notifyShowAlerts', 'notifyBreakingNews', 'notifyRequestConfirmation',
-        'notifySpecialEvents', 'audioQuality', 'totalListeningMinutes',
-        'episodesPlayed', 'topCategory', 'requestedPremiumUpgrade', 'updatedAt'
-      ]));
+      allow create: if isSuperAdmin()
+        // Listener self-registration (limited fields, no role escalation)
+        || (signedInOwnDoc(userId) && request.resource.data.keys().hasOnly([
+          'name', 'displayName', 'email', 'photoUrl',
+          'notifyShowAlerts', 'notifyBreakingNews', 'notifyRequestConfirmation',
+          'notifySpecialEvents', 'audioQuality', 'totalListeningMinutes',
+          'episodesPlayed', 'topCategory', 'requestedPremiumUpgrade', 'updatedAt'
+        ]))
+        // Station owner self-registration via the FMStream onboarding flow
+        || (signedInOwnDoc(userId)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.role == 'superAdmin'
+          && request.resource.data.stationId is string
+          && request.resource.data.stationId.size() > 0
+          && request.resource.data.keys().hasOnly([
+            'uid', 'email', 'displayName', 'role', 'stationId', 'isActive', 'createdAt'
+          ]));
       allow update: if isSuperAdmin() || (signedInOwnDoc(userId) && safeUserSelfUpdate());
       allow delete: if isSuperAdmin();
     }

@@ -109,8 +109,14 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     }
   }
 
+  static const _fmTeal = Color(0xFF15E0B4);
+  static const _platformBg = Color(0xFF06112B);
+
   @override
   Widget build(BuildContext context) {
+    final stationId = ref.watch(currentStationIdProvider);
+    final isPlatformLevel = stationId == null;
+
     return Scaffold(
       backgroundColor: AppColors.bg0,
       body: Center(
@@ -125,25 +131,48 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
-                    child: Image.asset(
-                      'assets/images/lion_fm_logo.webp',
-                      width: 120,
-                      errorBuilder: (_, __, ___) => Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: AppColors.greenTealGradient,
-                          borderRadius:
-                              BorderRadius.circular(AppDimensions.r16),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'LF',
-                          style: AppTextStyles.h1
-                              .copyWith(color: AppColors.bg0),
-                        ),
-                      ),
-                    ),
+                    child: isPlatformLevel
+                        ? RichText(
+                            text: const TextSpan(children: [
+                              TextSpan(
+                                text: 'FM',
+                                style: TextStyle(
+                                  color: _fmTeal,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  fontFamily: 'SpaceGrotesk',
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Stream',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  fontFamily: 'SpaceGrotesk',
+                                ),
+                              ),
+                            ]),
+                          )
+                        : Image.asset(
+                            'assets/images/lion_fm_logo.webp',
+                            width: 120,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                gradient: AppColors.greenTealGradient,
+                                borderRadius:
+                                    BorderRadius.circular(AppDimensions.r16),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'LF',
+                                style: AppTextStyles.h1
+                                    .copyWith(color: AppColors.bg0),
+                              ),
+                            ),
+                          ),
                   ),
                   const SizedBox(height: AppDimensions.p24),
                   Text(
@@ -153,7 +182,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                   ),
                   const SizedBox(height: AppDimensions.p8),
                   Text(
-                    'Lion FM 91.1 MHz — Staff Access',
+                    isPlatformLevel
+                        ? 'Platform Administration'
+                        : 'Lion FM 91.1 MHz — Staff Access',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.body
                         .copyWith(color: AppColors.textSecondary),
@@ -206,28 +237,38 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _signIn,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.lionGreen,
-                        foregroundColor: AppColors.bg0,
-                        disabledBackgroundColor:
-                            AppColors.lionGreen.withValues(alpha: 0.5),
+                        backgroundColor: isPlatformLevel
+                            ? _fmTeal
+                            : AppColors.lionGreen,
+                        foregroundColor: isPlatformLevel
+                            ? _platformBg
+                            : AppColors.bg0,
+                        disabledBackgroundColor: isPlatformLevel
+                            ? _fmTeal.withValues(alpha: 0.5)
+                            : AppColors.lionGreen.withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius:
                               BorderRadius.circular(AppDimensions.r12),
                         ),
                       ),
                       child: _isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppColors.bg0,
+                                color: isPlatformLevel
+                                    ? _platformBg
+                                    : AppColors.bg0,
                               ),
                             )
                           : Text(
                               'Sign In',
-                              style: AppTextStyles.bodyMedium
-                                  .copyWith(color: AppColors.bg0),
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: isPlatformLevel
+                                    ? _platformBg
+                                    : AppColors.bg0,
+                              ),
                             ),
                     ),
                   ),
