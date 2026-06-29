@@ -442,6 +442,7 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
                 const SizedBox(height: AppDimensions.p32),
 
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton.icon(
                       onPressed: () => setState(() => _step = 0),
@@ -450,7 +451,6 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
                       style: TextButton.styleFrom(
                           foregroundColor: AppColors.textSecondary),
                     ),
-                    const Spacer(),
                     SizedBox(
                       height: 52,
                       child: ElevatedButton(
