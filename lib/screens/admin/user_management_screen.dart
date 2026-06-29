@@ -532,30 +532,29 @@ class _AddUserSheetState extends ConsumerState<_AddUserSheet> {
 
       // Trigger email via Firebase "Trigger Email from Firestore" extension
       final acceptUrl =
-          'https://www.lionfm.online/#/admin-accept-invite?email=${Uri.encodeComponent(email)}';
+          'https://app.fmstream.online/#/admin-accept-invite?email=${Uri.encodeComponent(email)}';
       await FirebaseFirestore.instance.collection('mail').add({
         'to': [email],
         'message': {
-          'subject': "You've been invited to the Lion FM Admin Portal",
+          'subject': "You've been invited to FMStream Admin",
           'html': '''
-<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#111;color:#fff;border-radius:12px;">
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#0B1639;color:#fff;border-radius:12px;">
   <div style="text-align:center;margin-bottom:24px;">
-    <span style="font-size:32px;font-weight:700;color:#1E9B43;">LION FM</span>
-    <span style="font-size:14px;color:#888;display:block;">91.1 MHz</span>
+    <span style="font-size:32px;font-weight:800;color:#15E0B4;">FM</span><span style="font-size:32px;font-weight:800;color:#fff;">Stream</span>
   </div>
-  <h2 style="color:#1E9B43;">You\'re invited!</h2>
+  <h2 style="color:#15E0B4;">You\'re invited!</h2>
   <p>Hi $name,</p>
-  <p>${currentUser?.displayName ?? 'A Lion FM Admin'} has invited you to join the Lion FM Admin Portal as <strong style="color:#1E9B43;">${AdminUser.roleDisplayName(_role)}</strong>.</p>
+  <p>${currentUser?.displayName ?? 'An FMStream Admin'} has invited you to join FMStream as <strong style="color:#15E0B4;">${AdminUser.roleDisplayName(_role)}</strong>.</p>
   <p>Click the button below to set your password and activate your account:</p>
   <div style="text-align:center;margin:32px 0;">
-    <a href="$acceptUrl" style="background:#1E9B43;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
+    <a href="$acceptUrl" style="background:#15E0B4;color:#06112B;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
       Accept Invitation
     </a>
   </div>
   <p style="color:#888;font-size:13px;">This link is personal — do not share it with others.</p>
-  <hr style="border:none;border-top:1px solid #333;margin:24px 0;"/>
+  <hr style="border:none;border-top:1px solid #1E2D4A;margin:24px 0;"/>
   <p style="color:#666;font-size:12px;text-align:center;">
-    Lion FM 91.1 MHz · University of Nigeria, Nsukka<br/>
+    FMStream · app.fmstream.online<br/>
     If you did not expect this invitation, please ignore this email.
   </p>
 </div>''',
