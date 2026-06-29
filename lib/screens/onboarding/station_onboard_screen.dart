@@ -441,7 +441,9 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
                 ),
                 const SizedBox(height: AppDimensions.p32),
 
-                Row(
+                SizedBox(
+                  width: double.infinity,
+                  child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton.icon(
@@ -484,6 +486,7 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
                       ),
                     ),
                   ],
+                  ),
                 ),
               ],
             ),
