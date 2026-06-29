@@ -31,22 +31,7 @@ class NewsScreen extends ConsumerWidget {
     final category = ref.watch(newsCategoryProvider);
 
     return Scaffold(
-      appBar: LionFmAppBar(
-        title: 'Campus News',
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(16),
-          child: Padding(
-            padding: const EdgeInsets.only(
-                left: AppDimensions.p16, bottom: AppDimensions.p8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('@lionfmunn',
-                  style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textTertiary)),
-            ),
-          ),
-        ),
-      ),
+      appBar: const LionFmAppBar(title: 'News'),
       body: RefreshIndicator(
         onRefresh: () async => ref.refresh(newsItemsProvider),
         color: AppColors.amberGold,
@@ -129,7 +114,7 @@ class NewsScreen extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.all(AppDimensions.p16),
                         child: Text(
-                          'Updated from @lionfmunn · ${DateFormat('h:mm a').format(DateTime.now())}',
+                          'Last updated · ${DateFormat('h:mm a').format(DateTime.now())}',
                           style: AppTextStyles.caption,
                           textAlign: TextAlign.center,
                         ),

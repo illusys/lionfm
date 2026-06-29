@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../models/station.dart';
 import '../../../providers/current_station_provider.dart';
 import '../../../providers/schedule_provider.dart';
+import '../../../providers/station_provider.dart';
 
 // ─── Slide models ─────────────────────────────────────────────────────────────
 
@@ -163,12 +165,17 @@ class _FeatureCarouselState extends ConsumerState<FeatureCarousel> {
             height: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.lionGreen,
+              color: AppColors.electricTeal,
             ),
           ),
         ),
       );
     }
+
+    final stationId = ref.watch(currentStationIdProvider);
+    final station = stationId != null
+        ? ref.watch(stationProvider(stationId)).valueOrNull
+        : null;
 
     return SizedBox(
       height: 200,
@@ -181,6 +188,7 @@ class _FeatureCarouselState extends ConsumerState<FeatureCarousel> {
               onPageChanged: (i) => setState(() => _currentPage = i),
               itemBuilder: (ctx, i) => _SlideView(
                 slide: _slides[i],
+                station: station,
                 onTap: () => _handleTap(ctx, _slides[i]),
               ),
             ),
@@ -206,8 +214,9 @@ class _FeatureCarouselState extends ConsumerState<FeatureCarousel> {
 class _SlideView extends StatelessWidget {
   final _Slide slide;
   final VoidCallback onTap;
+  final Station? station;
 
-  const _SlideView({required this.slide, required this.onTap});
+  const _SlideView({required this.slide, required this.onTap, this.station});
 
   @override
   Widget build(BuildContext context) {
@@ -232,26 +241,38 @@ class _SlideView extends StatelessWidget {
   }
 
   Widget _buildWelcomeSlide() {
+    final name = (station?.name.isNotEmpty == true) ? station!.name : 'Your Station';
+    final tagline = (station?.tagline.isNotEmpty == true) ? station!.tagline : 'Live Radio Streaming';
+    final logoUrl = station?.logoUrl ?? '';
+
     return Container(
       decoration: const BoxDecoration(gradient: AppColors.heroGradient),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/images/lion_fm_logo.webp',
-              width: 120,
-              fit: BoxFit.contain,
-            ),
+            if (logoUrl.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  logoUrl,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => _stationInitial(name),
+                ),
+              )
+            else
+              _stationInitial(name),
             const SizedBox(height: 12),
             Text(
-              'Welcome to Lion FM 91.1 MHz',
+              'Welcome to $name',
               style: AppTextStyles.h3.copyWith(color: Colors.white),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
-              'Your Interactive University Radio',
+              tagline,
               style: AppTextStyles.bodySmall.copyWith(
                 color: Colors.white70,
                 fontSize: 13,
@@ -259,6 +280,28 @@ class _SlideView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _stationInitial(String name) {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 32,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -331,13 +374,8 @@ class _ImageSlide extends StatelessWidget {
         else
           Container(
             decoration: const BoxDecoration(gradient: AppColors.heroGradient),
-            child: Center(
-              child: Image.asset(
-                'assets/images/lion_fm_logo.webp',
-                width: 80,
-                fit: BoxFit.contain,
-                opacity: const AlwaysStoppedAnimation(0.4),
-              ),
+            child: const Center(
+              child: Icon(Icons.radio_rounded, size: 64, color: Colors.white24),
             ),
           ),
         // Dark gradient overlay (bottom 40%)
@@ -427,7 +465,7 @@ class _DotIndicator extends StatelessWidget {
           height: 6,
           margin: const EdgeInsets.symmetric(horizontal: 3),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.lionGreen : AppColors.textMuted,
+            color: isActive ? AppColors.electricTeal : AppColors.textMuted,
             borderRadius: BorderRadius.circular(3),
           ),
         );

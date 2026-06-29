@@ -47,6 +47,7 @@ import '../../screens/admin/ad_manager_screen.dart';
 import '../../screens/admin/events_manager_screen.dart';
 import '../../screens/admin/admin_chat_screen.dart';
 import '../../screens/admin/analytics_screen.dart';
+import '../../screens/admin/news_manager_screen.dart';
 import '../../screens/admin/revenue_dashboard_screen.dart';
 import '../../screens/admin/user_management_screen.dart';
 import '../../screens/admin/admin_settings_screen.dart';
@@ -271,6 +272,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/chat',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: AdminChatScreen()),
+          ),
+          GoRoute(
+            path: '/admin/news',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: NewsManagerScreen()),
           ),
           GoRoute(
             path: '/admin/analytics',
