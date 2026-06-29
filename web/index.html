@@ -29,12 +29,6 @@
   <link rel="dns-prefetch" href="https://accounts.google.com">
   <link rel="dns-prefetch" href="https://storage.googleapis.com">
 
-  <!-- Preload the splash logo so the loading screen shows instantly.
-       Without this, the browser discovers the <img> only after it finishes
-       parsing the rest of <head>, causing a visible blank moment. -->
-  <link rel="preload" as="image" href="assets/assets/images/lionfm_logo.png"
-        fetchpriority="high" type="image/png">
-
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -99,7 +93,7 @@
     /* ── Critical inline CSS — zero network round-trip ───────────────────── */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: #0A0A0A;
+      background-color: #0B1639;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -111,108 +105,42 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
       opacity: 1;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.3s ease;
     }
     #loading.hidden { opacity: 0; pointer-events: none; }
 
-    .glow-blob {
-      position: fixed;
-      width: 320px; height: 320px;
+    .fm-wordmark {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .fm-wordmark .fm { color: #15E0B4; }
+    .fm-wordmark .stream { color: #ffffff; }
+
+    .fm-ring {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(21,224,180,0.2);
+      border-top-color: #15E0B4;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(30,155,67,0.12) 0%, transparent 70%);
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      animation: glowPulse 2s ease-in-out infinite alternate;
+      animation: spin 0.8s linear infinite, fadeUp 0.5s ease 0.2s both;
     }
-    @keyframes glowPulse {
-      from { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
-      to   { opacity: 1;   transform: translate(-50%, -50%) scale(1.1); }
-    }
-
-    .logo-img {
-      width: 240px; height: 240px;
-      object-fit: contain;
-      /* preloaded above — will display without a render-blocking round-trip */
-      animation: logoBounce 0.6s cubic-bezier(.36,.07,.19,.97) forwards,
-                 logoFloat 2.5s ease-in-out 0.6s infinite alternate;
-    }
-    @keyframes logoBounce {
-      0%   { opacity: 0; transform: scale(0.5); }
-      70%  { opacity: 1; transform: scale(1.08); }
-      100% { transform: scale(1); }
-    }
-    @keyframes logoFloat {
-      from { transform: translateY(0px); }
-      to   { transform: translateY(-8px); }
-    }
-
-    .tagline {
-      color: rgba(245,244,239,0.5);
-      font-size: 13px;
-      font-style: italic;
-      animation: fadeIn 0.5s ease 0.8s both;
-    }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    .equalizer {
-      display: flex; align-items: flex-end;
-      gap: 4px; height: 32px;
-      animation: fadeIn 0.5s ease 1s both;
-    }
-    .eq-bar {
-      width: 4px; border-radius: 2px;
-      animation: eqBounce var(--dur, 0.6s) ease-in-out infinite alternate;
-    }
-    @keyframes eqBounce {
-      from { height: var(--min-h, 6px); }
-      to   { height: var(--max-h, 28px); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <div class="glow-blob"></div>
   <div id="loading">
-    <picture>
-      <source srcset="assets/assets/images/lion_fm_logo.webp" type="image/webp">
-      <img class="logo-img"
-           src="assets/assets/images/lionfm_logo.png"
-           fetchpriority="high"
-           onerror="this.style.display='none';
-                    document.getElementById('logo-fallback').style.display='flex';"
-           alt="Lion FM">
-    </picture>
-    <div id="logo-fallback" style="display:none;width:120px;height:120px;
-         background:linear-gradient(135deg,#1E9B43,#28D7D2);border-radius:28px;
-         align-items:center;justify-content:center;flex-direction:column;
-         box-shadow:0 0 32px rgba(30,155,67,0.4);">
-      <span style="color:rgba(10,10,10,0.8);font-size:13px;font-weight:700;letter-spacing:3px;">LION</span>
-      <span style="color:#0A0A0A;font-size:38px;font-weight:900;line-height:1;">FM</span>
-      <span style="color:rgba(10,10,10,0.6);font-size:10px;letter-spacing:1px;">91.1 MHz</span>
-    </div>
-    <div class="tagline">...Your interactive radio</div>
-    <div class="equalizer" id="eq"></div>
+    <div class="fm-wordmark"><span class="fm">FM</span><span class="stream">Stream</span></div>
+    <div class="fm-ring"></div>
   </div>
 
   <script>
-    // Equalizer bars — pure DOM, zero library dependency
-    (function() {
-      var eq = document.getElementById('eq');
-      var colors = ['#1E9B43','#1E9B43','#28D7D2','#28D7D2','#C89A29','#28D7D2','#28D7D2','#1E9B43','#1E9B43'];
-      for (var i = 0; i < 9; i++) {
-        var bar = document.createElement('div');
-        bar.className = 'eq-bar';
-        var minH = (6  + Math.random() * 8).toFixed(0);
-        var maxH = (16 + Math.random() * 16).toFixed(0);
-        var dur  = (0.4 + Math.random() * 0.5).toFixed(2);
-        bar.style.cssText =
-          '--min-h:' + minH + 'px;--max-h:' + maxH + 'px;--dur:' + dur + 's;' +
-          'background:' + colors[i] + ';animation-delay:' + (i * 0.07) + 's';
-        eq.appendChild(bar);
-      }
-    })();
 
     // Fade out the loading screen once Flutter paints its first frame.
     // 'flutter-first-frame' is dispatched by flutter_bootstrap.js.

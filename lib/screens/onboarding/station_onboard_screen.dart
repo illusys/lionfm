@@ -133,9 +133,9 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
         'logoUrl': '',
         'faviconUrl': '',
         'brandColors': {
-          'primary': '#1E9B43',
-          'secondary': '#28D7D2',
-          'accent': '#C89A29',
+          'primary': '#15E0B4',
+          'secondary': '#0B1639',
+          'accent': '#15E0B4',
           'background': '#0A0A0A',
         },
         'plan': 'starter',
@@ -218,7 +218,7 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
   Widget build(BuildContext context) {
     if (_successSlug != null) return _buildSuccess();
     return Scaffold(
-      backgroundColor: AppColors.bg0,
+      backgroundColor: const Color(0xFF0B1639),
       body: _step == 0 ? _buildStep1() : _buildStep2(),
     );
   }
@@ -348,7 +348,7 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
               child: CircularProgressIndicator(strokeWidth: 2)),
         ),
       'available' => const Icon(Icons.check_circle_rounded,
-          color: AppColors.successGreen, size: 20),
+          color: _teal, size: 20),
       'taken' => const Icon(Icons.cancel_rounded,
           color: AppColors.errorRed, size: 20),
       _ => null,
@@ -522,7 +522,7 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
         Uri.parse('https://$slug.fmstream.online/#/admin-login');
 
     return Scaffold(
-      backgroundColor: AppColors.bg0,
+      backgroundColor: const Color(0xFF0B1639),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.p24),
@@ -640,12 +640,12 @@ class _StepIndicator extends StatelessWidget {
                 ? const Color(0xFF15E0B4)
                 : active
                     ? const Color(0xFF15E0B4)
-                    : AppColors.bg2,
+                    : const Color(0xFF1A3060),
             shape: BoxShape.circle,
             border: Border.all(
               color: active || done
                   ? const Color(0xFF15E0B4)
-                  : AppColors.border1,
+                  : const Color(0xFF5A6B86),
             ),
           ),
           child: Center(
@@ -682,7 +682,7 @@ class _StepIndicator extends StatelessWidget {
         child: Container(
           height: 1,
           margin: const EdgeInsets.only(bottom: 18),
-          color: AppColors.border1,
+          color: const Color(0xFF5A6B86),
         ),
       );
 }

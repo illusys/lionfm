@@ -80,7 +80,7 @@ class _AcceptInviteScreenState extends State<AcceptInviteScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Account created! Please sign in with your new password.'),
-          backgroundColor: AppColors.successGreen,
+          backgroundColor: Color(0xFF15E0B4),
         ));
         context.go('/admin-login');
       }
