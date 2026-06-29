@@ -439,54 +439,47 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppDimensions.p32),
+                const SizedBox(height: 32),
 
-                SizedBox(
-                  width: double.infinity,
-                  child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    TextButton.icon(
-                      onPressed: () => setState(() => _step = 0),
-                      icon: const Icon(Icons.arrow_back_rounded, size: 16),
-                      label: const Text('Back'),
-                      style: TextButton.styleFrom(
-                          foregroundColor: AppColors.textSecondary),
-                    ),
-                    SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _submitting ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _teal,
-                          foregroundColor: _dark,
-                          disabledBackgroundColor:
-                              _teal.withValues(alpha: 0.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.r12),
-                          ),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                    ElevatedButton(
+                      onPressed: _submitting ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _teal,
+                        foregroundColor: _dark,
+                        disabledBackgroundColor: _teal.withValues(alpha: 0.5),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppDimensions.r12),
                         ),
-                        child: _submitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: _dark),
-                              )
-                            : const Text(
-                                'Create station',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: _dark),
+                        elevation: 0,
+                      ),
+                      child: _submitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: _dark),
+                            )
+                          : const Text(
+                              'Create station',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
                               ),
+                            ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => setState(() => _step = 0),
+                      child: const Text(
+                        '← Back',
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                   ],
-                  ),
                 ),
               ],
             ),
