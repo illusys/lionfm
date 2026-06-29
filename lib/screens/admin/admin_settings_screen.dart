@@ -235,6 +235,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
       );
 
       await batch.commit();
+      debugPrint('Station branding saved for $sid: '
+          'name=${_nameCtrl.text.trim()}, '
+          'primary=${_primaryCtrl.text.trim()}');
       _showSnack('Settings saved');
     } catch (e) {
       _showSnack('Error saving: $e', isError: true);
@@ -580,11 +583,9 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
           const SizedBox(height: AppDimensions.p24),
           _buildSection5Domain(),
           const SizedBox(height: AppDimensions.p24),
-          if (isSuperAdmin) ...[
+          if (isPlatformOwner) ...[
             _buildSection6Firebase(),
             const SizedBox(height: AppDimensions.p24),
-          ],
-          if (isPlatformOwner) ...[
             _buildSection7RevenueSplit(),
             const SizedBox(height: AppDimensions.p24),
           ],
@@ -1216,19 +1217,21 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _DangerButton(
-                label: 'Clear Request Queue',
-                subtitle: 'Delete all played/skipped requests',
-                onPressed: _clearDoneRequests,
-              ),
-              const Divider(color: AppColors.border1, height: 24),
-              _DangerButton(
-                label: 'Export All Data as CSV',
-                subtitle: 'Shows, users — copied to clipboard',
-                onPressed: _exportData,
-                isDestructive: false,
-              ),
-              const Divider(color: AppColors.border1, height: 24),
+              if (isPlatformOwner) ...[
+                _DangerButton(
+                  label: 'Clear Request Queue',
+                  subtitle: 'Delete all played/skipped requests',
+                  onPressed: _clearDoneRequests,
+                ),
+                const Divider(color: AppColors.border1, height: 24),
+                _DangerButton(
+                  label: 'Export All Data as CSV',
+                  subtitle: 'Shows, users — copied to clipboard',
+                  onPressed: _exportData,
+                  isDestructive: false,
+                ),
+                const Divider(color: AppColors.border1, height: 24),
+              ],
               _DangerButton(
                 label: 'Sign Out of Admin Portal',
                 subtitle: 'Returns to the login screen',

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/constants/app_colors.dart';
+import '../../providers/current_station_provider.dart';
+import '../../providers/station_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -103,12 +104,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.dispose();
   }
 
-  List<Widget> _buildNotes() {
+  List<Widget> _buildNotes(Color noteColor) {
     return [
-      _buildNote('♪', left: 40, top: 120, color: AppColors.bg0.withValues(alpha: 0.6), delay: 0.0),
-      _buildNote('♫', right: 60, top: 100, color: AppColors.bg0.withValues(alpha: 0.5), delay: 0.3),
-      _buildNote('♩', right: 40, bottom: 160, color: AppColors.bg0.withValues(alpha: 0.7), delay: 0.6),
-      _buildNote('♬', left: 50, bottom: 140, color: AppColors.bg0.withValues(alpha: 0.5), delay: 0.9),
+      _buildNote('♪', left: 40, top: 120, color: noteColor, delay: 0.0),
+      _buildNote('♫', right: 60, top: 100, color: noteColor, delay: 0.3),
+      _buildNote('♩', right: 40, bottom: 160, color: noteColor, delay: 0.6),
+      _buildNote('♬', left: 50, bottom: 140, color: noteColor, delay: 0.9),
     ];
   }
 
@@ -140,17 +141,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
   }
 
-  Widget _buildEqualizer() {
+  Widget _buildEqualizer(Color barColor) {
     final bars = [
-      (AppColors.bg0.withValues(alpha: 0.7), 8.0, 0.0),
-      (AppColors.bg0.withValues(alpha: 0.5), 16.0, 0.1),
-      (AppColors.bg0.withValues(alpha: 0.7), 12.0, 0.2),
-      (AppColors.bg0.withValues(alpha: 0.6), 20.0, 0.3),
-      (AppColors.bg0.withValues(alpha: 0.7), 10.0, 0.4),
-      (AppColors.bg0.withValues(alpha: 0.5), 18.0, 0.15),
-      (AppColors.bg0.withValues(alpha: 0.7), 14.0, 0.25),
-      (AppColors.bg0.withValues(alpha: 0.6), 8.0, 0.35),
-      (AppColors.bg0.withValues(alpha: 0.5), 20.0, 0.05),
+      (barColor.withValues(alpha: 0.7), 8.0, 0.0),
+      (barColor.withValues(alpha: 0.5), 16.0, 0.1),
+      (barColor.withValues(alpha: 0.7), 12.0, 0.2),
+      (barColor.withValues(alpha: 0.6), 20.0, 0.3),
+      (barColor.withValues(alpha: 0.7), 10.0, 0.4),
+      (barColor.withValues(alpha: 0.5), 18.0, 0.15),
+      (barColor.withValues(alpha: 0.7), 14.0, 0.25),
+      (barColor.withValues(alpha: 0.6), 8.0, 0.35),
+      (barColor.withValues(alpha: 0.5), 20.0, 0.05),
     ];
     return FadeTransition(
       opacity: _eqOpacity,
@@ -180,111 +181,230 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final stationId = ref.watch(currentStationIdProvider);
+    final stationAsync =
+        stationId != null ? ref.watch(stationProvider(stationId)) : null;
+    final station = stationAsync?.valueOrNull;
+
+    // Derive background colors from station brand, or neutral FMStream defaults
+    final bgColor = station != null
+        ? station.brandColors.backgroundColor
+        : const Color(0xFF0B1639); // FMStream navy
+    final primaryColor = station != null
+        ? station.brandColors.primaryColor
+        : const Color(0xFF15E0B4); // FMStream teal
+
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Color.alphaBlend(primaryColor.withValues(alpha: 0.35), bgColor),
+        bgColor,
+      ],
+    );
+
+    final tagline = station?.tagline ?? '';
+    final logoUrl = station?.logoUrl ?? '';
+
+    final noteColor = Colors.white.withValues(alpha: 0.4);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(gradient: AppColors.splashGradient),
+        decoration: BoxDecoration(gradient: gradient),
         child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Ambient amber glow at center
-          Container(
-            decoration: const BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                radius: 0.7,
-                colors: [
-                  Color(0x30000000),
-                  Colors.transparent,
-                ],
+          fit: StackFit.expand,
+          children: [
+            // Pulse rings
+            Center(
+              child: AnimatedBuilder(
+                animation: _ringCtrl,
+                builder: (_, __) => Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ...[0.0, 0.33, 0.66].asMap().entries.map((e) {
+                      final progress = (_ringCtrl.value + e.key * 0.33) % 1.0;
+                      final scale = 1.0 + progress * 2.2;
+                      final opacity = (1.0 - progress).clamp(0.0, 0.8);
+                      return Transform.scale(
+                        scale: scale,
+                        child: Container(
+                          width: 160,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: primaryColor.withValues(alpha: opacity * 0.5),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
               ),
             ),
-          ),
-          // Pulse rings
-          Center(
-            child: AnimatedBuilder(
-              animation: _ringCtrl,
-              builder: (_, __) => Stack(
-                alignment: Alignment.center,
+            // Music notes
+            Stack(children: _buildNotes(noteColor)),
+            // Main content
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  ...[0.0, 0.33, 0.66].asMap().entries.map((e) {
-                    final colors = [
-                      AppColors.bg0,
-                      AppColors.bg1,
-                      AppColors.bg0,
-                    ];
-                    final progress = (_ringCtrl.value + e.key * 0.33) % 1.0;
-                    final scale = 1.0 + progress * 2.2;
-                    final opacity = (1.0 - progress).clamp(0.0, 0.8);
-                    return Transform.scale(
-                      scale: scale,
-                      child: Container(
-                        width: 160,
-                        height: 160,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: colors[e.key].withValues(alpha: opacity),
-                            width: 2,
+                  // Logo or FMStream wordmark
+                  AnimatedBuilder(
+                    animation: Listenable.merge([_logoCtrl, _floatCtrl]),
+                    builder: (_, __) => Opacity(
+                      opacity: _logoOpacity.value,
+                      child: Transform.translate(
+                        offset: Offset(
+                            0,
+                            _floatCtrl.isAnimating
+                                ? _floatY.value
+                                : 0),
+                        child: Transform.scale(
+                          scale: _logoScale.value,
+                          child: _SplashLogo(
+                            logoUrl: logoUrl,
+                            primaryColor: primaryColor,
                           ),
                         ),
                       ),
-                    );
-                  }),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Tagline
+                  FadeTransition(
+                    opacity: _taglineOpacity,
+                    child: tagline.isNotEmpty
+                        ? Text(
+                            tagline,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              letterSpacing: 2.0,
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          )
+                        : _FMStreamWordmarkSmall(color: primaryColor),
+                  ),
+                  const SizedBox(height: 32),
+                  // Equalizer
+                  _buildEqualizer(primaryColor),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Logo widget: network image if available, else wordmark ───────────────────
+
+class _SplashLogo extends StatelessWidget {
+  final String logoUrl;
+  final Color primaryColor;
+  const _SplashLogo({required this.logoUrl, required this.primaryColor});
+
+  @override
+  Widget build(BuildContext context) {
+    if (logoUrl.isNotEmpty) {
+      return Image.network(
+        logoUrl,
+        width: 200,
+        height: 200,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        errorBuilder: (_, __, ___) => _FMStreamWordmark(color: primaryColor),
+      );
+    }
+    return _FMStreamWordmark(color: primaryColor);
+  }
+}
+
+// ── FMStream wordmark (fallback when no station logo) ────────────────────────
+
+class _FMStreamWordmark extends StatelessWidget {
+  final Color color;
+  const _FMStreamWordmark({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withValues(alpha: 0.6), width: 3),
+            color: color.withValues(alpha: 0.1),
           ),
-          // Music notes
-          Stack(children: _buildNotes()),
-          // Main content
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Logo
-                AnimatedBuilder(
-                  animation: Listenable.merge([_logoCtrl, _floatCtrl]),
-                  builder: (_, __) => Opacity(
-                    opacity: _logoOpacity.value,
-                    child: Transform.translate(
-                      offset: Offset(0, _floatCtrl.isAnimating ? _floatY.value : 0),
-                      child: Transform.scale(
-                        scale: _logoScale.value,
-                        child: Image.asset(
-                          'assets/images/lion_fm_logo.webp',
-                          width: 300,
-                          fit: BoxFit.contain,
-                          filterQuality: FilterQuality.high,
-                        ),
-                      ),
-                    ),
-                  ),
+          alignment: Alignment.center,
+          child: Icon(Icons.radio_rounded, color: color, size: 56),
+        ),
+        const SizedBox(height: 16),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'FM',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: color,
                 ),
-                const SizedBox(height: 24),
-                // Tagline
-                FadeTransition(
-                  opacity: _taglineOpacity,
-                  child: Text(
-                    '...Your interactive radio',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      letterSpacing: 2.0,
-                      color: AppColors.bg0.withValues(alpha: 0.75),
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
+              ),
+              TextSpan(
+                text: 'Stream',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 32),
-                // Equalizer
-                _buildEqualizer(),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FMStreamWordmarkSmall extends StatelessWidget {
+  final Color color;
+  const _FMStreamWordmarkSmall({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: 'FM',
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 2.0,
+            ),
+          ),
+          TextSpan(
+            text: 'Stream',
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.75),
+              letterSpacing: 2.0,
             ),
           ),
         ],
-        ),
       ),
     );
   }

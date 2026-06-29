@@ -20,6 +20,17 @@ class AppTheme {
         focusBorder: AppColors.borderGold,
       );
 
+  /// Neutral FMStream default — teal/navy, used while a tenant station
+  /// is loading or when no station branding is available.
+  static ThemeData get fmstreamDefault => _buildTheme(
+        primary: const Color(0xFF15E0B4), // FMStream teal
+        onPrimary: const Color(0xFF0B1639), // FMStream navy
+        primaryContainer: const Color(0xFF0B2050),
+        secondary: const Color(0xFF0B1639),
+        accentBorder: const Color(0x6015E0B4),
+        focusBorder: const Color(0x6015E0B4),
+      );
+
   /// Per-tenant theme built from a station's brand colors.
   /// Falls back gracefully: any color not in the brand palette keeps
   /// the Lion FM default so the FMStream dark surface system is preserved.
