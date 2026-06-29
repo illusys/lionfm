@@ -160,6 +160,30 @@ class _StationOnboardScreenState extends State<StationOnboardScreen> {
         'stationId': slug,
       });
 
+      // 5. Send welcome email via Firebase Trigger Email extension
+      await db.collection('mail').add({
+        'to': [email],
+        'message': {
+          'subject': 'Welcome to FMStream — Your station is live!',
+          'html': '''
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#0A0F1E;color:#E8E8E8;border-radius:12px;">
+  <h1 style="color:#15E0B4;font-size:28px;margin-bottom:8px;">Welcome to FMStream!</h1>
+  <p style="color:#A0A8B8;font-size:16px;margin-bottom:24px;">Hi $name,</p>
+  <p style="font-size:16px;line-height:1.6;">Your station <strong style="color:#15E0B4;">$name</strong> is now live on FMStream. You're on a <strong>14-day free trial</strong> of the Starter plan — no credit card required.</p>
+  <div style="margin:28px 0;padding:20px;background:#0B1639;border-radius:8px;border:1px solid #1E2A45;">
+    <p style="margin:0 0 8px;font-size:13px;color:#A0A8B8;text-transform:uppercase;letter-spacing:1px;">Your admin dashboard</p>
+    <a href="https://$slug.fmstream.online/#/admin-login" style="color:#15E0B4;font-size:16px;font-weight:600;text-decoration:none;">https://$slug.fmstream.online/#/admin-login</a>
+  </div>
+  <p style="font-size:15px;line-height:1.6;color:#A0A8B8;">From your dashboard you can set up your stream URL, customize branding, manage your team, and go on air.</p>
+  <p style="margin-top:32px;font-size:14px;color:#6B7280;">The FMStream team<br><a href="https://fmstream.online" style="color:#15E0B4;">fmstream.online</a></p>
+</div>
+''',
+          'text':
+              'Welcome to FMStream! Your station $name is live. Visit your admin dashboard at https://$slug.fmstream.online/#/admin-login. You have a 14-day free trial of the Starter plan.',
+        },
+        'createdAt': now,
+      });
+
       if (mounted) {
         setState(() {
           _successSlug = slug;

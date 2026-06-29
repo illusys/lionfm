@@ -56,9 +56,12 @@ final durationStreamProvider = StreamProvider<Duration?>((ref) {
 // ─── Live stream URL (from Firestore) ─────────────────────────────────────────
 
 final liveStreamUrlProvider = StreamProvider<String>((ref) {
+  final stationId = ref.watch(currentStationIdProvider);
+  // Lion FM backward compat: stream_config/current; tenants: stream_config/{stationId}
+  final docId = (stationId == null || stationId == 'lion') ? 'current' : stationId;
   return FirebaseFirestore.instance
       .collection('stream_config')
-      .doc('current')
+      .doc(docId)
       .snapshots()
       .map((doc) => doc.data()?['streamUrl'] as String? ?? '');
 });

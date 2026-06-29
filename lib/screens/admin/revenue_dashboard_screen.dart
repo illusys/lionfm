@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/admin_auth_provider.dart';
+import '../../providers/current_station_provider.dart';
 
 final _revenueSplitProvider =
     StreamProvider<Map<String, dynamic>>((ref) {
@@ -28,6 +29,8 @@ class RevenueDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final stationId = ref.watch(currentStationIdProvider);
+    final isLionFm = stationId == 'lion';
     final splitAsync = ref.watch(_revenueSplitProvider);
     final adminUser = ref.watch(adminUserProvider).valueOrNull;
     final isSuperAdmin = adminUser?.isSuperAdmin ?? false;
@@ -36,127 +39,137 @@ class RevenueDashboardScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg0,
       appBar: AppBar(
           title: const Text('Revenue'), automaticallyImplyLeading: false),
-      body: ListView(
-        padding: const EdgeInsets.all(AppDimensions.p16),
-        children: [
-          // Summary card
-          Container(
-            padding: const EdgeInsets.all(AppDimensions.p20),
-            decoration: BoxDecoration(
-              gradient: AppColors.greenTealGradient,
-              borderRadius: BorderRadius.circular(AppDimensions.r16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'This Month',
-                  style: AppTextStyles.caption
-                      .copyWith(color: AppColors.bg0.withValues(alpha: 0.7)),
-                ),
-                Text(
-                  '₦142,500',
-                  style: AppTextStyles.heroTitle
-                      .copyWith(color: AppColors.bg0, fontSize: 32),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '+12% vs last month',
-                  style: AppTextStyles.bodySmall
-                      .copyWith(color: AppColors.bg0.withValues(alpha: 0.8)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppDimensions.p24),
+      body: isLionFm
+          ? _buildLionFmRevenue(splitAsync, isSuperAdmin)
+          : _buildTenantRevenuePlaceholder(),
+    );
+  }
 
-          // Revenue split — read view + superAdmin edit button
-          Row(
+  Widget _buildLionFmRevenue(
+      AsyncValue<Map<String, dynamic>> splitAsync, bool isSuperAdmin) {
+    return ListView(
+      padding: const EdgeInsets.all(AppDimensions.p16),
+      children: [
+        // Summary card
+        Container(
+          padding: const EdgeInsets.all(AppDimensions.p20),
+          decoration: BoxDecoration(
+            gradient: AppColors.greenTealGradient,
+            borderRadius: BorderRadius.circular(AppDimensions.r16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('REVENUE SPLIT', style: AppTextStyles.label),
-              const Spacer(),
-              if (isSuperAdmin)
-                splitAsync.whenData((data) {
-                  final lion =
-                      (data['lionFmPct'] as num?)?.toInt() ?? 45;
-                  final illusys =
-                      (data['illusysPct'] as num?)?.toInt() ?? 40;
-                  final unn = (data['unnPct'] as num?)?.toInt() ?? 15;
-                  return _EditSplitButton(
-                    lionPct: lion,
-                    illusysPct: illusys,
-                    unnPct: unn,
-                  );
-                }).valueOrNull ??
-                    const SizedBox.shrink(),
+              Text(
+                'This Month',
+                style: AppTextStyles.caption
+                    .copyWith(color: AppColors.bg0.withValues(alpha: 0.7)),
+              ),
+              Text(
+                '₦142,500',
+                style: AppTextStyles.heroTitle
+                    .copyWith(color: AppColors.bg0, fontSize: 32),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '+12% vs last month',
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppColors.bg0.withValues(alpha: 0.8)),
+              ),
             ],
           ),
-          const SizedBox(height: AppDimensions.p12),
-          splitAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => Text(
-              'Could not load split data.',
-              style: AppTextStyles.caption,
-            ),
-            data: (data) {
-              final lionPct = (data['lionFmPct'] as num?)?.toInt() ?? 45;
-              final illusysPct = (data['illusysPct'] as num?)?.toInt() ?? 40;
-              final unnPct = (data['unnPct'] as num?)?.toInt() ?? 15;
+        ),
+        const SizedBox(height: AppDimensions.p24),
 
-              return Column(
+        // Revenue split — read view + superAdmin edit button
+        Row(
+          children: [
+            Text('REVENUE SPLIT', style: AppTextStyles.label),
+            const Spacer(),
+            if (isSuperAdmin)
+              splitAsync.whenData((data) {
+                final lion = (data['lionFmPct'] as num?)?.toInt() ?? 45;
+                final illusys = (data['illusysPct'] as num?)?.toInt() ?? 40;
+                final unn = (data['unnPct'] as num?)?.toInt() ?? 15;
+                return _EditSplitButton(
+                  lionPct: lion,
+                  illusysPct: illusys,
+                  unnPct: unn,
+                );
+              }).valueOrNull ??
+                  const SizedBox.shrink(),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.p12),
+        splitAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) =>
+              Text('Could not load split data.', style: AppTextStyles.caption),
+          data: (data) {
+            final lionPct = (data['lionFmPct'] as num?)?.toInt() ?? 45;
+            final illusysPct = (data['illusysPct'] as num?)?.toInt() ?? 40;
+            final unnPct = (data['unnPct'] as num?)?.toInt() ?? 15;
+            return Column(
+              children: [
+                _SplitRow(label: 'Lion FM 91.1', pct: lionPct, color: AppColors.lionGreen),
+                _SplitRow(label: 'iLLuSys LTD', pct: illusysPct, color: AppColors.electricTeal),
+                _SplitRow(label: 'UNN', pct: unnPct, color: AppColors.lionGold),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: AppDimensions.p24),
+
+        // Monthly history
+        Text('MONTHLY HISTORY', style: AppTextStyles.label),
+        const SizedBox(height: AppDimensions.p12),
+        ..._history.map((h) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.bg2,
+                borderRadius: BorderRadius.circular(AppDimensions.r12),
+                border: Border.all(color: AppColors.border1),
+              ),
+              child: Row(
                 children: [
-                  _SplitRow(
-                    label: 'Lion FM 91.1',
-                    pct: lionPct,
-                    color: AppColors.lionGreen,
-                  ),
-                  _SplitRow(
-                    label: 'iLLuSys LTD',
-                    pct: illusysPct,
-                    color: AppColors.electricTeal,
-                  ),
-                  _SplitRow(
-                    label: 'UNN',
-                    pct: unnPct,
-                    color: AppColors.lionGold,
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: AppDimensions.p24),
-
-          // Monthly history
-          Text('MONTHLY HISTORY', style: AppTextStyles.label),
-          const SizedBox(height: AppDimensions.p12),
-          ..._history.map((h) => Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.bg2,
-                  borderRadius: BorderRadius.circular(AppDimensions.r12),
-                  border: Border.all(color: AppColors.border1),
-                ),
-                child: Row(
-                  children: [
-                    Text(h.$1, style: AppTextStyles.body),
-                    const Spacer(),
-                    Text(
-                      h.$2,
+                  Text(h.$1, style: AppTextStyles.body),
+                  const Spacer(),
+                  Text(h.$2,
                       style: AppTextStyles.bodyMedium
-                          .copyWith(color: AppColors.lionGold),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      h.$3,
+                          .copyWith(color: AppColors.lionGold)),
+                  const SizedBox(width: 12),
+                  Text(h.$3,
                       style: AppTextStyles.caption
-                          .copyWith(color: AppColors.lionGreen),
-                    ),
-                  ],
-                ),
-              )),
-        ],
+                          .copyWith(color: AppColors.lionGreen)),
+                ],
+              ),
+            )),
+      ],
+    );
+  }
+
+  Widget _buildTenantRevenuePlaceholder() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimensions.p32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.bar_chart_rounded,
+                size: 64, color: AppColors.textMuted.withValues(alpha: 0.4)),
+            const SizedBox(height: AppDimensions.p16),
+            Text('Revenue reporting coming soon',
+                style: AppTextStyles.h2, textAlign: TextAlign.center),
+            const SizedBox(height: AppDimensions.p8),
+            Text(
+              'Detailed revenue analytics will be available here once your station goes live.',
+              style: AppTextStyles.body
+                  .copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

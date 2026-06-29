@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'current_station_provider.dart';
 
 enum AdminRole { platformOwner, superAdmin, stationManager, broadcaster, unnAdmin, none }
 
@@ -159,6 +160,28 @@ final adminUserProvider = StreamProvider<AdminUser?>((ref) async* {
 
 final allAdminUsersProvider =
     StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final stationId = ref.watch(currentStationIdProvider);
+  final adminUser = ref.watch(adminUserProvider).valueOrNull;
+  final isPlatformOwner = adminUser?.isPlatformOwner ?? false;
+
+  if (!isPlatformOwner && stationId != null) {
+    // Station-scoped: only return users belonging to this station
+    return FirebaseFirestore.instance
+        .collection('users')
+        .where('stationId', isEqualTo: stationId)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map<Map<String, dynamic>>(
+              (d) => <String, dynamic>{'id': d.id, ...d.data()},
+            )
+            .where((u) {
+              final role = u['role'] as String?;
+              return role != null && role != 'none';
+            })
+            .toList());
+  }
+
+  // Platform owner: return all users across all tenants
   return FirebaseFirestore.instance
       .collection('users')
       .where('role', whereNotIn: ['none'])

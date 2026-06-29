@@ -38,11 +38,14 @@ class FirestoreChatRepository implements ChatRepository {
   final String stationId;
   final FirebaseFirestore _db;
 
+  // Lion FM backward compat: config lives at chat_config/current; other stations use chat_config/{stationId}
+  String get _chatConfigDocId => stationId == 'lion' ? 'current' : stationId;
+
   @override
   Stream<ChatConfigModel> watchConfig() {
     return _db
         .collection('chat_config')
-        .doc('current')
+        .doc(_chatConfigDocId)
         .snapshots()
         .map((snap) => snap.exists
             ? ChatConfigModel.fromFirestore(snap)
@@ -144,7 +147,7 @@ class FirestoreChatRepository implements ChatRepository {
 
   @override
   Future<void> activateChat({String? activeLabel}) async {
-    await _db.collection('chat_config').doc('current').set({
+    await _db.collection('chat_config').doc(_chatConfigDocId).set({
       'stationId': stationId,
       'isActive': true,
       'activeSince': FieldValue.serverTimestamp(),
@@ -155,7 +158,7 @@ class FirestoreChatRepository implements ChatRepository {
 
   @override
   Future<void> deactivateChat() async {
-    await _db.collection('chat_config').doc('current').set({
+    await _db.collection('chat_config').doc(_chatConfigDocId).set({
       'stationId': stationId,
       'isActive': false,
     }, SetOptions(merge: true));
@@ -163,7 +166,7 @@ class FirestoreChatRepository implements ChatRepository {
 
   @override
   Future<void> setNextSessionNote(String note) async {
-    await _db.collection('chat_config').doc('current').set({
+    await _db.collection('chat_config').doc(_chatConfigDocId).set({
       'stationId': stationId,
       'nextSessionNote': note.isEmpty ? null : note,
     }, SetOptions(merge: true));

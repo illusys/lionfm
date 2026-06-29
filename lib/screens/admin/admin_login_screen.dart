@@ -7,6 +7,8 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/text_styles.dart';
 import '../../providers/admin_auth_provider.dart';
 import '../../providers/current_station_provider.dart';
+import '../../providers/station_provider.dart';
+import '../../models/station.dart';
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -116,6 +118,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   Widget build(BuildContext context) {
     final stationId = ref.watch(currentStationIdProvider);
     final isPlatformLevel = stationId == null;
+    final station = stationId != null
+        ? ref.watch(stationProvider(stationId)).valueOrNull
+        : null;
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
@@ -154,25 +159,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                               ),
                             ]),
                           )
-                        : Image.asset(
-                            'assets/images/lion_fm_logo.webp',
-                            width: 120,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                gradient: AppColors.greenTealGradient,
-                                borderRadius:
-                                    BorderRadius.circular(AppDimensions.r16),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'LF',
-                                style: AppTextStyles.h1
-                                    .copyWith(color: AppColors.bg0),
-                              ),
-                            ),
-                          ),
+                        : _StationLoginLogo(station: station),
                   ),
                   const SizedBox(height: AppDimensions.p24),
                   Text(
@@ -184,7 +171,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                   Text(
                     isPlatformLevel
                         ? 'Platform Administration'
-                        : 'Lion FM 91.1 MHz — Staff Access',
+                        : station != null && station.name.isNotEmpty
+                            ? '${station.name} — Staff Access'
+                            : 'Staff Access',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.body
                         .copyWith(color: AppColors.textSecondary),
@@ -308,6 +297,52 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.p16,
         vertical: AppDimensions.p16,
+      ),
+    );
+  }
+}
+
+// ── Station logo for admin login: network image or initials fallback ──────────
+
+class _StationLoginLogo extends StatelessWidget {
+  final Station? station;
+  const _StationLoginLogo({required this.station});
+
+  @override
+  Widget build(BuildContext context) {
+    final logoUrl = station?.logoUrl ?? '';
+    if (logoUrl.isNotEmpty) {
+      return Image.network(
+        logoUrl,
+        width: 100,
+        height: 100,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _initials(),
+      );
+    }
+    return _initials();
+  }
+
+  Widget _initials() {
+    final name = station?.name ?? '';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: const Color(0xFF15E0B4).withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+        border: Border.all(
+            color: const Color(0xFF15E0B4).withValues(alpha: 0.5), width: 2),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: Color(0xFF15E0B4),
+          fontSize: 32,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
