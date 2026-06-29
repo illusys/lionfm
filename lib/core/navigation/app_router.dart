@@ -72,6 +72,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (stationId == null) {
         const allowed = [
           '/get-started',
+          '/onboard',
           '/admin-login',
           '/platform',
           '/admin-accept-invite',
