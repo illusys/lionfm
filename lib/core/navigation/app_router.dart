@@ -20,7 +20,11 @@ import '../../screens/admin/admin_shell.dart';
 
 // ── Platform shell ────────────────────────────────────────────────────────────
 import '../../screens/platform/platform_shell.dart';
+import '../../screens/platform/platform_dashboard_screen.dart';
 import '../../screens/platform/platform_stations_screen.dart';
+import '../../screens/platform/platform_ads_screen.dart';
+import '../../screens/platform/platform_revenue_screen.dart';
+import '../../screens/platform/platform_settings_screen.dart';
 import '../../screens/platform/platform_station_detail_screen.dart';
 import '../../screens/platform/platform_billing_screen.dart';
 import '../../screens/platform/platform_onboarding_screen.dart';
@@ -298,7 +302,27 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/platform',
             pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PlatformDashboardScreen()),
+          ),
+          GoRoute(
+            path: '/platform/stations',
+            pageBuilder: (context, state) =>
                 const NoTransitionPage(child: PlatformStationsScreen()),
+          ),
+          GoRoute(
+            path: '/platform/ads',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PlatformAdsScreen()),
+          ),
+          GoRoute(
+            path: '/platform/revenue',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PlatformRevenueScreen()),
+          ),
+          GoRoute(
+            path: '/platform/settings',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PlatformSettingsScreen()),
           ),
           GoRoute(
             path: '/platform/station/:id',

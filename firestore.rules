@@ -255,5 +255,18 @@ service cloud.firestore {
       // Signed-in users can upsert their own record (written by sendMessage)
       allow write: if isSignedIn() && request.auth.uid == uid;
     }
+
+    // ── Platform-level collections (platform owner only) ──────────────────────
+
+    match /platform_ads/{docId} {
+      allow read: if true;
+      allow create, delete: if isPlatformOwner();
+      allow update: if isPlatformOwner() || safeAdCounterUpdate();
+    }
+
+    match /platform_config/{docId} {
+      allow read: if isPlatformOwner();
+      allow write: if isPlatformOwner();
+    }
   }
 }

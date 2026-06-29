@@ -12,19 +12,62 @@ class PlatformShell extends ConsumerWidget {
   const PlatformShell({super.key, required this.child});
 
   static const _navItems = [
-    _NavItem(icon: Icons.radio_rounded, label: 'Stations', route: '/platform'),
-    _NavItem(icon: Icons.assignment_rounded, label: 'Onboarding', route: '/platform/onboarding'),
+    _NavItem(
+      icon: Icons.dashboard_rounded,
+      label: 'Dashboard',
+      route: '/platform',
+      activePrefix: null,
+    ),
+    _NavItem(
+      icon: Icons.radio_rounded,
+      label: 'Stations',
+      route: '/platform/stations',
+      activePrefix: '/platform/station',
+    ),
+    _NavItem(
+      icon: Icons.campaign_rounded,
+      label: 'Ads',
+      route: '/platform/ads',
+      activePrefix: null,
+    ),
+    _NavItem(
+      icon: Icons.bar_chart_rounded,
+      label: 'Revenue',
+      route: '/platform/revenue',
+      activePrefix: null,
+    ),
+    _NavItem(
+      icon: Icons.settings_rounded,
+      label: 'Settings',
+      route: '/platform/settings',
+      activePrefix: null,
+    ),
   ];
+
+  int _selectedIdx(String location) {
+    // Dashboard: exact match only
+    if (location == '/platform') return 0;
+
+    for (var i = 1; i < _navItems.length; i++) {
+      final item = _navItems[i];
+      // Exact match
+      if (item.route == location) return i;
+      // Custom active prefix (e.g. /platform/station for /platform/station/:id)
+      if (item.activePrefix != null &&
+          location.startsWith(item.activePrefix!)) {
+        return i;
+      }
+      // Default prefix match
+      if (location.startsWith(item.route)) return i;
+    }
+    return 0;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final adminUser = ref.watch(adminUserProvider).valueOrNull;
     final location = GoRouterState.of(context).matchedLocation;
-
-    int selectedIdx = _navItems.indexWhere((i) =>
-        i.route == location ||
-        (i.route != '/platform' && location.startsWith(i.route)));
-    if (selectedIdx < 0) selectedIdx = 0;
+    final selectedIdx = _selectedIdx(location);
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
@@ -34,7 +77,8 @@ class PlatformShell extends ConsumerWidget {
             width: 72,
             decoration: const BoxDecoration(
               color: AppColors.bg1,
-              border: Border(right: BorderSide(color: AppColors.borderGold, width: 1)),
+              border: Border(
+                  right: BorderSide(color: AppColors.borderGold, width: 1)),
             ),
             child: Column(
               children: [
@@ -42,7 +86,8 @@ class PlatformShell extends ConsumerWidget {
                 _PlatformAvatarChip(adminUser: adminUser),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.lionGold.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
@@ -54,7 +99,6 @@ class PlatformShell extends ConsumerWidget {
                 const SizedBox(height: AppDimensions.p16),
                 const Divider(color: AppColors.border1, height: 1),
                 const SizedBox(height: 8),
-                // Platform nav items
                 ..._navItems.asMap().entries.map((e) {
                   final isActive = e.key == selectedIdx;
                   return Tooltip(
@@ -68,12 +112,15 @@ class PlatformShell extends ConsumerWidget {
                           color: isActive ? AppColors.bg2 : Colors.transparent,
                           border: isActive
                               ? const Border(
-                                  left: BorderSide(color: AppColors.lionGold, width: 3))
+                                  left: BorderSide(
+                                      color: AppColors.lionGold, width: 3))
                               : null,
                         ),
                         alignment: Alignment.center,
                         child: Icon(e.value.icon,
-                            color: isActive ? AppColors.lionGold : AppColors.textMuted,
+                            color: isActive
+                                ? AppColors.lionGold
+                                : AppColors.textMuted,
                             size: 22),
                       ),
                     ),
@@ -147,7 +194,8 @@ class _PlatformAvatarChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppDimensions.r8),
         ),
         alignment: Alignment.center,
-        child: Text(initial, style: AppTextStyles.h3.copyWith(color: AppColors.bg0)),
+        child: Text(initial,
+            style: AppTextStyles.h3.copyWith(color: AppColors.bg0)),
       ),
     );
   }
@@ -157,5 +205,10 @@ class _NavItem {
   final IconData icon;
   final String label;
   final String route;
-  const _NavItem({required this.icon, required this.label, required this.route});
+  final String? activePrefix;
+  const _NavItem(
+      {required this.icon,
+      required this.label,
+      required this.route,
+      required this.activePrefix});
 }
